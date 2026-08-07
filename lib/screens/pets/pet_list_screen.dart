@@ -103,34 +103,6 @@ class _PetListScreenState extends State<PetListScreen> {
       ),
       body: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-            child: TextField(
-              controller: _searchController,
-              onChanged: _onSearchChanged,
-              decoration: InputDecoration(
-                hintText: 'Search by name or breed...',
-                prefixIcon: const Icon(
-                  Icons.search_rounded,
-                  color: AppTheme.textSecondary,
-                  size: 20,
-                ),
-                suffixIcon: _searchQuery.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(
-                          Icons.close_rounded,
-                          color: AppTheme.textSecondary,
-                          size: 18,
-                        ),
-                        onPressed: () {
-                          _searchController.clear();
-                          _onSearchChanged('');
-                        },
-                      )
-                    : null,
-              ),
-            ),
-          ),
           const SizedBox(height: 12),
           SizedBox(
             height: 38,

@@ -37,6 +37,7 @@ class ApiService {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_tokenKey, data['token'] as String);
       await prefs.setString(_userKey, jsonEncode(data['user']));
+      await prefs.setString('last_active_timestamp', DateTime.now().toIso8601String());
       return data;
     }
 
@@ -73,6 +74,7 @@ class ApiService {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_tokenKey, data['token'] as String);
       await prefs.setString(_userKey, jsonEncode(data['user']));
+      await prefs.setString('last_active_timestamp', DateTime.now().toIso8601String());
       return data;
     }
 
@@ -84,6 +86,45 @@ class ApiService {
     }
 
     throw Exception('Login failed. Please check your credentials.');
+  }
+
+  static Future<Map<String, dynamic>> resetPassword({
+    required String email,
+    required String newPassword,
+    required String confirmPassword,
+  }) async {
+    final response = await http
+        .post(
+          Uri.parse('$_baseUrl/auth/reset-password'),
+          headers: _headers,
+          body: jsonEncode({
+            'email': email,
+            'password': newPassword,
+            'password_confirmation': confirmPassword,
+          }),
+        )
+        .timeout(const Duration(seconds: 15));
+
+    final data = jsonDecode(response.body) as Map<String, dynamic>;
+
+    if (response.statusCode == 200) {
+      return data;
+    }
+
+    if (response.statusCode == 404 || response.statusCode == 422 || response.statusCode == 400) {
+      final errors = data['errors'] as Map<String, dynamic>?;
+      if (errors != null && errors.isNotEmpty) {
+        final firstField = errors.values.first;
+        final msg = firstField is List ? firstField.first : firstField;
+        throw Exception(msg.toString());
+      }
+      final message = data['message']?.toString();
+      if (message != null && message.isNotEmpty) {
+        throw Exception(message);
+      }
+    }
+
+    throw Exception(data['message']?.toString() ?? 'Password reset failed. Please try again.');
   }
 
   static Future<String?> getToken() async {
@@ -98,10 +139,26 @@ class ApiService {
     return jsonDecode(userJson) as Map<String, dynamic>;
   }
 
+  static Future<void> updateLastActiveTime() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('last_active_timestamp', DateTime.now().toIso8601String());
+  }
+
+  static Future<bool> isSessionExpired() async {
+    final prefs = await SharedPreferences.getInstance();
+    final lastActiveStr = prefs.getString('last_active_timestamp');
+    if (lastActiveStr == null) return false;
+    final lastActive = DateTime.tryParse(lastActiveStr);
+    if (lastActive == null) return false;
+    final difference = DateTime.now().difference(lastActive);
+    return difference.inDays >= 7;
+  }
+
   static Future<void> clearSession() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_tokenKey);
     await prefs.remove(_userKey);
+    await prefs.remove('last_active_timestamp');
     await prefs.remove('user_full_address');
     await prefs.remove('user_city');
     await prefs.remove('user_barangay');

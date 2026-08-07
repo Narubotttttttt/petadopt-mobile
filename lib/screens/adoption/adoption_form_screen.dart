@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mobile_petadopt/screens/adoption/my_applications_screen.dart';
@@ -617,13 +618,25 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
           TextFormField(
             controller: _phoneController,
             keyboardType: TextInputType.phone,
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly,
+              LengthLimitingTextInputFormatter(11),
+            ],
             decoration: const InputDecoration(
-              labelText: 'Phone Number',
+              labelText: 'Phone Number (11 digits)',
+              hintText: '09123456789',
               prefixIcon: Icon(Icons.phone_outlined,
                   color: AppTheme.textSecondary, size: 20),
             ),
-            validator: (value) =>
-                value == null || value.isEmpty ? 'Please enter your phone' : null,
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) {
+                return 'Please enter your phone number';
+              }
+              if (value.trim().length != 11) {
+                return 'Phone number must be exactly 11 digits';
+              }
+              return null;
+            },
           ),
           const SizedBox(height: 14),
           Row(

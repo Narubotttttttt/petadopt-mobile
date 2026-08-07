@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile_petadopt/services/api_service.dart';
 import 'package:mobile_petadopt/theme/app_theme.dart';
@@ -18,59 +19,73 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
 
-  final List<Widget> _tabs = const [
-    _HomeTab(),
-    PetListScreen(),
-    MyApplicationsScreen(),
-    ProfileScreen(),
+  List<Widget> get _tabs => [
+    _HomeTab(onSeeAllPressed: () => setState(() => _selectedIndex = 1)),
+    const PetListScreen(),
+    const MyApplicationsScreen(),
+    const ProfileScreen(),
   ];
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: _tabs,
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        onTap: (index) {
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        if (_selectedIndex != 0) {
           setState(() {
-            _selectedIndex = index;
+            _selectedIndex = 0;
           });
-        },
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: AppTheme.primary,
-        unselectedItemColor: AppTheme.textSecondary,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            activeIcon: Icon(Icons.home_rounded),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.pets_outlined),
-            activeIcon: Icon(Icons.pets_rounded),
-            label: 'Pets',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.assignment_outlined),
-            activeIcon: Icon(Icons.assignment_rounded),
-            label: 'Applications',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline_rounded),
-            activeIcon: Icon(Icons.person_rounded),
-            label: 'Profile',
-          ),
-        ],
+        } else {
+          SystemNavigator.pop();
+        }
+      },
+      child: Scaffold(
+        body: IndexedStack(
+          index: _selectedIndex,
+          children: _tabs,
+        ),
+        bottomNavigationBar: BottomNavigationBar(
+          currentIndex: _selectedIndex,
+          onTap: (index) {
+            setState(() {
+              _selectedIndex = index;
+            });
+          },
+          type: BottomNavigationBarType.fixed,
+          selectedItemColor: AppTheme.primary,
+          unselectedItemColor: AppTheme.textSecondary,
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home_outlined),
+              activeIcon: Icon(Icons.home_rounded),
+              label: 'Home',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.pets_outlined),
+              activeIcon: Icon(Icons.pets_rounded),
+              label: 'Pets',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.assignment_outlined),
+              activeIcon: Icon(Icons.assignment_rounded),
+              label: 'Applications',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person_outline_rounded),
+              activeIcon: Icon(Icons.person_rounded),
+              label: 'Profile',
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
 class _HomeTab extends StatefulWidget {
-  const _HomeTab();
+  final VoidCallback? onSeeAllPressed;
+  const _HomeTab({this.onSeeAllPressed});
 
   @override
   State<_HomeTab> createState() => _HomeTabState();
@@ -419,7 +434,12 @@ class _HomeTabState extends State<_HomeTab> {
                     ),
                   ],
                   const SizedBox(height: 28),
-                  _sectionHeader(context, '🐾 Available Pets', 'See All'),
+                  _sectionHeader(
+                    context,
+                    '🐾 Available Pets',
+                    'See All',
+                    onTap: widget.onSeeAllPressed,
+                  ),
                   const SizedBox(height: 14),
                   _isLoading
                       ? const Center(
@@ -569,42 +589,6 @@ class _HomeTabState extends State<_HomeTab> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 18),
-                GestureDetector(
-                  onTap: () {},
-                  child: Container(
-                    height: 46,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.08),
-                          blurRadius: 10,
-                          offset: const Offset(0, 3),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        const SizedBox(width: 14),
-                        Icon(
-                          Icons.search_rounded,
-                          color: AppTheme.textSecondary,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 10),
-                        Text(
-                          'Search pets',
-                          style: GoogleFonts.poppins(
-                            fontSize: 13,
-                            color: AppTheme.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
               ],
             ),
           ),
@@ -618,6 +602,7 @@ class _HomeTabState extends State<_HomeTab> {
     String title,
     String actionLabel, {
     bool isPowered = false,
+    VoidCallback? onTap,
   }) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -648,7 +633,7 @@ class _HomeTabState extends State<_HomeTab> {
           )
         else
           TextButton(
-            onPressed: () {},
+            onPressed: onTap,
             style: TextButton.styleFrom(
               padding: EdgeInsets.zero,
               minimumSize: Size.zero,

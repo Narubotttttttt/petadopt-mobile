@@ -252,12 +252,14 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                   Row(
                     children: [
                       _infoCard('🎂', 'Age', pet['age'] as String),
-                      const SizedBox(width: 10),
+                      const SizedBox(width: 8),
                       _infoCard(
                         pet['gender'] == 'Male' ? '♂️' : '♀️',
                         'Gender',
                         pet['gender'] as String,
                       ),
+                      const SizedBox(width: 8),
+                      _infoCard('🎨', 'Color', (pet['color'] as String?) ?? 'N/A'),
                     ],
                   ),
                   const SizedBox(height: 24),
@@ -315,6 +317,79 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                       fontSize: 14,
                       color: AppTheme.textSecondary,
                       height: 1.7,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    'Medical History 🩺',
+                    style: GoogleFonts.poppins(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppTheme.surface,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppTheme.cardBorder),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          (pet['medical_history'] as String?) ?? 'No medical history recorded.',
+                          style: GoogleFonts.poppins(
+                            fontSize: 13,
+                            color: AppTheme.textSecondary,
+                            height: 1.6,
+                          ),
+                        ),
+                        if (pet['medical_logs'] != null && (pet['medical_logs'] as List).isNotEmpty) ...[
+                          const SizedBox(height: 12),
+                          const Divider(height: 1),
+                          const SizedBox(height: 12),
+                          ...(pet['medical_logs'] as List).map((log) {
+                            final mapLog = log as Map<String, dynamic>;
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Icon(Icons.check_circle_outline_rounded, color: AppTheme.successColor, size: 18),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          '${mapLog['title'] ?? 'Medical Checkup'} ${mapLog['date'] != null ? '(${mapLog['date']})' : ''}',
+                                          style: GoogleFonts.poppins(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
+                                            color: AppTheme.textPrimary,
+                                          ),
+                                        ),
+                                        if (mapLog['notes'] != null && mapLog['notes'].toString().isNotEmpty)
+                                          Text(
+                                            mapLog['notes'].toString(),
+                                            style: GoogleFonts.poppins(
+                                              fontSize: 11,
+                                              color: AppTheme.textSecondary,
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }).toList(),
+                        ],
+                      ],
                     ),
                   ),
 

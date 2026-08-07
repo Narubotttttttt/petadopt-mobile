@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:mobile_petadopt/services/api_service.dart';
 import 'package:mobile_petadopt/theme/app_theme.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -47,9 +48,24 @@ class _SplashScreenState extends State<SplashScreen>
 
     _controller.forward();
 
-    Future.delayed(const Duration(milliseconds: 2800), () {
+    Future.delayed(const Duration(milliseconds: 2400), () async {
+      final isExpired = await ApiService.isSessionExpired();
+      if (isExpired) {
+        await ApiService.clearSession();
+        if (mounted) {
+          Navigator.pushReplacementNamed(context, '/login');
+        }
+        return;
+      }
+
+      final token = await ApiService.getToken();
       if (mounted) {
-        Navigator.pushReplacementNamed(context, '/login');
+        if (token != null && token.isNotEmpty) {
+          await ApiService.updateLastActiveTime();
+          Navigator.pushReplacementNamed(context, '/home');
+        } else {
+          Navigator.pushReplacementNamed(context, '/login');
+        }
       }
     });
   }
@@ -114,17 +130,21 @@ class _SplashScreenState extends State<SplashScreen>
                           width: 120,
                           height: 120,
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.18),
-                            borderRadius: BorderRadius.circular(32),
-                            border: Border.all(
-                              color: Colors.white.withOpacity(0.28),
-                              width: 1.5,
-                            ),
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.2),
+                                blurRadius: 16,
+                                offset: const Offset(0, 6),
+                              ),
+                            ],
                           ),
-                          child: const Center(
-                            child: Text(
-                              '🐾',
-                              style: TextStyle(fontSize: 56),
+                          padding: const EdgeInsets.all(4),
+                          child: ClipOval(
+                            child: Image.asset(
+                              'assets/images/caws_logo.png',
+                              fit: BoxFit.cover,
                             ),
                           ),
                         ),
