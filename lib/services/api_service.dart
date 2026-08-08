@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
-  static const String _baseUrl = 'http://127.0.0.1:8000/api';
+  static const String _baseUrl = 'http://192.168.1.46:8000/api';
   static const String _tokenKey = 'auth_token';
   static const String _userKey = 'auth_user';
 
@@ -263,5 +263,39 @@ class ApiService {
     }
 
     throw Exception('Failed to load applications.');
+  }
+
+  static Future<List<Map<String, dynamic>>> getVaccineReminders() async {
+    final token = await getToken();
+    if (token == null) return [];
+    final headers = Map<String, String>.from(_headers);
+    headers['Authorization'] = 'Bearer $token';
+
+    final response = await http
+        .get(Uri.parse('$_baseUrl/vaccine-reminders'), headers: headers)
+        .timeout(const Duration(seconds: 15));
+
+    if (response.statusCode == 200) {
+      final json = jsonDecode(response.body) as Map<String, dynamic>;
+      final list = json['data'] as List<dynamic>;
+      return list.map((item) => Map<String, dynamic>.from(item as Map)).toList();
+    }
+
+    return [];
+  }
+
+  static Future<void> saveFcmToken(String fcmToken) async {
+    try {
+      final token = await getToken();
+      if (token == null) return;
+      final headers = Map<String, String>.from(_headers);
+      headers['Authorization'] = 'Bearer $token';
+
+      await http.post(
+        Uri.parse('$_baseUrl/save-fcm-token'),
+        headers: headers,
+        body: jsonEncode({'fcm_token': fcmToken}),
+      ).timeout(const Duration(seconds: 10));
+    } catch (_) {}
   }
 }

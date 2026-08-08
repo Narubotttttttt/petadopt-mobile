@@ -1,4 +1,4 @@
-package com.example.mobile_petadopt
+package com.caws.mobilepetadopt
 
 import io.flutter.embedding.android.FlutterActivity
 

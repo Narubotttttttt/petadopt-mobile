@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "639236440453",
+    "project_id": "caws-petadopt",
+    "storage_bucket": "caws-petadopt.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:639236440453:android:31483de75335903adf44ec",
+        "android_client_info": {
+          "package_name": "com.caws.mobilepetadopt"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCmwpT5ZvLPygtEthPzfGzyf5F7v4U2lgw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

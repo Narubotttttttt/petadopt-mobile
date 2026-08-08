@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile_petadopt/services/api_service.dart';
+import 'package:mobile_petadopt/services/notification_service.dart';
 import 'package:mobile_petadopt/theme/app_theme.dart';
 import 'package:mobile_petadopt/widgets/pet_card.dart';
 import 'package:mobile_petadopt/screens/pets/pet_list_screen.dart';
@@ -96,6 +97,7 @@ class _HomeTabState extends State<_HomeTab> {
   List<Map<String, dynamic>> _pets = [];
   bool _isLoading = true;
   bool _hasUnreadNotifications = false;
+  List<Map<String, dynamic>> _vaccineReminders = [];
 
   @override
   void initState() {
@@ -103,6 +105,7 @@ class _HomeTabState extends State<_HomeTab> {
     _loadUser();
     _fetchPets();
     _checkUnreadNotifications();
+    NotificationService.setupFirebaseFCM();
   }
 
   Future<void> _checkUnreadNotifications() async {
@@ -114,10 +117,30 @@ class _HomeTabState extends State<_HomeTab> {
       final lastReadStr = prefs.getString('user_${userId}_last_read_notif_time');
 
       final apps = await ApiService.getMyApplications();
+      final reminders = await ApiService.getVaccineReminders();
+
+      if (mounted) {
+        setState(() {
+          _vaccineReminders = reminders;
+        });
+      }
+
+      final hasUpcomingReminders = reminders.any((r) {
+        final days = r['days_until_due'] as int? ?? 999;
+        return days <= 30;
+      });
+
+      if (hasUpcomingReminders) {
+        if (mounted) setState(() => _hasUnreadNotifications = true);
+        return;
+      }
+
       if (apps.isEmpty) {
         if (mounted) setState(() => _hasUnreadNotifications = false);
         return;
       }
+
+
 
       if (lastReadStr == null) {
         if (mounted) setState(() => _hasUnreadNotifications = true);
@@ -151,6 +174,7 @@ class _HomeTabState extends State<_HomeTab> {
       setState(() {
         _userName = user['name'] as String;
       });
+      NotificationService.setupFirebaseFCM();
     }
   }
 
@@ -249,134 +273,225 @@ class _HomeTabState extends State<_HomeTab> {
                         ),
                       );
                     }
-                    return ListView.separated(
+                    return ListView(
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                      itemCount: apps.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 12),
-                      itemBuilder: (context, index) {
-                        final item = apps[index];
-                        final isAdoptedByOther = (item['isAdoptedByOther'] as bool?) ?? false;
-                        final isApproved = item['status'] == 'approved';
+                      children: [
+                        // ── Vaccine Reminder Cards ────────────────────────────
+                        if (_vaccineReminders.isNotEmpty) ...
+                          _vaccineReminders.map((reminder) {
+                            final days = reminder['days_until_due'] as int? ?? 999;
+                            final dueLabel = reminder['next_due_label'] as String? ?? '';
+                            final petName = reminder['pet_name'] as String? ?? 'Your pet';
+                            final category = reminder['category'] as String? ?? 'Checkup';
 
-                        if (isAdoptedByOther) {
-                          return Container(
-                            padding: const EdgeInsets.all(14),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFFFF4ED),
-                              borderRadius: BorderRadius.circular(14),
-                              border: Border.all(color: const Color(0xFFFFD8BF)),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
+                            final urgencyColor = days == 0
+                                ? const Color(0xFFDC2626)
+                                : days <= 1
+                                    ? const Color(0xFFEA580C)
+                                    : const Color(0xFF7C3AED);
+                            final urgencyBg = days == 0
+                                ? const Color(0xFFFEF2F2)
+                                : days <= 1
+                                    ? const Color(0xFFFFF7ED)
+                                    : const Color(0xFFF5F3FF);
+                            final urgencyBorder = days == 0
+                                ? const Color(0xFFFECACA)
+                                : days <= 1
+                                    ? const Color(0xFFFED7AA)
+                                    : const Color(0xFFDDD6FE);
+                            final dueText = days == 0
+                                ? '⚠️ Due TODAY'
+                                : days == 1
+                                    ? '🔔 Due TOMORROW'
+                                    : '📅 Due in $days days ($dueLabel)';
+
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: Container(
+                                padding: const EdgeInsets.all(14),
+                                decoration: BoxDecoration(
+                                  color: urgencyBg,
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(color: urgencyBorder),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Text('🐾', style: TextStyle(fontSize: 16)),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: Text(
-                                        '${item['petName']} Has Found a Home!',
-                                        style: GoogleFonts.poppins(
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w700,
-                                          color: const Color(0xFFD9363E),
+                                    Row(
+                                      children: [
+                                        const Text('💉', style: TextStyle(fontSize: 16)),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Text(
+                                            '$category Reminder — $petName',
+                                            style: GoogleFonts.poppins(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w700,
+                                              color: urgencyColor,
+                                            ),
+                                          ),
                                         ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      dueText,
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 11,
+                                        color: urgencyColor,
+                                        fontWeight: FontWeight.w600,
+                                        height: 1.4,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Make sure your adopted pet is up to date with their $category schedule.',
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 11,
+                                        color: AppTheme.textSecondary,
+                                        height: 1.4,
                                       ),
                                     ),
                                   ],
                                 ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  'Sorry, the pet you requested (${item['petName']}) has already found a forever home with another verified applicant! Please browse our other adorable pets looking for a loving home.',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 11,
-                                    color: AppTheme.textSecondary,
-                                    height: 1.4,
-                                  ),
+                              ),
+                            );
+                          }).toList(),
+
+                        // ── Application Status Cards ───────────────────────
+                        ...apps.map((item) {
+                          final isAdoptedByOther = (item['isAdoptedByOther'] as bool?) ?? false;
+                          final isApproved = item['status'] == 'approved';
+
+                          if (isAdoptedByOther) {
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: Container(
+                                padding: const EdgeInsets.all(14),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFFF4ED),
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(color: const Color(0xFFFFD8BF)),
                                 ),
-                              ],
-                            ),
-                          );
-                        } else if (isApproved) {
-                          return Container(
-                            padding: const EdgeInsets.all(14),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFE8F8F1),
-                              borderRadius: BorderRadius.circular(14),
-                              border: Border.all(color: AppTheme.successColor.withOpacity(0.3)),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Text('🎉', style: TextStyle(fontSize: 16)),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: Text(
-                                        'Adoption Approved for ${item['petName']}!',
-                                        style: GoogleFonts.poppins(
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w700,
-                                          color: AppTheme.successColor,
+                                    Row(
+                                      children: [
+                                        const Text('🐾', style: TextStyle(fontSize: 16)),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Text(
+                                            '${item['petName']} Has Found a Home!',
+                                            style: GoogleFonts.poppins(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w700,
+                                              color: const Color(0xFFD9363E),
+                                            ),
+                                          ),
                                         ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      'Sorry, the pet you requested (${item['petName']}) has already found a forever home with another verified applicant! Please browse our other adorable pets looking for a loving home.',
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 11,
+                                        color: AppTheme.textSecondary,
+                                        height: 1.4,
                                       ),
                                     ),
                                   ],
                                 ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  'Your request is approved! Event Date: ${item['scheduledAt'] ?? 'Sunday Adoption Event'}. Location: ${item['eventLocation'] ?? 'CAWS Sunday Event'}.',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 11,
-                                    color: AppTheme.textSecondary,
-                                    height: 1.4,
-                                  ),
+                              ),
+                            );
+                          } else if (isApproved) {
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: Container(
+                                padding: const EdgeInsets.all(14),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFE8F8F1),
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(color: AppTheme.successColor.withOpacity(0.3)),
                                 ),
-                              ],
-                            ),
-                          );
-                        } else {
-                          return Container(
-                            padding: const EdgeInsets.all(14),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFFFFBEB),
-                              borderRadius: BorderRadius.circular(14),
-                              border: Border.all(color: const Color(0xFFFDE68A)),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Text('⏳', style: TextStyle(fontSize: 16)),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: Text(
-                                        'Adoption Request Pending for ${item['petName']}',
-                                        style: GoogleFonts.poppins(
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w700,
-                                          color: AppTheme.warningColor,
+                                    Row(
+                                      children: [
+                                        const Text('🎉', style: TextStyle(fontSize: 16)),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Text(
+                                            'Adoption Approved for ${item['petName']}!',
+                                            style: GoogleFonts.poppins(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w700,
+                                              color: AppTheme.successColor,
+                                            ),
+                                          ),
                                         ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      'Your request is approved! Event Date: ${item['scheduledAt'] ?? 'Sunday Adoption Event'}. Location: ${item['eventLocation'] ?? 'CAWS Sunday Event'}.',
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 11,
+                                        color: AppTheme.textSecondary,
+                                        height: 1.4,
                                       ),
                                     ),
                                   ],
                                 ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  'Your application is being reviewed by CAWS staff.',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 11,
-                                    color: AppTheme.textSecondary,
-                                    height: 1.4,
-                                  ),
+                              ),
+                            );
+                          } else {
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: Container(
+                                padding: const EdgeInsets.all(14),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFFFBEB),
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(color: const Color(0xFFFDE68A)),
                                 ),
-                              ],
-                            ),
-                          );
-                        }
-                      },
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        const Text('⏳', style: TextStyle(fontSize: 16)),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Text(
+                                            'Adoption Request Pending for ${item['petName']}',
+                                            style: GoogleFonts.poppins(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w700,
+                                              color: AppTheme.warningColor,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      'Your application is being reviewed by CAWS staff.',
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 11,
+                                        color: AppTheme.textSecondary,
+                                        height: 1.4,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }
+                        }).toList(),
+                      ],
                     );
                   },
                 ),

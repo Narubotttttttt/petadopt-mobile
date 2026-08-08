@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile_petadopt/services/api_service.dart';
+import 'package:mobile_petadopt/services/notification_service.dart';
 import 'package:mobile_petadopt/theme/app_theme.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -33,6 +34,8 @@ class _LoginScreenState extends State<LoginScreen> {
           email: _emailController.text.trim(),
           password: _passwordController.text,
         );
+        // Sync FCM device token immediately with Laravel backend
+        await NotificationService.setupFirebaseFCM();
         if (mounted) {
           Navigator.pushReplacementNamed(context, '/home');
         }
