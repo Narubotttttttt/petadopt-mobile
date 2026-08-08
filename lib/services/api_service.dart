@@ -245,6 +245,23 @@ class ApiService {
     throw Exception(resData['message']?.toString() ?? 'Failed to submit adoption application.');
   }
 
+  static Future<String?> getContractDownloadUrl(int id) async {
+    final token = await getToken();
+    final headers = Map<String, String>.from(_headers);
+    if (token != null) {
+      headers['Authorization'] = 'Bearer $token';
+    }
+
+    final response = await http.get(Uri.parse('$_baseUrl/adoption-applications/$id/contract'), headers: headers).timeout(const Duration(seconds: 15));
+
+    if (response.statusCode == 200) {
+      final json = jsonDecode(response.body) as Map<String, dynamic>;
+      return json['url'] as String?;
+    }
+    
+    return null;
+  }
+
   static Future<List<Map<String, dynamic>>> getMyApplications() async {
     final token = await getToken();
     final headers = Map<String, String>.from(_headers);

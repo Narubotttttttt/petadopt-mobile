@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile_petadopt/services/api_service.dart';
 import 'package:mobile_petadopt/theme/app_theme.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class MyApplicationsScreen extends StatefulWidget {
   const MyApplicationsScreen({super.key});
@@ -105,16 +106,69 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
   }
 }
 
-class _ApplicationCard extends StatelessWidget {
+class _ApplicationCard extends StatefulWidget {
   final Map<String, dynamic> application;
 
   const _ApplicationCard({required this.application});
 
   @override
+  State<_ApplicationCard> createState() => _ApplicationCardState();
+}
+
+class _ApplicationCardState extends State<_ApplicationCard> {
+  bool _isDownloading = false;
+
+  Future<void> _handleDownloadContract() async {
+    if (_isDownloading) return;
+    setState(() => _isDownloading = true);
+
+    try {
+      final appId = widget.application['id'] is int
+          ? widget.application['id'] as int
+          : int.tryParse(widget.application['id'].toString()) ?? 0;
+
+      if (appId == 0) {
+        throw Exception('Invalid application ID');
+      }
+
+      final urlStr = await ApiService.getContractDownloadUrl(appId);
+      if (urlStr != null && urlStr.isNotEmpty) {
+        final uri = Uri.parse(urlStr);
+        final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+        if (!launched) {
+          await launchUrl(uri, mode: LaunchMode.platformDefault);
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Could not generate contract URL. Please try again.'),
+              backgroundColor: AppTheme.errorColor,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Download failed: $e'),
+            backgroundColor: AppTheme.errorColor,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isDownloading = false);
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final status = (application['status'] as String?) ?? 'pending';
-    final scheduledAt = application['scheduledAt'] as String?;
-    final isAdoptedByOther = (application['isAdoptedByOther'] as bool?) ?? false;
+    final status = (widget.application['status'] as String?) ?? 'pending';
+    final scheduledAt = widget.application['scheduledAt'] as String?;
+    final isAdoptedByOther = (widget.application['isAdoptedByOther'] as bool?) ?? false;
     final statusInfo = _getStatusInfo(status, scheduledAt != null, isAdoptedByOther);
 
     return Container(
@@ -140,7 +194,7 @@ class _ApplicationCard extends StatelessWidget {
                 ClipRRect(
                   borderRadius: BorderRadius.circular(14),
                   child: Image.network(
-                    application['petImage'] as String,
+                    widget.application['petImage'] as String,
                     width: 72,
                     height: 72,
                     fit: BoxFit.cover,
@@ -164,7 +218,7 @@ class _ApplicationCard extends StatelessWidget {
                         children: [
                           Expanded(
                             child: Text(
-                              application['petName'] as String,
+                              widget.application['petName'] as String,
                               style: GoogleFonts.poppins(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w700,
@@ -182,7 +236,7 @@ class _ApplicationCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 3),
                       Text(
-                        '${application['petBreed']} • ${application['petType']}',
+                        '${widget.application['petBreed']} • ${widget.application['petType']}',
                         style: GoogleFonts.poppins(
                           fontSize: 12,
                           color: AppTheme.textSecondary,
@@ -198,7 +252,7 @@ class _ApplicationCard extends StatelessWidget {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            'Applied: ${application['dateApplied']}',
+                            'Applied: ${widget.application['dateApplied']}',
                             style: GoogleFonts.poppins(
                               fontSize: 11,
                               color: AppTheme.textSecondary,
@@ -211,6 +265,60 @@ class _ApplicationCard extends StatelessWidget {
                 ),
               ],
             ),
+            if (status == 'approved' || status == 'adopted') ...[
+              const SizedBox(height: 14),
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: _isDownloading ? null : _handleDownloadContract,
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEAF5F6),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppTheme.primary.withOpacity(0.3)),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        if (_isDownloading) ...[
+                          const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primary),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Preparing Contract...',
+                            style: GoogleFonts.poppins(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: AppTheme.primaryDark,
+                            ),
+                          ),
+                        ] else ...[
+                          const Icon(Icons.download_rounded, color: AppTheme.primary, size: 18),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Download Adoption Contract',
+                            style: GoogleFonts.poppins(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: AppTheme.primaryDark,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
             if (status == 'approved' && scheduledAt != null && scheduledAt.isNotEmpty) ...[
               const SizedBox(height: 14),
               Container(
@@ -273,8 +381,8 @@ class _ApplicationCard extends StatelessWidget {
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
-                            (application['eventLocation'] as String?)?.isNotEmpty == true
-                                ? (application['eventLocation'] as String)
+                            (widget.application['eventLocation'] as String?)?.isNotEmpty == true
+                                ? (widget.application['eventLocation'] as String)
                                 : 'CAWS Adoption Event',
                             style: GoogleFonts.poppins(
                               fontSize: 11,
@@ -300,8 +408,8 @@ class _ApplicationCard extends StatelessWidget {
                           const SizedBox(width: 6),
                           Expanded(
                             child: Text(
-                              (application['eventNotes'] as String?)?.isNotEmpty == true
-                                  ? (application['eventNotes'] as String)
+                              (widget.application['eventNotes'] as String?)?.isNotEmpty == true
+                                  ? (widget.application['eventNotes'] as String)
                                   : 'Please bring your Valid ID and Barangay Certificate for pet release & verification.',
                               style: GoogleFonts.poppins(
                                 fontSize: 10,
@@ -336,7 +444,7 @@ class _ApplicationCard extends StatelessWidget {
                         const SizedBox(width: 6),
                         Expanded(
                           child: Text(
-                            '${application['petName']} Has Found a Forever Home!',
+                            '${widget.application['petName']} Has Found a Forever Home!',
                             style: GoogleFonts.poppins(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
@@ -348,7 +456,7 @@ class _ApplicationCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      'Sorry, the pet you requested (${application['petName']}) has already found a forever home with another verified applicant! Please explore our other lovable pets waiting for a home.',
+                      'Sorry, the pet you requested (${widget.application['petName']}) has already found a forever home with another verified applicant! Please explore our other lovable pets waiting for a home.',
                       style: GoogleFonts.poppins(
                         fontSize: 11,
                         color: AppTheme.textSecondary,
