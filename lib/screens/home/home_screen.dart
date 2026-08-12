@@ -19,6 +19,62 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
+  bool _hasUnreadApplications = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkUnreadApplications();
+  }
+
+  Future<void> _checkUnreadApplications() async {
+    try {
+      final user = await ApiService.getUser();
+      if (user == null) return;
+      final userId = user['id'];
+      final prefs = await SharedPreferences.getInstance();
+      final lastViewedStr = prefs.getString('user_${userId}_last_viewed_applications_time');
+
+      final apps = await ApiService.getMyApplications();
+      if (apps.isEmpty) {
+        if (mounted) setState(() => _hasUnreadApplications = false);
+        return;
+      }
+
+      if (lastViewedStr == null) {
+        if (mounted) setState(() => _hasUnreadApplications = true);
+        return;
+      }
+
+      final lastViewedTime = DateTime.parse(lastViewedStr);
+      bool hasNew = false;
+      for (final app in apps) {
+        final updatedAtStr = app['updated_at']?.toString() ?? app['created_at']?.toString();
+        if (updatedAtStr != null) {
+          final appTime = DateTime.tryParse(updatedAtStr);
+          if (appTime != null && appTime.isAfter(lastViewedTime)) {
+            hasNew = true;
+            break;
+          }
+        }
+      }
+      if (mounted) setState(() => _hasUnreadApplications = hasNew);
+    } catch (_) {}
+  }
+
+  Future<void> _markApplicationsAsViewed() async {
+    try {
+      final user = await ApiService.getUser();
+      if (user != null) {
+        final userId = user['id'];
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('user_${userId}_last_viewed_applications_time', DateTime.now().toIso8601String());
+      }
+      if (mounted) {
+        setState(() => _hasUnreadApplications = false);
+      }
+    } catch (_) {}
+  }
 
   List<Widget> get _tabs => [
     _HomeTab(onSeeAllPressed: () => setState(() => _selectedIndex = 1)),
@@ -52,27 +108,66 @@ class _HomeScreenState extends State<HomeScreen> {
             setState(() {
               _selectedIndex = index;
             });
+            if (index == 2) {
+              _markApplicationsAsViewed();
+            }
           },
           type: BottomNavigationBarType.fixed,
           selectedItemColor: AppTheme.primary,
           unselectedItemColor: AppTheme.textSecondary,
-          items: const [
-            BottomNavigationBarItem(
+          items: [
+            const BottomNavigationBarItem(
               icon: Icon(Icons.home_outlined),
               activeIcon: Icon(Icons.home_rounded),
               label: 'Home',
             ),
-            BottomNavigationBarItem(
+            const BottomNavigationBarItem(
               icon: Icon(Icons.pets_outlined),
               activeIcon: Icon(Icons.pets_rounded),
               label: 'Pets',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.assignment_outlined),
-              activeIcon: Icon(Icons.assignment_rounded),
+              icon: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  const Icon(Icons.assignment_outlined),
+                  if (_hasUnreadApplications)
+                    Positioned(
+                      top: -2,
+                      right: -2,
+                      child: Container(
+                        width: 8,
+                        height: 8,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFFF4D4F),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              activeIcon: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  const Icon(Icons.assignment_rounded),
+                  if (_hasUnreadApplications)
+                    Positioned(
+                      top: -2,
+                      right: -2,
+                      child: Container(
+                        width: 8,
+                        height: 8,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFFF4D4F),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
               label: 'Applications',
             ),
-            BottomNavigationBarItem(
+            const BottomNavigationBarItem(
               icon: Icon(Icons.person_outline_rounded),
               activeIcon: Icon(Icons.person_rounded),
               label: 'Profile',
@@ -171,8 +266,10 @@ class _HomeTabState extends State<_HomeTab> {
   Future<void> _loadUser() async {
     final user = await ApiService.getUser();
     if (mounted && user != null && user['name'] != null) {
+      final rawName = (user['name'] as String).trim();
+      final firstName = rawName.isNotEmpty ? rawName.split(RegExp(r'\s+')).first : 'Adopter';
       setState(() {
-        _userName = user['name'] as String;
+        _userName = firstName;
       });
       NotificationService.setupFirebaseFCM();
     }
@@ -447,6 +544,90 @@ class _HomeTabState extends State<_HomeTab> {
                                 ),
                               ),
                             );
+                          } else if (item['status'] == 'rejected') {
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: Container(
+                                padding: const EdgeInsets.all(14),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFEF2F2),
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(color: const Color(0xFFFECACA)),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        const Text('📋', style: TextStyle(fontSize: 16)),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Text(
+                                            'Application Update — ${item['petName']}',
+                                            style: GoogleFonts.poppins(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w700,
+                                              color: const Color(0xFFDC2626),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      'Thank you for your interest in adopting ${item['petName']}. Your application was not approved at this time. Please explore our other lovable pets looking for a home!',
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 11,
+                                        color: AppTheme.textSecondary,
+                                        height: 1.4,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          } else if (item['status'] == 'under_review') {
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: Container(
+                                padding: const EdgeInsets.all(14),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFEFF6FF),
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(color: const Color(0xFFBFDBFE)),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        const Text('🔍', style: TextStyle(fontSize: 16)),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Text(
+                                            'Application Under Review — ${item['petName']}',
+                                            style: GoogleFonts.poppins(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w700,
+                                              color: const Color(0xFF2563EB),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      'CAWS staff is actively reviewing your verification documents and questionnaire.',
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 11,
+                                        color: AppTheme.textSecondary,
+                                        height: 1.4,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
                           } else {
                             return Padding(
                               padding: const EdgeInsets.only(bottom: 12),
@@ -478,7 +659,7 @@ class _HomeTabState extends State<_HomeTab> {
                                     ),
                                     const SizedBox(height: 6),
                                     Text(
-                                      'Your application is being reviewed by CAWS staff.',
+                                      'Your application is awaiting review by CAWS staff.',
                                       style: GoogleFonts.poppins(
                                         fontSize: 11,
                                         color: AppTheme.textSecondary,
@@ -651,7 +832,7 @@ class _HomeTabState extends State<_HomeTab> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Hello, $_userName! 👋',
+                          'Hello, ${_userName.trim().split(RegExp(r'\s+')).first}! 👋',
                           style: GoogleFonts.poppins(
                             fontSize: 20,
                             fontWeight: FontWeight.w700,

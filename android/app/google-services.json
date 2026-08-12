@@ -12,7 +12,20 @@
           "package_name": "com.caws.mobilepetadopt"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "639236440453-hd1qi94op7f8mmenlrhhidlfm46g59pa.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.caws.mobilepetadopt",
+            "certificate_hash": "b1a87640bcc261f9e43978c54316a4467e70df99"
+          }
+        },
+        {
+          "client_id": "639236440453-tkj8i09c45dsj6nda1803e2t13b4p8cf.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyCmwpT5ZvLPygtEthPzfGzyf5F7v4U2lgw"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "639236440453-tkj8i09c45dsj6nda1803e2t13b4p8cf.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

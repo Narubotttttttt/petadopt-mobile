@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class ApiService {
   static const String _baseUrl = 'http://192.168.1.46:8000/api';
@@ -88,6 +89,76 @@ class ApiService {
     throw Exception('Login failed. Please check your credentials.');
   }
 
+  static Future<Map<String, dynamic>> googleLogin({
+    required String email,
+    required String name,
+  }) async {
+    final response = await http
+        .post(
+          Uri.parse('$_baseUrl/auth/google-login'),
+          headers: _headers,
+          body: jsonEncode({
+            'email': email,
+            'name': name,
+          }),
+        )
+        .timeout(const Duration(seconds: 15));
+
+    final data = jsonDecode(response.body) as Map<String, dynamic>;
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_tokenKey, data['token'] as String);
+      await prefs.setString(_userKey, jsonEncode(data['user']));
+      await prefs.setString('last_active_timestamp', DateTime.now().toIso8601String());
+      return data;
+    }
+
+    throw Exception(data['message']?.toString() ?? 'Google sign-in failed. Please try again.');
+  }
+
+  static Future<Map<String, dynamic>> sendEmailOtp(String email) async {
+    final response = await http
+        .post(
+          Uri.parse('$_baseUrl/auth/send-email-otp'),
+          headers: _headers,
+          body: jsonEncode({'email': email.trim()}),
+        )
+        .timeout(const Duration(seconds: 15));
+
+    final data = jsonDecode(response.body) as Map<String, dynamic>;
+
+    if (response.statusCode == 200 && data['success'] == true) {
+      return data;
+    }
+
+    throw Exception(data['message']?.toString() ?? 'Failed to send verification code.');
+  }
+
+  static Future<bool> verifyEmailOtp({
+    required String email,
+    required String otp,
+  }) async {
+    final response = await http
+        .post(
+          Uri.parse('$_baseUrl/auth/verify-email-otp'),
+          headers: _headers,
+          body: jsonEncode({
+            'email': email.trim(),
+            'otp': otp.trim(),
+          }),
+        )
+        .timeout(const Duration(seconds: 15));
+
+    final data = jsonDecode(response.body) as Map<String, dynamic>;
+
+    if (response.statusCode == 200 && data['success'] == true) {
+      return true;
+    }
+
+    throw Exception(data['message']?.toString() ?? 'Invalid or expired verification code.');
+  }
+
   static Future<Map<String, dynamic>> resetPassword({
     required String email,
     required String newPassword,
@@ -162,6 +233,11 @@ class ApiService {
     await prefs.remove('user_full_address');
     await prefs.remove('user_city');
     await prefs.remove('user_barangay');
+
+    try {
+      final googleSignIn = GoogleSignIn();
+      await googleSignIn.signOut();
+    } catch (_) {}
   }
 
   static Future<List<Map<String, dynamic>>> getPets({

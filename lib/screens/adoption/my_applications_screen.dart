@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile_petadopt/services/api_service.dart';
 import 'package:mobile_petadopt/theme/app_theme.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class MyApplicationsScreen extends StatefulWidget {
@@ -24,6 +25,12 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
   Future<void> _fetchApplications() async {
     try {
       final list = await ApiService.getMyApplications();
+      final user = await ApiService.getUser();
+      if (user != null) {
+        final userId = user['id'];
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('user_${userId}_last_viewed_applications_time', DateTime.now().toIso8601String());
+      }
       if (mounted) {
         setState(() {
           _applications = list;
@@ -481,6 +488,76 @@ class _ApplicationCardState extends State<_ApplicationCard> {
                             const SizedBox(width: 6),
                             Text(
                               'Browse Other Pets',
+                              style: GoogleFonts.poppins(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            if (status == 'rejected' && !isAdoptedByOther) ...[
+              const SizedBox(height: 14),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFEF2F2),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFFFECACA)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Text('📋', style: TextStyle(fontSize: 16)),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            'Application Not Approved',
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFFDC2626),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Thank you for your interest in adopting ${widget.application['petName']}. Unfortunately, your application could not be approved at this time. We encourage you to browse our other available pets!',
+                      style: GoogleFonts.poppins(
+                        fontSize: 11,
+                        color: AppTheme.textSecondary,
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.popUntil(context, ModalRoute.withName('/home'));
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primary,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.pets_rounded, color: Colors.white, size: 14),
+                            const SizedBox(width: 6),
+                            Text(
+                              'Browse Available Pets',
                               style: GoogleFonts.poppins(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,

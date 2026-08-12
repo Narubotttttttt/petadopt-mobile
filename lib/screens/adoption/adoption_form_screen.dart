@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -6,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mobile_petadopt/screens/adoption/my_applications_screen.dart';
 import 'package:mobile_petadopt/services/api_service.dart';
+import 'package:mobile_petadopt/services/phone_auth_service.dart';
 import 'package:mobile_petadopt/theme/app_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -22,7 +24,9 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
   int _currentStep = 0;
   final _personalFormKey = GlobalKey<FormState>();
 
-  final _fullNameController = TextEditingController();
+  final _firstNameController = TextEditingController();
+  final _middleNameController = TextEditingController();
+  final _lastNameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _addressController = TextEditingController();
   final _reasonController = TextEditingController();
@@ -32,6 +36,12 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
   String _homeType = 'House';
   bool _hasOtherPets = false;
   bool _hasExperience = false;
+
+  bool _isPhoneVerified = false;
+  bool _isSendingOtp = false;
+  String? _verificationId;
+  int? _resendToken;
+  String _verifiedPhoneNumber = '';
 
   XFile? _validIdImage;
   XFile? _certificateImage;
@@ -47,7 +57,9 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
 
   @override
   void dispose() {
-    _fullNameController.dispose();
+    _firstNameController.dispose();
+    _middleNameController.dispose();
+    _lastNameController.dispose();
     _phoneController.dispose();
     _addressController.dispose();
     _reasonController.dispose();
@@ -65,7 +77,17 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
     if (mounted) {
       setState(() {
         if (user != null && user['name'] != null) {
-          _fullNameController.text = user['name'] as String;
+          final parts = (user['name'] as String).trim().split(RegExp(r'\s+'));
+          if (parts.length == 1) {
+            _firstNameController.text = parts[0];
+          } else if (parts.length == 2) {
+            _firstNameController.text = parts[0];
+            _lastNameController.text = parts[1];
+          } else if (parts.length >= 3) {
+            _firstNameController.text = parts[0];
+            _middleNameController.text = parts.sublist(1, parts.length - 1).join(' ');
+            _lastNameController.text = parts.last;
+          }
         }
         if (address != null && address.isNotEmpty) {
           _addressController.text = address;
@@ -146,7 +168,8 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
   }
 
   void _nextStep() {
-    if (_currentStep == 0 && _personalFormKey.currentState!.validate()) {
+    if (_currentStep == 0) {
+      if (!_personalFormKey.currentState!.validate()) return;
       setState(() => _currentStep++);
     } else if (_currentStep == 1) {
       if (_validIdImage == null) {
@@ -189,6 +212,282 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
     if (_currentStep > 0) setState(() => _currentStep--);
   }
 
+  Future<void> _sendPhoneOtp() async {
+    final phone = _phoneController.text.trim();
+    final validationError = PhoneAuthService.validatePhilippineNumber(phone);
+    if (validationError != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(validationError, style: GoogleFonts.poppins(fontSize: 13)),
+          backgroundColor: AppTheme.errorColor,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isSendingOtp = true);
+
+    await PhoneAuthService.sendOtp(
+      phoneNumber: phone,
+      forceResendingToken: _resendToken,
+      onCodeSent: (verificationId, resendToken) {
+        if (mounted) {
+          setState(() {
+            _isSendingOtp = false;
+            _verificationId = verificationId;
+            _resendToken = resendToken;
+          });
+          _openOtpDialog();
+        }
+      },
+      onAutoVerified: (credential) {
+        if (mounted) {
+          setState(() {
+            _isSendingOtp = false;
+            _isPhoneVerified = true;
+            _verifiedPhoneNumber = phone;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Phone number auto-verified via SMS! 🎉', style: GoogleFonts.poppins(fontSize: 13)),
+              backgroundColor: AppTheme.successColor,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+          );
+        }
+      },
+      onError: (errorMessage) {
+        if (mounted) {
+          setState(() => _isSendingOtp = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(errorMessage, style: GoogleFonts.poppins(fontSize: 13)),
+              backgroundColor: AppTheme.errorColor,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+          );
+        }
+      },
+      onTimeout: (verificationId) {
+        _verificationId = verificationId;
+      },
+    );
+  }
+
+  void _openOtpDialog() {
+    final otpController = TextEditingController();
+    bool isVerifying = false;
+    int secondsRemaining = 60;
+    Timer? countdownTimer;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (modalCtx) {
+        return StatefulBuilder(
+          builder: (modalCtx, setModalState) {
+            countdownTimer ??= Timer.periodic(const Duration(seconds: 1), (timer) {
+              if (secondsRemaining > 0) {
+                if (modalCtx.mounted) setModalState(() => secondsRemaining--);
+              } else {
+                timer.cancel();
+              }
+            });
+
+            return Container(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(modalCtx).viewInsets.bottom + 28,
+                top: 24,
+                left: 24,
+                right: 24,
+              ),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 44,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Container(
+                    width: 56,
+                    height: 56,
+                    decoration: const BoxDecoration(
+                      color: AppTheme.primaryLight,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.sms_rounded, color: AppTheme.primary, size: 28),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Verify Phone Number',
+                    style: GoogleFonts.poppins(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Enter the 6-digit SMS code sent to\n${PhoneAuthService.formatToE164(_phoneController.text.trim())}',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      color: AppTheme.textSecondary,
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  TextFormField(
+                    controller: otpController,
+                    keyboardType: TextInputType.number,
+                    maxLength: 6,
+                    textAlign: TextAlign.center,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    style: GoogleFonts.poppins(
+                      fontSize: 24,
+                      letterSpacing: 8,
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.primaryDark,
+                    ),
+                    decoration: InputDecoration(
+                      counterText: '',
+                      hintText: '••••••',
+                      hintStyle: TextStyle(letterSpacing: 8, color: Colors.grey.shade300),
+                      fillColor: const Color(0xFFF6F8FA),
+                      filled: true,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: BorderSide(color: Colors.grey.shade300),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: const BorderSide(color: AppTheme.primary, width: 2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  isVerifying
+                      ? const Center(child: CircularProgressIndicator(color: AppTheme.primary))
+                      : ElevatedButton(
+                          onPressed: () async {
+                            final code = otpController.text.trim();
+                            if (code.length != 6) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Please enter all 6 digits', style: GoogleFonts.poppins(fontSize: 13)),
+                                  backgroundColor: AppTheme.warningColor,
+                                ),
+                              );
+                              return;
+                            }
+                            setModalState(() => isVerifying = true);
+                            try {
+                              if (_verificationId != null) {
+                                await PhoneAuthService.verifyOtpCode(
+                                  verificationId: _verificationId!,
+                                  smsCode: code,
+                                );
+                                countdownTimer?.cancel();
+                                if (mounted) {
+                                  setState(() {
+                                    _isPhoneVerified = true;
+                                    _verifiedPhoneNumber = _phoneController.text.trim();
+                                  });
+                                }
+                                if (modalCtx.mounted) Navigator.pop(modalCtx);
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Phone number verified successfully! 🎉', style: GoogleFonts.poppins(fontSize: 13)),
+                                      backgroundColor: AppTheme.successColor,
+                                      behavior: SnackBarBehavior.floating,
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                    ),
+                                  );
+                                }
+                              }
+                            } catch (e) {
+                              setModalState(() => isVerifying = false);
+                              if (modalCtx.mounted) {
+                                ScaffoldMessenger.of(modalCtx).showSnackBar(
+                                  SnackBar(
+                                    content: Text(e.toString().replaceFirst('Exception: ', ''), style: GoogleFonts.poppins(fontSize: 13)),
+                                    backgroundColor: AppTheme.errorColor,
+                                  ),
+                                );
+                              }
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.primary,
+                            minimumSize: const Size(double.infinity, 50),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          ),
+                          child: Text(
+                            'Verify Code',
+                            style: GoogleFonts.poppins(
+                              color: Colors.white,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        secondsRemaining > 0
+                            ? 'Resend code in ${secondsRemaining}s'
+                            : "Didn't receive the SMS? ",
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          color: AppTheme.textSecondary,
+                        ),
+                      ),
+                      if (secondsRemaining == 0)
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.pop(modalCtx);
+                            _sendPhoneOtp();
+                          },
+                          child: Text(
+                            'Resend',
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: AppTheme.primary,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    ).whenComplete(() {
+      countdownTimer?.cancel();
+    });
+  }
+
   Future<void> _submitForm() async {
     showDialog(
       context: context,
@@ -206,10 +505,17 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
       final city = prefs.getString('user_${userId}_city') ?? '';
       final barangay = prefs.getString('user_${userId}_barangay') ?? '';
 
+      final middle = _middleNameController.text.trim();
+      final fullName = [
+        _firstNameController.text.trim(),
+        if (middle.isNotEmpty) middle,
+        _lastNameController.text.trim(),
+      ].join(' ');
+
       await ApiService.submitAdoptionApplication(
         data: {
           'pet_id': petId,
-          'full_name': _fullNameController.text.trim(),
+          'full_name': fullName,
           'phone': _phoneController.text.trim(),
           'address': _addressController.text.trim(),
           'city': city,
@@ -604,15 +910,49 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
             ),
           ),
           const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                flex: 3,
+                child: TextFormField(
+                  controller: _firstNameController,
+                  textCapitalization: TextCapitalization.words,
+                  decoration: const InputDecoration(
+                    labelText: 'First Name',
+                    hintText: 'e.g. Juan',
+                    prefixIcon: Icon(Icons.person_outline_rounded,
+                        color: AppTheme.textSecondary, size: 20),
+                  ),
+                  validator: (value) =>
+                      value == null || value.trim().isEmpty ? 'Required' : null,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                flex: 2,
+                child: TextFormField(
+                  controller: _middleNameController,
+                  textCapitalization: TextCapitalization.words,
+                  decoration: const InputDecoration(
+                    labelText: 'Middle (Opt)',
+                    hintText: 'e.g. M.',
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
           TextFormField(
-            controller: _fullNameController,
+            controller: _lastNameController,
+            textCapitalization: TextCapitalization.words,
             decoration: const InputDecoration(
-              labelText: 'Full Name',
-              prefixIcon: Icon(Icons.person_outline_rounded,
+              labelText: 'Last Name',
+              hintText: 'e.g. Dela Cruz',
+              prefixIcon: Icon(Icons.badge_outlined,
                   color: AppTheme.textSecondary, size: 20),
             ),
             validator: (value) =>
-                value == null || value.isEmpty ? 'Please enter your name' : null,
+                value == null || value.trim().isEmpty ? 'Please enter your last name' : null,
           ),
           const SizedBox(height: 14),
           TextFormField(
@@ -628,15 +968,7 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
               prefixIcon: Icon(Icons.phone_outlined,
                   color: AppTheme.textSecondary, size: 20),
             ),
-            validator: (value) {
-              if (value == null || value.trim().isEmpty) {
-                return 'Please enter your phone number';
-              }
-              if (value.trim().length != 11) {
-                return 'Phone number must be exactly 11 digits';
-              }
-              return null;
-            },
+            validator: (value) => PhoneAuthService.validatePhilippineNumber(value),
           ),
           const SizedBox(height: 14),
           Row(
