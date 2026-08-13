@@ -190,6 +190,7 @@ class _HomeTab extends StatefulWidget {
 class _HomeTabState extends State<_HomeTab> {
   String _userName = 'Adopter';
   List<Map<String, dynamic>> _pets = [];
+  List<Map<String, dynamic>> _recommendations = [];
   bool _isLoading = true;
   bool _hasUnreadNotifications = false;
   List<Map<String, dynamic>> _vaccineReminders = [];
@@ -199,8 +200,24 @@ class _HomeTabState extends State<_HomeTab> {
     super.initState();
     _loadUser();
     _fetchPets();
+    _fetchRecommendations();
     _checkUnreadNotifications();
     NotificationService.setupFirebaseFCM();
+  }
+
+  Future<void> _fetchRecommendations() async {
+    try {
+      final recs = await ApiService.getRecommendations();
+      final availableRecs = recs.where((pet) {
+        final status = pet['status']?.toString().toLowerCase();
+        return status == null || status == 'available';
+      }).toList();
+      if (mounted) {
+        setState(() {
+          _recommendations = availableRecs;
+        });
+      }
+    } catch (_) {}
   }
 
   Future<void> _checkUnreadNotifications() async {
@@ -278,9 +295,13 @@ class _HomeTabState extends State<_HomeTab> {
   Future<void> _fetchPets() async {
     try {
       final pets = await ApiService.getPets();
+      final availablePets = pets.where((pet) {
+        final status = pet['status']?.toString().toLowerCase();
+        return status == null || status == 'available';
+      }).toList();
       if (mounted) {
         setState(() {
-          _pets = pets;
+          _pets = availablePets;
           _isLoading = false;
         });
       }
@@ -687,7 +708,10 @@ class _HomeTabState extends State<_HomeTab> {
   @override
   Widget build(BuildContext context) {
     return RefreshIndicator(
-      onRefresh: _fetchPets,
+      onRefresh: () async {
+        await _fetchPets();
+        await _fetchRecommendations();
+      },
       color: AppTheme.primary,
       child: CustomScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
@@ -699,30 +723,128 @@ class _HomeTabState extends State<_HomeTab> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (_pets.isNotEmpty) ...[
+                  // ML Pet Match Quiz Banner
+                  Container(
+                    margin: const EdgeInsets.only(top: 20),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF0A6B72), AppTheme.primary],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppTheme.primary.withOpacity(0.25),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 46,
+                          height: 46,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Center(child: Text('🧠', style: TextStyle(fontSize: 24))),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Find Your Perfect Match ✨',
+                                style: GoogleFonts.poppins(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'Take our 1-min ML Lifestyle Quiz for personalized pet matches',
+                                style: GoogleFonts.poppins(
+                                  color: Colors.white.withOpacity(0.9),
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        ElevatedButton(
+                          onPressed: () async {
+                            await Navigator.pushNamed(context, '/match-quiz');
+                            _fetchRecommendations();
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: AppTheme.primaryDark,
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            elevation: 0,
+                          ),
+                          child: Text(
+                            'Quiz 🐾',
+                            style: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w700),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Python ML Recommendations Carousel
+                  if (_recommendations.isNotEmpty || _pets.isNotEmpty) ...[
                     const SizedBox(height: 24),
                     _sectionHeader(
                       context,
                       '🤖 Recommended for You',
-                      'Powered by ML',
+                      'ML Cosine Match',
                       isPowered: true,
+                      onTap: () => Navigator.pushNamed(context, '/match-quiz'),
                     ),
                     const SizedBox(height: 14),
                     SizedBox(
                       height: 235,
                       child: ListView.separated(
                         scrollDirection: Axis.horizontal,
-                        itemCount: _pets.length,
+                        itemCount: _recommendations.isNotEmpty ? _recommendations.length : _pets.length,
                         separatorBuilder: (_, __) => const SizedBox(width: 12),
                         itemBuilder: (context, index) {
-                          final pet = _pets[index];
+                          final isRec = _recommendations.isNotEmpty;
+                          final raw = isRec ? _recommendations[index] : _pets[index];
+
+                          final petData = isRec
+                              ? {
+                                  'id': raw['pet_id'] ?? raw['id'],
+                                  'name': raw['name'] ?? 'Pet #${raw['pet_id']}',
+                                  'breed': raw['breed'] ?? 'Mixed Breed',
+                                  'age': raw['age'] ?? 'Adult',
+                                  'gender': raw['gender'] ?? 'male',
+                                  'type': raw['type'] ?? 'cat',
+                                  'image': raw['photo_url'] ??
+                                      (raw['photo_path'] != null
+                                          ? 'http://10.0.2.2:8000/storage/${raw['photo_path']}'
+                                          : 'https://images.unsplash.com/photo-1543466835-00a7907e9de1'),
+                                  'match_percentage': raw['match_percentage'],
+                                  'isRecommended': true,
+                                  ...raw,
+                                }
+                              : raw;
+
                           return PetCard(
-                            pet: pet,
+                            pet: petData,
                             isHorizontal: true,
                             onTap: () => Navigator.pushNamed(
                               context,
                               '/pet-detail',
-                              arguments: pet,
+                              arguments: petData,
                             ),
                           );
                         },

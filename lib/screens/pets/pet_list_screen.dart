@@ -39,9 +39,13 @@ class _PetListScreenState extends State<PetListScreen> {
         type: _selectedFilter,
         search: _searchQuery,
       );
+      final availablePets = pets.where((pet) {
+        final status = pet['status']?.toString().toLowerCase();
+        return status == null || status == 'available';
+      }).toList();
       if (mounted) {
         setState(() {
-          _pets = pets;
+          _pets = availablePets;
           _isLoading = false;
         });
       }

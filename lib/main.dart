@@ -5,6 +5,8 @@ import 'package:mobile_petadopt/screens/auth/register_screen.dart';
 import 'package:mobile_petadopt/screens/home/home_screen.dart';
 import 'package:mobile_petadopt/screens/pets/pet_detail_screen.dart';
 import 'package:mobile_petadopt/screens/profile/edit_address_screen.dart';
+import 'package:mobile_petadopt/screens/profile/profile_screen.dart';
+import 'package:mobile_petadopt/screens/recommendation/match_quiz_screen.dart';
 import 'package:mobile_petadopt/screens/splash/splash_screen.dart';
 import 'package:mobile_petadopt/services/notification_service.dart';
 import 'package:mobile_petadopt/theme/app_theme.dart';
@@ -34,7 +36,9 @@ class PetAdoptApp extends StatelessWidget {
         '/login': (context) => const LoginScreen(),
         '/register': (context) => const RegisterScreen(),
         '/home': (context) => const HomeScreen(),
+        '/profile': (context) => const ProfileScreen(),
         '/edit-address': (context) => const EditAddressScreen(),
+        '/match-quiz': (context) => const MatchQuizScreen(),
       },
       onGenerateRoute: (settings) {
         if (settings.name == '/pet-detail') {

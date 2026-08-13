@@ -28,6 +28,7 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
   final _middleNameController = TextEditingController();
   final _lastNameController = TextEditingController();
   final _phoneController = TextEditingController();
+  final _secondaryPhoneController = TextEditingController();
   final _addressController = TextEditingController();
   final _reasonController = TextEditingController();
   final _otherPetsDetailsController = TextEditingController();
@@ -36,6 +37,7 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
   String _homeType = 'House';
   bool _hasOtherPets = false;
   bool _hasExperience = false;
+  String? _adopterId;
 
   bool _isPhoneVerified = false;
   bool _isSendingOtp = false;
@@ -61,6 +63,7 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
     _middleNameController.dispose();
     _lastNameController.dispose();
     _phoneController.dispose();
+    _secondaryPhoneController.dispose();
     _addressController.dispose();
     _reasonController.dispose();
     _otherPetsDetailsController.dispose();
@@ -73,9 +76,14 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
     final userId = user != null ? user['id'] : 'guest';
     final prefs = await SharedPreferences.getInstance();
     final address = prefs.getString('user_${userId}_full_address');
+    final phone = prefs.getString('user_${userId}_phone') ?? (user != null ? user['phone'] as String? : null);
+    final secondaryPhone = prefs.getString('user_${userId}_secondary_phone');
 
     if (mounted) {
       setState(() {
+        if (userId != null && userId != 'guest') {
+          _adopterId = 'ADP-${userId.toString().padLeft(4, '0')}';
+        }
         if (user != null && user['name'] != null) {
           final parts = (user['name'] as String).trim().split(RegExp(r'\s+'));
           if (parts.length == 1) {
@@ -89,10 +97,32 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
             _lastNameController.text = parts.last;
           }
         }
+        if (phone != null && phone.isNotEmpty) {
+          _phoneController.text = phone;
+        }
+        if (secondaryPhone != null && secondaryPhone.isNotEmpty) {
+          _secondaryPhoneController.text = secondaryPhone;
+        }
         if (address != null && address.isNotEmpty) {
           _addressController.text = address;
         }
       });
+    }
+  }
+
+  Future<void> _savePhoneNumberLocally() async {
+    final phone = _phoneController.text.trim();
+    final secondary = _secondaryPhoneController.text.trim();
+    final user = await ApiService.getUser();
+    final userId = user != null ? user['id'] : 'guest';
+    final prefs = await SharedPreferences.getInstance();
+    if (phone.isNotEmpty) {
+      await prefs.setString('user_${userId}_phone', phone);
+    }
+    if (secondary.isNotEmpty) {
+      await prefs.setString('user_${userId}_secondary_phone', secondary);
+    } else {
+      await prefs.remove('user_${userId}_secondary_phone');
     }
   }
 
@@ -170,6 +200,7 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
   void _nextStep() {
     if (_currentStep == 0) {
       if (!_personalFormKey.currentState!.validate()) return;
+      _savePhoneNumberLocally();
       setState(() => _currentStep++);
     } else if (_currentStep == 1) {
       if (_validIdImage == null) {
@@ -512,11 +543,17 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
         _lastNameController.text.trim(),
       ].join(' ');
 
+      final primaryPhone = _phoneController.text.trim();
+      final secondaryPhone = _secondaryPhoneController.text.trim();
+      final fullContactPhone = secondaryPhone.isNotEmpty ? '$primaryPhone / $secondaryPhone' : primaryPhone;
+
+      await _savePhoneNumberLocally();
+
       await ApiService.submitAdoptionApplication(
         data: {
           'pet_id': petId,
           'full_name': fullName,
-          'phone': _phoneController.text.trim(),
+          'phone': fullContactPhone,
           'address': _addressController.text.trim(),
           'city': city,
           'barangay': barangay,
@@ -901,12 +938,65 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Personal Information',
-            style: GoogleFonts.poppins(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: AppTheme.textPrimary,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Personal Information',
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.textPrimary,
+                ),
+              ),
+              if (_adopterId != null)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryLight,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppTheme.primary.withOpacity(0.3)),
+                  ),
+                  child: Text(
+                    '🏷️ ID: $_adopterId',
+                    style: GoogleFonts.poppins(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.primaryDark,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: const Color(0xFFEFF6FF),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFBFDBFE)),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(
+                  Icons.info_outline_rounded,
+                  color: Color(0xFF2563EB),
+                  size: 18,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Reminder: Please enter your exact real full name as it appears on your Government ID for adoption verification.',
+                    style: GoogleFonts.poppins(
+                      fontSize: 11.5,
+                      color: const Color(0xFF1E40AF),
+                      fontWeight: FontWeight.w500,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 16),
@@ -955,6 +1045,29 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
                 value == null || value.trim().isEmpty ? 'Please enter your last name' : null,
           ),
           const SizedBox(height: 14),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Primary Mobile Number *',
+                style: GoogleFonts.poppins(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.textSecondary,
+                ),
+              ),
+              if (_phoneController.text.isNotEmpty)
+                Text(
+                  'Auto-filled',
+                  style: GoogleFonts.poppins(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                    color: AppTheme.primary,
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 4),
           TextFormField(
             controller: _phoneController,
             keyboardType: TextInputType.phone,
@@ -963,12 +1076,37 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
               LengthLimitingTextInputFormatter(11),
             ],
             decoration: const InputDecoration(
-              labelText: 'Phone Number (11 digits)',
+              labelText: 'Primary Phone (11 digits)',
               hintText: '09123456789',
               prefixIcon: Icon(Icons.phone_outlined,
                   color: AppTheme.textSecondary, size: 20),
             ),
             validator: (value) => PhoneAuthService.validatePhilippineNumber(value),
+          ),
+          const SizedBox(height: 12),
+          TextFormField(
+            controller: _secondaryPhoneController,
+            keyboardType: TextInputType.phone,
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly,
+              LengthLimitingTextInputFormatter(11),
+            ],
+            decoration: const InputDecoration(
+              labelText: 'Secondary / Backup Phone (Optional)',
+              hintText: '09987654321',
+              prefixIcon: Icon(Icons.phone_iphone_rounded,
+                  color: AppTheme.textSecondary, size: 20),
+            ),
+            validator: (val) {
+              if (val != null && val.trim().isNotEmpty) {
+                final err = PhoneAuthService.validatePhilippineNumber(val);
+                if (err != null) return err;
+                if (val.trim() == _phoneController.text.trim()) {
+                  return 'Must be different from primary number';
+                }
+              }
+              return null;
+            },
           ),
           const SizedBox(height: 14),
           Row(

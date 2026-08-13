@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 
 class ApiService {
   static const String _baseUrl = 'http://192.168.1.46:8000/api';
@@ -89,33 +88,6 @@ class ApiService {
     throw Exception('Login failed. Please check your credentials.');
   }
 
-  static Future<Map<String, dynamic>> googleLogin({
-    required String email,
-    required String name,
-  }) async {
-    final response = await http
-        .post(
-          Uri.parse('$_baseUrl/auth/google-login'),
-          headers: _headers,
-          body: jsonEncode({
-            'email': email,
-            'name': name,
-          }),
-        )
-        .timeout(const Duration(seconds: 15));
-
-    final data = jsonDecode(response.body) as Map<String, dynamic>;
-
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_tokenKey, data['token'] as String);
-      await prefs.setString(_userKey, jsonEncode(data['user']));
-      await prefs.setString('last_active_timestamp', DateTime.now().toIso8601String());
-      return data;
-    }
-
-    throw Exception(data['message']?.toString() ?? 'Google sign-in failed. Please try again.');
-  }
 
   static Future<Map<String, dynamic>> sendEmailOtp(String email) async {
     final response = await http
@@ -233,11 +205,6 @@ class ApiService {
     await prefs.remove('user_full_address');
     await prefs.remove('user_city');
     await prefs.remove('user_barangay');
-
-    try {
-      final googleSignIn = GoogleSignIn();
-      await googleSignIn.signOut();
-    } catch (_) {}
   }
 
   static Future<List<Map<String, dynamic>>> getPets({
@@ -390,5 +357,72 @@ class ApiService {
         body: jsonEncode({'fcm_token': fcmToken}),
       ).timeout(const Duration(seconds: 10));
     } catch (_) {}
+  }
+
+  static Future<List<Map<String, dynamic>>> getRecommendations({
+    Map<String, dynamic>? profile,
+  }) async {
+    final token = await getToken();
+    final headers = Map<String, String>.from(_headers);
+    if (token != null) {
+      headers['Authorization'] = 'Bearer $token';
+    }
+
+    final response = await http
+        .post(
+          Uri.parse('$_baseUrl/recommendations/match'),
+          headers: headers,
+          body: jsonEncode(profile ?? {}),
+        )
+        .timeout(const Duration(seconds: 15));
+
+    if (response.statusCode == 200) {
+      final json = jsonDecode(response.body) as Map<String, dynamic>;
+      final list = json['recommendations'] as List<dynamic>? ?? [];
+      return list.map((item) => Map<String, dynamic>.from(item as Map)).toList();
+    }
+
+    return [];
+  }
+
+  static Future<Map<String, dynamic>?> getSavedPreferences() async {
+    final token = await getToken();
+    if (token == null) return null;
+    final headers = Map<String, String>.from(_headers);
+    headers['Authorization'] = 'Bearer $token';
+
+    try {
+      final response = await http
+          .get(Uri.parse('$_baseUrl/recommendations/my-preferences'), headers: headers)
+          .timeout(const Duration(seconds: 15));
+
+      if (response.statusCode == 200) {
+        final json = jsonDecode(response.body) as Map<String, dynamic>;
+        if (json['preferences'] != null) {
+          return Map<String, dynamic>.from(json['preferences'] as Map);
+        }
+      }
+    } catch (_) {}
+
+    return null;
+  }
+
+  static Future<Map<String, dynamic>> updateProfileName(String name) async {
+    final token = await getToken();
+    final response = await http.post(
+      Uri.parse('$_baseUrl/user/update-profile'),
+      headers: {
+        ..._headers,
+        if (token != null) 'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({'name': name}),
+    ).timeout(const Duration(seconds: 15));
+
+    final data = jsonDecode(response.body) as Map<String, dynamic>;
+    if (response.statusCode == 200 && data['user'] != null) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_userKey, jsonEncode(data['user']));
+    }
+    return data;
   }
 }
