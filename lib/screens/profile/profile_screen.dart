@@ -1,6 +1,10 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:mobile_petadopt/screens/adoption/my_adopted_pets_screen.dart';
+import 'package:mobile_petadopt/screens/adoption/my_applications_screen.dart';
 import 'package:mobile_petadopt/services/api_service.dart';
 import 'package:mobile_petadopt/theme/app_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -17,8 +21,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String? _savedAddress;
   String? _savedPhone;
   String? _savedSecondaryPhone;
+  bool _isUploadingAvatar = false;
 
   static const List<Map<String, dynamic>> _menuItems = [
+    {
+      'icon': Icons.pets_rounded,
+      'label': 'My Adopted Pets',
+      'subtitle': 'Health check-ins & care hub',
+    },
     {
       'icon': Icons.person_outline_rounded,
       'label': 'Edit Profile',
@@ -71,6 +81,102 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _savedPhone = phone;
         _savedSecondaryPhone = secondaryPhone;
       });
+    }
+  }
+
+  String _getInitials(String name) {
+    final parts = name.trim().split(RegExp(r'\s+'));
+    if (parts.isEmpty || parts.first.isEmpty) return 'A';
+    if (parts.length == 1) return parts.first[0].toUpperCase();
+    return '${parts.first[0]}${parts.last[0]}'.toUpperCase();
+  }
+
+  Future<void> _showAvatarOptions() async {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 18),
+              Text(
+                'Change Profile Photo',
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 16),
+              ListTile(
+                leading: const Icon(Icons.camera_alt_rounded, color: AppTheme.primary),
+                title: Text('Take Photo with Camera', style: GoogleFonts.poppins(fontSize: 14)),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _pickAndUploadAvatar(ImageSource.camera);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_library_rounded, color: AppTheme.primary),
+                title: Text('Choose from Gallery', style: GoogleFonts.poppins(fontSize: 14)),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _pickAndUploadAvatar(ImageSource.gallery);
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickAndUploadAvatar(ImageSource source) async {
+    try {
+      final picker = ImagePicker();
+      final picked = await picker.pickImage(source: source, imageQuality: 85);
+      if (picked == null) return;
+
+      setState(() => _isUploadingAvatar = true);
+      await ApiService.uploadAvatar(File(picked.path));
+      await _loadUser();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Profile photo updated successfully.', style: GoogleFonts.poppins(fontSize: 13)),
+            backgroundColor: AppTheme.successColor,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString().replaceFirst('Exception: ', ''), style: GoogleFonts.poppins(fontSize: 13)),
+            backgroundColor: AppTheme.errorColor,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isUploadingAvatar = false);
     }
   }
 
@@ -144,30 +250,64 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Column(
         children: [
           GestureDetector(
-            onTap: () => _showEditNameDialog(context),
+            onTap: _showAvatarOptions,
             child: Stack(
               children: [
                 Container(
-                  width: 80,
-                  height: 80,
+                  width: 84,
+                  height: 84,
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.25),
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: Colors.white.withOpacity(0.5),
-                      width: 2,
+                      color: Colors.white.withOpacity(0.6),
+                      width: 2.5,
                     ),
                   ),
-                  child: const Center(
-                    child: Text('👤', style: TextStyle(fontSize: 36)),
-                  ),
+                  child: _isUploadingAvatar
+                      ? const Center(
+                          child: SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
+                          ),
+                        )
+                      : (_user != null && _user!['avatar'] != null && _user!['avatar'].toString().isNotEmpty)
+                          ? ClipOval(
+                              child: Image.network(
+                                _user!['avatar'],
+                                width: 84,
+                                height: 84,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => Center(
+                                  child: Text(
+                                    _getInitials(name),
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 26,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            )
+                          : Center(
+                              child: Text(
+                                _getInitials(name),
+                                style: GoogleFonts.poppins(
+                                  fontSize: 26,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
                 ),
                 Positioned(
                   bottom: 0,
                   right: 0,
                   child: Container(
-                    width: 26,
-                    height: 26,
+                    width: 28,
+                    height: 28,
                     decoration: BoxDecoration(
                       color: Colors.white,
                       shape: BoxShape.circle,
@@ -177,8 +317,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                     ),
                     child: const Icon(
-                      Icons.edit_rounded,
-                      size: 13,
+                      Icons.camera_alt_rounded,
+                      size: 14,
                       color: AppTheme.primary,
                     ),
                   ),
@@ -432,7 +572,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             await _loadUser();
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text('Legal name updated to "$newName" successfully! ✨', style: GoogleFonts.poppins(fontSize: 13)),
+                                content: Text('Legal name updated to "$newName" successfully.', style: GoogleFonts.poppins(fontSize: 13)),
                                 backgroundColor: AppTheme.successColor,
                                 behavior: SnackBarBehavior.floating,
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -818,7 +958,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         });
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text('Contact numbers saved successfully! 📱', style: GoogleFonts.poppins(fontSize: 13)),
+                            content: Text('Contact numbers saved successfully.', style: GoogleFonts.poppins(fontSize: 13)),
                             backgroundColor: AppTheme.successColor,
                             behavior: SnackBarBehavior.floating,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -912,6 +1052,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 onTap: () {
                   if (item['label'] == 'Edit Profile') {
                     _showEditNameDialog(context);
+                  } else if (item['label'] == 'My Adopted Pets') {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const MyAdoptedPetsScreen()),
+                    );
+                  } else if (item['label'] == 'My Applications') {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const MyApplicationsScreen()),
+                    );
+                  } else if (item['label'] == 'Saved Pets') {
+                    Navigator.pushNamed(context, '/favorites');
                   }
                 },
                 borderRadius: BorderRadius.circular(16),

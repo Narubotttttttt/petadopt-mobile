@@ -69,9 +69,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   String get _fullName {
     final first = _firstNameController.text.trim();
-    final middle = _noMiddleName ? '' : _middleNameController.text.trim();
+    var middle = _noMiddleName ? '' : _middleNameController.text.trim();
     final last = _lastNameController.text.trim();
     if (middle.isNotEmpty) {
+      if (middle.length == 1 && RegExp(r'^[a-zA-Z]$').hasMatch(middle)) {
+        middle = '${middle.toUpperCase()}.';
+      } else if (middle.length == 2 && middle.endsWith('.')) {
+        middle = '${middle[0].toUpperCase()}.';
+      }
       return '$first $middle $last';
     }
     return '$first $last';
@@ -93,7 +98,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Verification code sent to $email! 📧', style: GoogleFonts.poppins(fontSize: 13)),
+            content: Text('Verification code sent to $email!', style: GoogleFonts.poppins(fontSize: 13)),
             backgroundColor: AppTheme.successColor,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -155,7 +160,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Email verified successfully! 🎉 Now set up your mobile number.', style: GoogleFonts.poppins(fontSize: 13)),
+            content: Text('Email verified successfully! Now set up your mobile number.', style: GoogleFonts.poppins(fontSize: 13)),
             backgroundColor: AppTheme.successColor,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -185,7 +190,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('New verification code sent! 📧', style: GoogleFonts.poppins(fontSize: 13)),
+            content: Text('New verification code sent!', style: GoogleFonts.poppins(fontSize: 13)),
             backgroundColor: AppTheme.successColor,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -236,7 +241,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           _startPhoneTimer();
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('SMS code sent to $phone! 📲', style: GoogleFonts.poppins(fontSize: 13)),
+              content: Text('SMS code sent to $phone!', style: GoogleFonts.poppins(fontSize: 13)),
               backgroundColor: AppTheme.successColor,
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -351,7 +356,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Welcome to CAWS PetAdopt, $_fullName! 🐾', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600)),
+            content: Text('Welcome to CAWS PetAdopt, $_fullName!', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600)),
             backgroundColor: AppTheme.successColor,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -461,8 +466,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Text('🐾', style: TextStyle(fontSize: 30)),
-                          const SizedBox(height: 4),
+                          const Icon(Icons.pets_rounded, color: Colors.white, size: 28),
+                          const SizedBox(height: 6),
                           Text(
                             'Adopter Registration',
                             style: GoogleFonts.poppins(
@@ -629,12 +634,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ),
           const SizedBox(height: 14),
 
-          // Middle Name Input (Visible by default, hidden when toggle is ON)
+          // Middle Name / Initial Input (Visible by default, hidden when toggle is ON)
           if (!_noMiddleName) ...[
             _buildTextField(
               controller: _middleNameController,
-              label: 'Middle Name',
-              hint: 'e.g. Santos',
+              label: 'Middle Name / Initial',
+              hint: 'e.g. Santos or S.',
               icon: Icons.person_outline_rounded,
             ),
             const SizedBox(height: 14),
@@ -919,7 +924,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         if (!_isPhoneOtpSent) ...[
           _isSendingPhoneOtp
               ? _loadingButton()
-              : _gradientButton('Send SMS Code 📲', _sendPhoneOtp),
+              : _gradientButton('Send SMS Code', _sendPhoneOtp),
         ] else ...[
           // SMS OTP Input
           TextFormField(
@@ -974,7 +979,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
           _isVerifyingPhoneOtp || _isRegistering
               ? _loadingButton()
-              : _gradientButton('Complete Registration 🎉', _handleStep3VerifyAndRegister),
+              : _gradientButton('Complete Registration', _handleStep3VerifyAndRegister),
         ],
 
         const SizedBox(height: 16),

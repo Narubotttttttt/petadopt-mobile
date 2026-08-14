@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:mobile_petadopt/screens/adoption/adopted_pet_hub_screen.dart';
 import 'package:mobile_petadopt/services/api_service.dart';
 import 'package:mobile_petadopt/theme/app_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class MyApplicationsScreen extends StatefulWidget {
   const MyApplicationsScreen({super.key});
@@ -29,7 +29,10 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
       if (user != null) {
         final userId = user['id'];
         final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('user_${userId}_last_viewed_applications_time', DateTime.now().toIso8601String());
+        await prefs.setString(
+          'user_${userId}_last_viewed_applications_time',
+          DateTime.now().toIso8601String(),
+        );
       }
       if (mounted) {
         setState(() {
@@ -77,7 +80,10 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
                     itemCount: _applications.length,
                     separatorBuilder: (_, __) => const SizedBox(height: 14),
                     itemBuilder: (context, index) {
-                      return _ApplicationCard(application: _applications[index]);
+                      return _ApplicationCard(
+                        application: _applications[index],
+                        onRefresh: _fetchApplications,
+                      );
                     },
                   ),
                 ),
@@ -89,7 +95,7 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Text('📋', style: TextStyle(fontSize: 60)),
+          const Icon(Icons.assignment_outlined, size: 60, color: AppTheme.textSecondary),
           const SizedBox(height: 16),
           Text(
             'No applications yet',
@@ -101,7 +107,7 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
           ),
           const SizedBox(height: 6),
           Text(
-            'Browse available pets and apply for adoption!',
+            'Browse pets and submit your adoption request.',
             style: GoogleFonts.poppins(
               fontSize: 13,
               color: AppTheme.textSecondary,
@@ -113,87 +119,42 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
   }
 }
 
-class _ApplicationCard extends StatefulWidget {
+class _ApplicationCard extends StatelessWidget {
   final Map<String, dynamic> application;
+  final VoidCallback onRefresh;
 
-  const _ApplicationCard({required this.application});
-
-  @override
-  State<_ApplicationCard> createState() => _ApplicationCardState();
-}
-
-class _ApplicationCardState extends State<_ApplicationCard> {
-  bool _isDownloading = false;
-
-  Future<void> _handleDownloadContract() async {
-    if (_isDownloading) return;
-    setState(() => _isDownloading = true);
-
-    try {
-      final appId = widget.application['id'] is int
-          ? widget.application['id'] as int
-          : int.tryParse(widget.application['id'].toString()) ?? 0;
-
-      if (appId == 0) {
-        throw Exception('Invalid application ID');
-      }
-
-      final urlStr = await ApiService.getContractDownloadUrl(appId);
-      if (urlStr != null && urlStr.isNotEmpty) {
-        final uri = Uri.parse(urlStr);
-        final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
-        if (!launched) {
-          await launchUrl(uri, mode: LaunchMode.platformDefault);
-        }
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Could not generate contract URL. Please try again.'),
-              backgroundColor: AppTheme.errorColor,
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Download failed: $e'),
-            backgroundColor: AppTheme.errorColor,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isDownloading = false);
-      }
-    }
-  }
+  const _ApplicationCard({
+    required this.application,
+    required this.onRefresh,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final status = (widget.application['status'] as String?) ?? 'pending';
-    final scheduledAt = widget.application['scheduledAt'] as String?;
-    final isAdoptedByOther = (widget.application['isAdoptedByOther'] as bool?) ?? false;
-    final statusInfo = _getStatusInfo(status, scheduledAt != null, isAdoptedByOther);
+    final status = application['status'] as String? ?? 'pending';
+    final isAdoptedByOther = application['isAdoptedByOther'] as bool? ?? false;
+    final scheduledAt = application['scheduledAt'] as String?;
+    final eventLocation = application['eventLocation'] as String?;
+    final eventNotes = application['eventNotes'] as String?;
+
+    final isScheduled = scheduledAt != null && scheduledAt.isNotEmpty;
+    final statusInfo = _getStatusInfo(status, isScheduled, isAdoptedByOther);
 
     return Container(
       decoration: BoxDecoration(
-        color: AppTheme.background,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppTheme.cardBorder),
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.04),
             blurRadius: 10,
-            offset: const Offset(0, 3),
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -201,7 +162,7 @@ class _ApplicationCardState extends State<_ApplicationCard> {
                 ClipRRect(
                   borderRadius: BorderRadius.circular(14),
                   child: Image.network(
-                    widget.application['petImage'] as String,
+                    application['petImage'] as String,
                     width: 72,
                     height: 72,
                     fit: BoxFit.cover,
@@ -210,7 +171,7 @@ class _ApplicationCardState extends State<_ApplicationCard> {
                       height: 72,
                       color: AppTheme.primaryLight,
                       child: const Center(
-                        child: Text('🐾', style: TextStyle(fontSize: 28)),
+                        child: Icon(Icons.pets_rounded, color: AppTheme.primary, size: 28),
                       ),
                     ),
                   ),
@@ -225,7 +186,7 @@ class _ApplicationCardState extends State<_ApplicationCard> {
                         children: [
                           Expanded(
                             child: Text(
-                              widget.application['petName'] as String,
+                              application['petName'] as String,
                               style: GoogleFonts.poppins(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w700,
@@ -243,7 +204,7 @@ class _ApplicationCardState extends State<_ApplicationCard> {
                       ),
                       const SizedBox(height: 3),
                       Text(
-                        '${widget.application['petBreed']} • ${widget.application['petType']}',
+                        '${application['petBreed']} • ${application['petType']}',
                         style: GoogleFonts.poppins(
                           fontSize: 12,
                           color: AppTheme.textSecondary,
@@ -259,7 +220,7 @@ class _ApplicationCardState extends State<_ApplicationCard> {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            'Applied: ${widget.application['dateApplied']}',
+                            'Applied: ${application['dateApplied']}',
                             style: GoogleFonts.poppins(
                               fontSize: 11,
                               color: AppTheme.textSecondary,
@@ -272,60 +233,54 @@ class _ApplicationCardState extends State<_ApplicationCard> {
                 ),
               ],
             ),
+
             if (status == 'approved' || status == 'adopted') ...[
               const SizedBox(height: 14),
               Material(
                 color: Colors.transparent,
                 child: InkWell(
-                  onTap: _isDownloading ? null : _handleDownloadContract,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => AdoptedPetHubScreen(application: application),
+                      ),
+                    ).then((_) => onRefresh());
+                  },
                   borderRadius: BorderRadius.circular(12),
                   child: Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEAF5F6),
+                      color: AppTheme.primaryLight,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: AppTheme.primary.withOpacity(0.3)),
                     ),
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        if (_isDownloading) ...[
-                          const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primary),
+                        Row(
+                          children: [
+                            const Icon(Icons.pets_rounded, color: AppTheme.primary, size: 18),
+                            const SizedBox(width: 8),
+                            Text(
+                              'View Adopted Pet Health Hub',
+                              style: GoogleFonts.poppins(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: AppTheme.primaryDark,
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Preparing Contract...',
-                            style: GoogleFonts.poppins(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                              color: AppTheme.primaryDark,
-                            ),
-                          ),
-                        ] else ...[
-                          const Icon(Icons.download_rounded, color: AppTheme.primary, size: 18),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Download Adoption Contract',
-                            style: GoogleFonts.poppins(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                              color: AppTheme.primaryDark,
-                            ),
-                          ),
-                        ],
+                          ],
+                        ),
+                        const Icon(Icons.arrow_forward_ios_rounded, color: AppTheme.primary, size: 14),
                       ],
                     ),
                   ),
                 ),
               ),
             ],
+
             if (status == 'approved' && scheduledAt != null && scheduledAt.isNotEmpty) ...[
               const SizedBox(height: 14),
               Container(
@@ -341,11 +296,11 @@ class _ApplicationCardState extends State<_ApplicationCard> {
                   children: [
                     Row(
                       children: [
-                        const Text('🎪', style: TextStyle(fontSize: 16)),
+                        const Icon(Icons.event_available_rounded, size: 16, color: AppTheme.primary),
                         const SizedBox(width: 6),
                         Expanded(
                           child: Text(
-                            'CAWS Mall Adoption Event & Release',
+                            'CAWS Adoption Event & Release',
                             style: GoogleFonts.poppins(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
@@ -358,11 +313,7 @@ class _ApplicationCardState extends State<_ApplicationCard> {
                     const SizedBox(height: 6),
                     Row(
                       children: [
-                        const Icon(
-                          Icons.event_available_rounded,
-                          size: 14,
-                          color: AppTheme.primary,
-                        ),
+                        const Icon(Icons.calendar_month_outlined, size: 14, color: AppTheme.primary),
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
@@ -376,198 +327,46 @@ class _ApplicationCardState extends State<_ApplicationCard> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 4),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Icon(
-                          Icons.location_on_rounded,
-                          size: 14,
-                          color: AppTheme.primary,
-                        ),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            (widget.application['eventLocation'] as String?)?.isNotEmpty == true
-                                ? (widget.application['eventLocation'] as String)
-                                : 'CAWS Adoption Event',
-                            style: GoogleFonts.poppins(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: AppTheme.textPrimary,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: AppTheme.primary.withOpacity(0.15)),
-                      ),
-                      child: Row(
+                    if (eventLocation != null && eventLocation.isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(Icons.info_outline_rounded, size: 14, color: AppTheme.primary),
-                          const SizedBox(width: 6),
+                          const Icon(Icons.location_on_outlined, size: 14, color: AppTheme.primary),
+                          const SizedBox(width: 4),
                           Expanded(
                             child: Text(
-                              (widget.application['eventNotes'] as String?)?.isNotEmpty == true
-                                  ? (widget.application['eventNotes'] as String)
-                                  : 'Please bring your Valid ID and Barangay Certificate for pet release & verification.',
+                              eventLocation,
                               style: GoogleFonts.poppins(
-                                fontSize: 10,
-                                color: AppTheme.textSecondary,
-                                height: 1.4,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                                color: AppTheme.textPrimary,
                               ),
                             ),
                           ),
                         ],
                       ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-            if (isAdoptedByOther) ...[
-              const SizedBox(height: 14),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFF4ED),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: const Color(0xFFFFD8BF)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        const Text('🐾', style: TextStyle(fontSize: 16)),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            '${widget.application['petName']} Has Found a Forever Home!',
-                            style: GoogleFonts.poppins(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: const Color(0xFFD9363E),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      'Sorry, the pet you requested (${widget.application['petName']}) has already found a forever home with another verified applicant! Please explore our other lovable pets waiting for a home.',
-                      style: GoogleFonts.poppins(
-                        fontSize: 11,
-                        color: AppTheme.textSecondary,
-                        height: 1.4,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.popUntil(context, ModalRoute.withName('/home'));
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: AppTheme.primary,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(Icons.pets_rounded, color: Colors.white, size: 14),
-                            const SizedBox(width: 6),
-                            Text(
-                              'Browse Other Pets',
+                    ],
+                    if (eventNotes != null && eventNotes.isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Icon(Icons.info_outline_rounded, size: 14, color: AppTheme.primary),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              eventNotes,
                               style: GoogleFonts.poppins(
                                 fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.white,
+                                color: AppTheme.textSecondary,
+                                fontStyle: FontStyle.italic,
                               ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-            if (status == 'rejected' && !isAdoptedByOther) ...[
-              const SizedBox(height: 14),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFEF2F2),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: const Color(0xFFFECACA)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        const Text('📋', style: TextStyle(fontSize: 16)),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            'Application Not Approved',
-                            style: GoogleFonts.poppins(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: const Color(0xFFDC2626),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      'Thank you for your interest in adopting ${widget.application['petName']}. Unfortunately, your application could not be approved at this time. We encourage you to browse our other available pets!',
-                      style: GoogleFonts.poppins(
-                        fontSize: 11,
-                        color: AppTheme.textSecondary,
-                        height: 1.4,
+                        ],
                       ),
-                    ),
-                    const SizedBox(height: 10),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.popUntil(context, ModalRoute.withName('/home'));
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: AppTheme.primary,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(Icons.pets_rounded, color: Colors.white, size: 14),
-                            const SizedBox(width: 6),
-                            Text(
-                              'Browse Available Pets',
-                              style: GoogleFonts.poppins(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+                    ],
                   ],
                 ),
               ),
@@ -581,7 +380,7 @@ class _ApplicationCardState extends State<_ApplicationCard> {
   Map<String, dynamic> _getStatusInfo(String status, bool isScheduled, bool isAdoptedByOther) {
     if (isAdoptedByOther) {
       return {
-        'label': 'Adopted by Other 🐾',
+        'label': 'Adopted by Other',
         'color': const Color(0xFFD9363E),
         'bgColor': const Color(0xFFFFF4ED),
       };
@@ -589,7 +388,7 @@ class _ApplicationCardState extends State<_ApplicationCard> {
 
     if (isScheduled && status != 'approved' && status != 'rejected') {
       return {
-        'label': 'Scheduled 📅',
+        'label': 'Scheduled',
         'color': AppTheme.primaryDark,
         'bgColor': AppTheme.primaryLight,
       };
@@ -598,25 +397,25 @@ class _ApplicationCardState extends State<_ApplicationCard> {
     switch (status) {
       case 'approved':
         return {
-          'label': 'Approved 🎉',
+          'label': 'Approved',
           'color': AppTheme.successColor,
           'bgColor': const Color(0xFFE8F8F1),
         };
       case 'rejected':
         return {
-          'label': 'Declined ❌',
+          'label': 'Declined',
           'color': AppTheme.errorColor,
           'bgColor': const Color(0xFFFEEEEE),
         };
       case 'under_review':
         return {
-          'label': 'Reviewing 🔍',
+          'label': 'Reviewing',
           'color': const Color(0xFF3B82F6),
           'bgColor': const Color(0xFFEFF6FF),
         };
       default:
         return {
-          'label': 'Pending ⏳',
+          'label': 'Pending',
           'color': AppTheme.warningColor,
           'bgColor': const Color(0xFFFFFBEB),
         };

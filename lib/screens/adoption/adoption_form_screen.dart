@@ -282,7 +282,7 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
           });
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Phone number auto-verified via SMS! 🎉', style: GoogleFonts.poppins(fontSize: 13)),
+              content: Text('Phone number auto-verified via SMS.', style: GoogleFonts.poppins(fontSize: 13)),
               backgroundColor: AppTheme.successColor,
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -444,7 +444,7 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
                                 if (mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
-                                      content: Text('Phone number verified successfully! 🎉', style: GoogleFonts.poppins(fontSize: 13)),
+                                      content: Text('Phone number verified successfully.', style: GoogleFonts.poppins(fontSize: 13)),
                                       backgroundColor: AppTheme.successColor,
                                       behavior: SnackBarBehavior.floating,
                                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -588,12 +588,12 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
                       shape: BoxShape.circle,
                     ),
                     child: const Center(
-                      child: Text('🐾', style: TextStyle(fontSize: 34)),
+                      child: Icon(Icons.pets_rounded, color: AppTheme.primary, size: 34),
                     ),
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'Adoption Request Submitted! 🐾',
+                    'Adoption Request Submitted',
                     style: GoogleFonts.poppins(
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
@@ -958,7 +958,7 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
                     border: Border.all(color: AppTheme.primary.withOpacity(0.3)),
                   ),
                   child: Text(
-                    '🏷️ ID: $_adopterId',
+                    'ID: $_adopterId',
                     style: GoogleFonts.poppins(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -71,6 +72,9 @@ class ApiService {
     final data = jsonDecode(response.body) as Map<String, dynamic>;
 
     if (response.statusCode == 200) {
+      if (data['user'] != null && data['user']['role'] != 'adopter') {
+        throw Exception('Admin accounts cannot log in to the mobile app. Please use the Web Admin Portal.');
+      }
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_tokenKey, data['token'] as String);
       await prefs.setString(_userKey, jsonEncode(data['user']));
@@ -78,7 +82,7 @@ class ApiService {
       return data;
     }
 
-    if (response.statusCode == 401 || response.statusCode == 422) {
+    if (response.statusCode == 401 || response.statusCode == 403 || response.statusCode == 422) {
       final message = data['message']?.toString();
       if (message != null && message.isNotEmpty) {
         throw Exception(message);
@@ -424,5 +428,91 @@ class ApiService {
       await prefs.setString(_userKey, jsonEncode(data['user']));
     }
     return data;
+  }
+
+  static Future<Map<String, dynamic>> uploadAvatar(File imageFile) async {
+    final token = await getToken();
+    final uri = Uri.parse('$_baseUrl/user/update-avatar');
+    final request = http.MultipartRequest('POST', uri);
+    request.headers.addAll({
+      'Accept': 'application/json',
+      if (token != null) 'Authorization': 'Bearer $token',
+    });
+    request.files.add(
+      await http.MultipartFile.fromPath('avatar', imageFile.path),
+    );
+
+    final streamedResponse = await request.send().timeout(const Duration(seconds: 30));
+    final response = await http.Response.fromStream(streamedResponse);
+    final data = jsonDecode(response.body) as Map<String, dynamic>;
+
+    if (response.statusCode == 200 && data['user'] != null) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_userKey, jsonEncode(data['user']));
+      return data;
+    }
+
+    throw Exception(data['message']?.toString() ?? 'Failed to upload profile picture.');
+  }
+
+  static Future<Map<String, dynamic>> submitHealthUpdate({
+    required int applicationId,
+    required File photo,
+    required String healthStatus,
+    double? weight,
+    String? notes,
+  }) async {
+    final token = await getToken();
+    final uri = Uri.parse('$_baseUrl/health-updates');
+    final request = http.MultipartRequest('POST', uri);
+    request.headers.addAll({
+      'Accept': 'application/json',
+      if (token != null) 'Authorization': 'Bearer $token',
+    });
+    request.fields['application_id'] = applicationId.toString();
+    request.fields['health_status'] = healthStatus;
+    if (weight != null) {
+      request.fields['weight'] = weight.toString();
+    }
+    if (notes != null && notes.trim().isNotEmpty) {
+      request.fields['notes'] = notes.trim();
+    }
+    request.files.add(
+      await http.MultipartFile.fromPath('photo', photo.path),
+    );
+
+    final streamedResponse = await request.send().timeout(const Duration(seconds: 30));
+    final response = await http.Response.fromStream(streamedResponse);
+    final data = jsonDecode(response.body) as Map<String, dynamic>;
+
+    if (response.statusCode == 201 && data['success'] == true) {
+      return data;
+    }
+
+    throw Exception(data['message']?.toString() ?? 'Failed to submit health check-in.');
+  }
+
+  static Future<List<Map<String, dynamic>>> getMyHealthUpdates({int? applicationId}) async {
+    final token = await getToken();
+    var url = '$_baseUrl/my-health-updates';
+    if (applicationId != null) {
+      url += '?application_id=$applicationId';
+    }
+
+    final response = await http.get(
+      Uri.parse(url),
+      headers: {
+        ..._headers,
+        if (token != null) 'Authorization': 'Bearer $token',
+      },
+    ).timeout(const Duration(seconds: 15));
+
+    if (response.statusCode == 200) {
+      final json = jsonDecode(response.body) as Map<String, dynamic>;
+      final list = json['data'] as List<dynamic>? ?? [];
+      return list.map((item) => Map<String, dynamic>.from(item as Map)).toList();
+    }
+
+    return [];
   }
 }

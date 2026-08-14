@@ -81,7 +81,7 @@ class _EditAddressScreenState extends State<EditAddressScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Address saved successfully! 📍',
+              'Address saved successfully.',
               style: GoogleFonts.poppins(fontSize: 13),
             ),
             backgroundColor: AppTheme.successColor,
