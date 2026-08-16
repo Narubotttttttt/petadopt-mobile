@@ -37,13 +37,25 @@ class _EditAddressScreenState extends State<EditAddressScreen> {
     final user = await ApiService.getUser();
     final userId = user != null ? user['id'] : 'guest';
     final prefs = await SharedPreferences.getInstance();
-    final city = prefs.getString('user_${userId}_city');
-    final barangay = prefs.getString('user_${userId}_barangay');
-    final street = prefs.getString('user_${userId}_street');
+    String? city = prefs.getString('user_${userId}_city');
+    String? barangay = prefs.getString('user_${userId}_barangay');
+    String? street = prefs.getString('user_${userId}_street');
 
-    if (mounted && city != null) {
+    // If local prefs empty, fallback to server profile address
+    if (city == null && user != null && user['address'] != null) {
+      final serverAddress = user['address'].toString();
+      city = user['city']?.toString();
+      final fullMatch = RegExp(r'^(.*?)(?:,\s*Brgy\.\s*([^,]+))?(?:,\s*([^,]+))?(?:,\s*Misamis Oriental)?$', caseSensitive: false).firstMatch(serverAddress);
+      if (fullMatch != null) {
+        street = fullMatch.group(1)?.trim();
+        barangay = fullMatch.group(2)?.trim();
+        if (city == null) city = fullMatch.group(3)?.trim();
+      }
+    }
+
+    if (mounted) {
       setState(() {
-        if (LocationData.citiesAndMunicipalities.contains(city)) {
+        if (city != null && LocationData.citiesAndMunicipalities.contains(city)) {
           _selectedCity = city;
         }
 
@@ -54,7 +66,7 @@ class _EditAddressScreenState extends State<EditAddressScreen> {
           _selectedBarangay = availableBarangays.first;
         }
 
-        if (street != null) {
+        if (street != null && street.isNotEmpty) {
           _streetController.text = street;
         }
       });
@@ -75,6 +87,17 @@ class _EditAddressScreenState extends State<EditAddressScreen> {
       await prefs.setString('user_${userId}_barangay', _selectedBarangay);
       await prefs.setString('user_${userId}_street', finalStreet);
       await prefs.setString('user_${userId}_full_address', fullAddress);
+
+      // Persist to server database (adopters_profile table)
+      try {
+        await ApiService.updateAddress(
+          address: fullAddress,
+          city: _selectedCity,
+          province: LocationData.defaultProvince,
+        );
+      } catch (e) {
+        // Continue with local save if offline
+      }
 
       if (mounted) {
         setState(() => _isLoading = false);

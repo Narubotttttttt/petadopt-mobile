@@ -515,4 +515,53 @@ class ApiService {
 
     return [];
   }
+
+  static Future<Map<String, dynamic>?> fetchUserProfile() async {
+    final token = await getToken();
+    if (token == null) return null;
+    final response = await http.get(
+      Uri.parse('$_baseUrl/user'),
+      headers: {
+        ..._headers,
+        'Authorization': 'Bearer $token',
+      },
+    ).timeout(const Duration(seconds: 15));
+
+    if (response.statusCode == 200) {
+      final user = jsonDecode(response.body) as Map<String, dynamic>;
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_userKey, jsonEncode(user));
+      return user;
+    }
+    return null;
+  }
+
+  static Future<bool> updateAddress({
+    required String address,
+    String? city,
+    String? province,
+    String? phone,
+  }) async {
+    final token = await getToken();
+    final response = await http.post(
+      Uri.parse('$_baseUrl/user/update-address'),
+      headers: {
+        ..._headers,
+        if (token != null) 'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'address': address,
+        'city': city,
+        'province': province,
+        'phone': phone,
+      }),
+    ).timeout(const Duration(seconds: 15));
+
+    if (response.statusCode == 200) {
+      await fetchUserProfile();
+      return true;
+    }
+    return false;
+  }
 }
+
