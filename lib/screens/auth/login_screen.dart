@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile_petadopt/services/api_service.dart';
 import 'package:mobile_petadopt/services/notification_service.dart';
 import 'package:mobile_petadopt/theme/app_theme.dart';
+import 'package:mobile_petadopt/widgets/exploration_mode_dialog.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -39,7 +40,16 @@ class _LoginScreenState extends State<LoginScreen> {
         // Sync FCM device token immediately with Laravel backend
         await NotificationService.setupFirebaseFCM();
         if (mounted) {
-          Navigator.pushReplacementNamed(context, '/home');
+          ExplorationModeDialog.show(
+            context,
+            onRecommendationSelected: () {
+              Navigator.pushReplacementNamed(context, '/home');
+              Navigator.pushNamed(context, '/match-quiz');
+            },
+            onManualSelected: () {
+              Navigator.pushReplacementNamed(context, '/home');
+            },
+          );
         }
       } catch (e) {
         if (mounted) {

@@ -194,6 +194,7 @@ class _HomeTabState extends State<_HomeTab> {
   bool _isLoading = true;
   bool _hasUnreadNotifications = false;
   List<Map<String, dynamic>> _vaccineReminders = [];
+  String _selectedCategory = 'all';
 
   @override
   void initState() {
@@ -251,8 +252,6 @@ class _HomeTabState extends State<_HomeTab> {
         if (mounted) setState(() => _hasUnreadNotifications = false);
         return;
       }
-
-
 
       if (lastReadStr == null) {
         if (mounted) setState(() => _hasUnreadNotifications = true);
@@ -314,23 +313,30 @@ class _HomeTabState extends State<_HomeTab> {
     }
   }
 
-  Future<void> _showNotificationsBottomSheet(BuildContext context) async {
+  List<Map<String, dynamic>> get _filteredPets {
+    if (_selectedCategory == 'all') return _pets;
+    return _pets.where((pet) {
+      final type = (pet['type'] ?? '').toString().toLowerCase();
+      return type == _selectedCategory;
+    }).toList();
+  }
+
+  Future<void> _showNotificationsBottomSheet() async {
     final user = await ApiService.getUser();
     if (user != null) {
       final userId = user['id'];
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('user_${userId}_last_read_notif_time', DateTime.now().toIso8601String());
     }
-    if (mounted) {
-      setState(() {
-        _hasUnreadNotifications = false;
-      });
-    }
+    if (!mounted) return;
+    setState(() {
+      _hasUnreadNotifications = false;
+    });
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) {
+      builder: (modalContext) {
         return Container(
           height: MediaQuery.of(context).size.height * 0.65,
           decoration: const BoxDecoration(
@@ -352,7 +358,7 @@ class _HomeTabState extends State<_HomeTab> {
                 padding: const EdgeInsets.all(20),
                 child: Row(
                   children: [
-                    const Icon(Icons.notifications_active_rounded, color: AppTheme.primary),
+                    const Icon(Icons.notifications_active_rounded, color: AppTheme.primary, size: 22),
                     const SizedBox(width: 10),
                     Text(
                       'Notifications & Alerts',
@@ -373,18 +379,23 @@ class _HomeTabState extends State<_HomeTab> {
                       return const Center(child: CircularProgressIndicator(color: AppTheme.primary));
                     }
                     final apps = snapshot.data ?? [];
-                    if (apps.isEmpty) {
+                    if (apps.isEmpty && _vaccineReminders.isEmpty) {
                       return Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Text('🔔', style: TextStyle(fontSize: 48)),
+                            Icon(
+                              Icons.notifications_none_rounded,
+                              size: 48,
+                              color: Colors.grey.shade400,
+                            ),
                             const SizedBox(height: 12),
                             Text(
                               'No notifications right now',
                               style: GoogleFonts.poppins(
                                 fontSize: 14,
                                 color: AppTheme.textSecondary,
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
                           ],
@@ -394,7 +405,7 @@ class _HomeTabState extends State<_HomeTab> {
                     return ListView(
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                       children: [
-                        // ── Vaccine Reminder Cards ────────────────────────────
+                        // Vaccine Reminders
                         if (_vaccineReminders.isNotEmpty) ...
                           _vaccineReminders.map((reminder) {
                             final days = reminder['days_until_due'] as int? ?? 999;
@@ -418,10 +429,10 @@ class _HomeTabState extends State<_HomeTab> {
                                     ? const Color(0xFFFED7AA)
                                     : const Color(0xFFDDD6FE);
                             final dueText = days == 0
-                                ? '⚠️ Due TODAY'
+                                ? 'Due Today'
                                 : days == 1
-                                    ? '🔔 Due TOMORROW'
-                                    : '📅 Due in $days days ($dueLabel)';
+                                    ? 'Due Tomorrow'
+                                    : 'Due in $days days ($dueLabel)';
 
                             return Padding(
                               padding: const EdgeInsets.only(bottom: 12),
@@ -437,11 +448,11 @@ class _HomeTabState extends State<_HomeTab> {
                                   children: [
                                     Row(
                                       children: [
-                                        const Text('💉', style: TextStyle(fontSize: 16)),
+                                        Icon(Icons.vaccines_rounded, color: urgencyColor, size: 18),
                                         const SizedBox(width: 8),
                                         Expanded(
                                           child: Text(
-                                            '$category Reminder — $petName',
+                                            '$category Reminder - $petName',
                                             style: GoogleFonts.poppins(
                                               fontSize: 13,
                                               fontWeight: FontWeight.w700,
@@ -474,9 +485,9 @@ class _HomeTabState extends State<_HomeTab> {
                                 ),
                               ),
                             );
-                          }).toList(),
+                          }),
 
-                        // ── Application Status Cards ───────────────────────
+                        // Application Status Cards
                         ...apps.map((item) {
                           final isAdoptedByOther = (item['isAdoptedByOther'] as bool?) ?? false;
                           final isApproved = item['status'] == 'approved';
@@ -496,11 +507,11 @@ class _HomeTabState extends State<_HomeTab> {
                                   children: [
                                     Row(
                                       children: [
-                                        const Text('🐾', style: TextStyle(fontSize: 16)),
+                                        const Icon(Icons.home_outlined, color: Color(0xFFD9363E), size: 18),
                                         const SizedBox(width: 8),
                                         Expanded(
                                           child: Text(
-                                            '${item['petName']} Has Found a Home!',
+                                            '${item['petName']} Has Found a Home',
                                             style: GoogleFonts.poppins(
                                               fontSize: 13,
                                               fontWeight: FontWeight.w700,
@@ -512,7 +523,7 @@ class _HomeTabState extends State<_HomeTab> {
                                     ),
                                     const SizedBox(height: 6),
                                     Text(
-                                      'Sorry, the pet you requested (${item['petName']}) has already found a forever home with another verified applicant! Please browse our other adorable pets looking for a loving home.',
+                                      'The pet you requested (${item['petName']}) has already found a forever home with another verified applicant.',
                                       style: GoogleFonts.poppins(
                                         fontSize: 11,
                                         color: AppTheme.textSecondary,
@@ -531,18 +542,18 @@ class _HomeTabState extends State<_HomeTab> {
                                 decoration: BoxDecoration(
                                   color: const Color(0xFFE8F8F1),
                                   borderRadius: BorderRadius.circular(14),
-                                  border: Border.all(color: AppTheme.successColor.withOpacity(0.3)),
+                                  border: Border.all(color: AppTheme.successColor.withValues(alpha: 0.3)),
                                 ),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Row(
                                       children: [
-                                        const Text('🎉', style: TextStyle(fontSize: 16)),
+                                        const Icon(Icons.check_circle_outline_rounded, color: AppTheme.successColor, size: 18),
                                         const SizedBox(width: 8),
                                         Expanded(
                                           child: Text(
-                                            'Adoption Approved for ${item['petName']}!',
+                                            'Adoption Approved for ${item['petName']}',
                                             style: GoogleFonts.poppins(
                                               fontSize: 13,
                                               fontWeight: FontWeight.w700,
@@ -580,11 +591,11 @@ class _HomeTabState extends State<_HomeTab> {
                                   children: [
                                     Row(
                                       children: [
-                                        const Text('📋', style: TextStyle(fontSize: 16)),
+                                        const Icon(Icons.info_outline_rounded, color: Color(0xFFDC2626), size: 18),
                                         const SizedBox(width: 8),
                                         Expanded(
                                           child: Text(
-                                            'Application Update — ${item['petName']}',
+                                            'Application Update - ${item['petName']}',
                                             style: GoogleFonts.poppins(
                                               fontSize: 13,
                                               fontWeight: FontWeight.w700,
@@ -596,7 +607,7 @@ class _HomeTabState extends State<_HomeTab> {
                                     ),
                                     const SizedBox(height: 6),
                                     Text(
-                                      'Thank you for your interest in adopting ${item['petName']}. Your application was not approved at this time. Please explore our other lovable pets looking for a home!',
+                                      'Thank you for your interest in adopting ${item['petName']}. Your application was not approved at this time.',
                                       style: GoogleFonts.poppins(
                                         fontSize: 11,
                                         color: AppTheme.textSecondary,
@@ -622,11 +633,11 @@ class _HomeTabState extends State<_HomeTab> {
                                   children: [
                                     Row(
                                       children: [
-                                        const Text('🔍', style: TextStyle(fontSize: 16)),
+                                        const Icon(Icons.manage_search_rounded, color: Color(0xFF2563EB), size: 18),
                                         const SizedBox(width: 8),
                                         Expanded(
                                           child: Text(
-                                            'Application Under Review — ${item['petName']}',
+                                            'Application Under Review - ${item['petName']}',
                                             style: GoogleFonts.poppins(
                                               fontSize: 13,
                                               fontWeight: FontWeight.w700,
@@ -664,11 +675,11 @@ class _HomeTabState extends State<_HomeTab> {
                                   children: [
                                     Row(
                                       children: [
-                                        const Text('⏳', style: TextStyle(fontSize: 16)),
+                                        const Icon(Icons.hourglass_top_rounded, color: AppTheme.warningColor, size: 18),
                                         const SizedBox(width: 8),
                                         Expanded(
                                           child: Text(
-                                            'Adoption Request Pending for ${item['petName']}',
+                                            'Adoption Request Pending - ${item['petName']}',
                                             style: GoogleFonts.poppins(
                                               fontSize: 13,
                                               fontWeight: FontWeight.w700,
@@ -692,7 +703,7 @@ class _HomeTabState extends State<_HomeTab> {
                               ),
                             );
                           }
-                        }).toList(),
+                        }),
                       ],
                     );
                   },
@@ -707,6 +718,8 @@ class _HomeTabState extends State<_HomeTab> {
 
   @override
   Widget build(BuildContext context) {
+    final displayedPets = _filteredPets;
+
     return RefreshIndicator(
       onRefresh: () async {
         await _fetchPets();
@@ -723,9 +736,21 @@ class _HomeTabState extends State<_HomeTab> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // ML Pet Match Quiz Banner
+                  // Quick Category Filters
+                  const SizedBox(height: 18),
+                  Row(
+                    children: [
+                      _buildCategoryChip('all', 'All Pets', Icons.grid_view_rounded),
+                      const SizedBox(width: 8),
+                      _buildCategoryChip('dog', 'Dogs', Icons.pets_rounded),
+                      const SizedBox(width: 8),
+                      _buildCategoryChip('cat', 'Cats', Icons.cruelty_free_rounded),
+                    ],
+                  ),
+
+                  // Smart Pet Match Recommendation Banner
                   Container(
-                    margin: const EdgeInsets.only(top: 20),
+                    margin: const EdgeInsets.only(top: 18),
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
@@ -736,8 +761,8 @@ class _HomeTabState extends State<_HomeTab> {
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                          color: AppTheme.primary.withOpacity(0.25),
-                          blurRadius: 12,
+                          color: AppTheme.primary.withValues(alpha: 0.25),
+                          blurRadius: 14,
                           offset: const Offset(0, 4),
                         ),
                       ],
@@ -748,10 +773,16 @@ class _HomeTabState extends State<_HomeTab> {
                           width: 46,
                           height: 46,
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
-                            shape: BoxShape.circle,
+                            color: Colors.white.withValues(alpha: 0.18),
+                            borderRadius: BorderRadius.circular(14),
                           ),
-                          child: const Center(child: Text('🧠', style: TextStyle(fontSize: 24))),
+                          child: const Center(
+                            child: Icon(
+                              Icons.auto_awesome_rounded,
+                              color: Colors.white,
+                              size: 22,
+                            ),
+                          ),
                         ),
                         const SizedBox(width: 14),
                         Expanded(
@@ -759,7 +790,7 @@ class _HomeTabState extends State<_HomeTab> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Find Your Perfect Match ✨',
+                                'Smart Pet Recommendation',
                                 style: GoogleFonts.poppins(
                                   color: Colors.white,
                                   fontSize: 14,
@@ -768,9 +799,9 @@ class _HomeTabState extends State<_HomeTab> {
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                'Take our 1-min ML Lifestyle Quiz for personalized pet matches',
+                                'Take our 1-minute quiz for personalized pet matches',
                                 style: GoogleFonts.poppins(
-                                  color: Colors.white.withOpacity(0.9),
+                                  color: Colors.white.withValues(alpha: 0.9),
                                   fontSize: 11,
                                 ),
                               ),
@@ -778,11 +809,16 @@ class _HomeTabState extends State<_HomeTab> {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        ElevatedButton(
+                        ElevatedButton.icon(
                           onPressed: () async {
                             await Navigator.pushNamed(context, '/match-quiz');
                             _fetchRecommendations();
                           },
+                          icon: const Icon(Icons.arrow_forward_rounded, size: 14),
+                          label: Text(
+                            'Take Quiz',
+                            style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w700),
+                          ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.white,
                             foregroundColor: AppTheme.primaryDark,
@@ -790,22 +826,18 @@ class _HomeTabState extends State<_HomeTab> {
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                             elevation: 0,
                           ),
-                          child: Text(
-                            'Quiz 🐾',
-                            style: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w700),
-                          ),
                         ),
                       ],
                     ),
                   ),
 
-                  // Python ML Recommendations Carousel
+                  // Recommendations Carousel (if available)
                   if (_recommendations.isNotEmpty || _pets.isNotEmpty) ...[
                     const SizedBox(height: 24),
                     _sectionHeader(
                       context,
-                      '🤖 Recommended for You',
-                      'ML Cosine Match',
+                      'Recommended for You',
+                      'Personalized Match',
                       isPowered: true,
                       onTap: () => Navigator.pushNamed(context, '/match-quiz'),
                     ),
@@ -815,7 +847,7 @@ class _HomeTabState extends State<_HomeTab> {
                       child: ListView.separated(
                         scrollDirection: Axis.horizontal,
                         itemCount: _recommendations.isNotEmpty ? _recommendations.length : _pets.length,
-                        separatorBuilder: (_, __) => const SizedBox(width: 12),
+                        separatorBuilder: (context, index) => const SizedBox(width: 12),
                         itemBuilder: (context, index) {
                           final isRec = _recommendations.isNotEmpty;
                           final raw = isRec ? _recommendations[index] : _pets[index];
@@ -851,10 +883,12 @@ class _HomeTabState extends State<_HomeTab> {
                       ),
                     ),
                   ],
+
+                  // Available Pets Section
                   const SizedBox(height: 28),
                   _sectionHeader(
                     context,
-                    '🐾 Available Pets',
+                    'Available for Adoption',
                     'See All',
                     onTap: widget.onSeeAllPressed,
                   ),
@@ -866,16 +900,20 @@ class _HomeTabState extends State<_HomeTab> {
                             child: CircularProgressIndicator(color: AppTheme.primary),
                           ),
                         )
-                      : _pets.isEmpty
+                      : displayedPets.isEmpty
                           ? Padding(
                               padding: const EdgeInsets.symmetric(vertical: 32),
                               child: Center(
                                 child: Column(
                                   children: [
-                                    const Text('🐾', style: TextStyle(fontSize: 48)),
+                                    Icon(
+                                      Icons.pets_rounded,
+                                      size: 48,
+                                      color: AppTheme.primary.withValues(alpha: 0.3),
+                                    ),
                                     const SizedBox(height: 12),
                                     Text(
-                                      'No available pets right now',
+                                      'No available pets in this category',
                                       style: GoogleFonts.poppins(
                                         fontSize: 15,
                                         fontWeight: FontWeight.w600,
@@ -884,7 +922,7 @@ class _HomeTabState extends State<_HomeTab> {
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
-                                      'Pets added from the Web Admin will appear here!',
+                                      'Newly listed adoptable pets will appear here.',
                                       style: GoogleFonts.poppins(
                                         fontSize: 12,
                                         color: AppTheme.textSecondary,
@@ -903,9 +941,9 @@ class _HomeTabState extends State<_HomeTab> {
                                 mainAxisSpacing: 12,
                                 childAspectRatio: 0.72,
                               ),
-                              itemCount: _pets.length,
+                              itemCount: displayedPets.length,
                               itemBuilder: (context, index) {
-                                final pet = _pets[index];
+                                final pet = displayedPets[index];
                                 return PetCard(
                                   pet: pet,
                                   onTap: () => Navigator.pushNamed(
@@ -926,6 +964,60 @@ class _HomeTabState extends State<_HomeTab> {
     );
   }
 
+  Widget _buildCategoryChip(String categoryKey, String label, IconData icon) {
+    final isSelected = _selectedCategory == categoryKey;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => _selectedCategory = categoryKey),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: isSelected ? AppTheme.primary : Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: isSelected ? AppTheme.primary : Colors.grey.shade200,
+            ),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: AppTheme.primary.withValues(alpha: 0.25),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ]
+                : [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.03),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 15,
+                color: isSelected ? Colors.white : AppTheme.textSecondary,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: GoogleFonts.poppins(
+                  fontSize: 12,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  color: isSelected ? Colors.white : AppTheme.textPrimary,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildSliverHeader(BuildContext context) {
     return SliverToBoxAdapter(
       child: Container(
@@ -936,8 +1028,8 @@ class _HomeTabState extends State<_HomeTab> {
             colors: [Color(0xFF0A6B72), AppTheme.primary],
           ),
           borderRadius: BorderRadius.only(
-            bottomLeft: Radius.circular(30),
-            bottomRight: Radius.circular(30),
+            bottomLeft: Radius.circular(32),
+            bottomRight: Radius.circular(32),
           ),
         ),
         child: SafeArea(
@@ -954,29 +1046,32 @@ class _HomeTabState extends State<_HomeTab> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Hello, ${_userName.trim().split(RegExp(r'\s+')).first}! 👋',
+                          'Welcome, ${_userName.trim().split(RegExp(r'\s+')).first}',
                           style: GoogleFonts.poppins(
-                            fontSize: 20,
+                            fontSize: 21,
                             fontWeight: FontWeight.w700,
                             color: Colors.white,
+                            letterSpacing: -0.2,
                           ),
                         ),
+                        const SizedBox(height: 2),
                         Text(
-                          'Find a pet that matches your lifestyle',
+                          'Find your perfect companion',
                           style: GoogleFonts.poppins(
-                            fontSize: 12,
-                            color: Colors.white.withOpacity(0.8),
+                            fontSize: 12.5,
+                            color: Colors.white.withValues(alpha: 0.85),
+                            fontWeight: FontWeight.w400,
                           ),
                         ),
                       ],
                     ),
                     GestureDetector(
-                      onTap: () => _showNotificationsBottomSheet(context),
+                      onTap: () => _showNotificationsBottomSheet(),
                       child: Container(
                         width: 44,
                         height: 44,
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
+                          color: Colors.white.withValues(alpha: 0.18),
                           shape: BoxShape.circle,
                         ),
                         child: Stack(
@@ -1028,23 +1123,27 @@ class _HomeTabState extends State<_HomeTab> {
         Text(
           title,
           style: GoogleFonts.poppins(
-            fontSize: 15,
+            fontSize: 16,
             fontWeight: FontWeight.w700,
             color: AppTheme.textPrimary,
+            letterSpacing: -0.2,
           ),
         ),
         if (isPowered)
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
             decoration: BoxDecoration(
-              color: const Color(0xFF6C63FF).withOpacity(0.1),
+              color: AppTheme.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: AppTheme.primary.withValues(alpha: 0.2),
+              ),
             ),
             child: Text(
               actionLabel,
               style: GoogleFonts.poppins(
-                fontSize: 10,
-                color: const Color(0xFF6C63FF),
+                fontSize: 10.5,
+                color: AppTheme.primary,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -1057,13 +1156,24 @@ class _HomeTabState extends State<_HomeTab> {
               minimumSize: Size.zero,
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
-            child: Text(
-              actionLabel,
-              style: GoogleFonts.poppins(
-                fontSize: 13,
-                color: AppTheme.primary,
-                fontWeight: FontWeight.w600,
-              ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  actionLabel,
+                  style: GoogleFonts.poppins(
+                    fontSize: 12.5,
+                    color: AppTheme.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(width: 2),
+                const Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 11,
+                  color: AppTheme.primary,
+                ),
+              ],
             ),
           ),
       ],

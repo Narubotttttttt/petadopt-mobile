@@ -139,7 +139,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
           },
         ),
         title: Text(
-          _showResults ? 'Your Top Pet Matches 🌟' : 'Pet Match Quiz 🐾',
+          _showResults ? 'Your Top Pet Matches' : 'Pet Match Quiz',
           style: GoogleFonts.poppins(fontSize: 17, fontWeight: FontWeight.w600),
         ),
       ),

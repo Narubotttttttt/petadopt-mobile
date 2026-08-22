@@ -6,6 +6,7 @@ import 'package:mobile_petadopt/services/api_service.dart';
 import 'package:mobile_petadopt/services/notification_service.dart';
 import 'package:mobile_petadopt/services/phone_auth_service.dart';
 import 'package:mobile_petadopt/theme/app_theme.dart';
+import 'package:mobile_petadopt/widgets/exploration_mode_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -362,7 +363,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
         );
-        Navigator.pushReplacementNamed(context, '/home');
+        ExplorationModeDialog.show(
+          context,
+          onRecommendationSelected: () {
+            Navigator.pushReplacementNamed(context, '/home');
+            Navigator.pushNamed(context, '/match-quiz');
+          },
+          onManualSelected: () {
+            Navigator.pushReplacementNamed(context, '/home');
+          },
+        );
       }
     } catch (e) {
       if (mounted) {

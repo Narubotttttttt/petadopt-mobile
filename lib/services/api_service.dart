@@ -93,6 +93,36 @@ class ApiService {
   }
 
 
+  static Future<Map<String, dynamic>> checkEmailAvailability(String email) async {
+    final response = await http
+        .post(
+          Uri.parse('$_baseUrl/auth/check-email'),
+          headers: _headers,
+          body: jsonEncode({'email': email.trim()}),
+        )
+        .timeout(const Duration(seconds: 15));
+
+    final data = jsonDecode(response.body) as Map<String, dynamic>;
+
+    if (response.statusCode == 200) {
+      return data;
+    }
+
+    if (response.statusCode == 422) {
+      final errors = data['errors'] as Map<String, dynamic>?;
+      if (errors != null && errors.isNotEmpty) {
+        final firstField = errors.values.first;
+        final message = firstField is List ? firstField.first : firstField;
+        throw Exception(message.toString());
+      }
+      if (data['message'] != null) {
+        throw Exception(data['message'].toString());
+      }
+    }
+
+    throw Exception(data['message']?.toString() ?? 'Failed to check email availability.');
+  }
+
   static Future<Map<String, dynamic>> sendEmailOtp(String email) async {
     final response = await http
         .post(
@@ -106,6 +136,18 @@ class ApiService {
 
     if (response.statusCode == 200 && data['success'] == true) {
       return data;
+    }
+
+    if (response.statusCode == 422) {
+      final errors = data['errors'] as Map<String, dynamic>?;
+      if (errors != null && errors.isNotEmpty) {
+        final firstField = errors.values.first;
+        final message = firstField is List ? firstField.first : firstField;
+        throw Exception(message.toString());
+      }
+      if (data['message'] != null) {
+        throw Exception(data['message'].toString());
+      }
     }
 
     throw Exception(data['message']?.toString() ?? 'Failed to send verification code.');
@@ -130,6 +172,18 @@ class ApiService {
 
     if (response.statusCode == 200 && data['success'] == true) {
       return true;
+    }
+
+    if (response.statusCode == 422) {
+      final errors = data['errors'] as Map<String, dynamic>?;
+      if (errors != null && errors.isNotEmpty) {
+        final firstField = errors.values.first;
+        final message = firstField is List ? firstField.first : firstField;
+        throw Exception(message.toString());
+      }
+      if (data['message'] != null) {
+        throw Exception(data['message'].toString());
+      }
     }
 
     throw Exception(data['message']?.toString() ?? 'Invalid or expired verification code.');

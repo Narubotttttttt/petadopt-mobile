@@ -292,7 +292,7 @@ class _PetCardState extends State<PetCard> {
                       child: Text(
                         matchPct != null
                             ? '${matchPct.toInt()}% Match'
-                            : '🌟 ML Pick',
+                            : 'Top Pick',
                         style: GoogleFonts.poppins(
                           color: Colors.white,
                           fontSize: 9.5,
@@ -364,8 +364,12 @@ class _PetCardState extends State<PetCard> {
     return Container(
       height: height,
       color: AppTheme.primaryLight,
-      child: const Center(
-        child: Text('🐾', style: TextStyle(fontSize: 40)),
+      child: Center(
+        child: Icon(
+          Icons.pets_rounded,
+          size: 38,
+          color: AppTheme.primary.withValues(alpha: 0.35),
+        ),
       ),
     );
   }
