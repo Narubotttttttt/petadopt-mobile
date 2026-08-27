@@ -901,7 +901,7 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
                 height: 54,
                 color: AppTheme.primaryLight,
                 child: const Center(
-                  child: Text('🐾', style: TextStyle(fontSize: 22)),
+                  child: Icon(Icons.pets_rounded, size: 22, color: Colors.white),
                 ),
               ),
             ),

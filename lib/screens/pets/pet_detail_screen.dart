@@ -19,7 +19,7 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
 
   String get _name {
     final n = widget.pet['name']?.toString();
-    return (n != null && n.trim().isNotEmpty && n != 'null') ? n : 'Pet #${widget.pet['id'] ?? ''}';
+    return (n != null && n.trim().isNotEmpty && n != 'null') ? n : 'Pet no. ${widget.pet['id'] ?? ''}';
   }
 
   String get _breed => widget.pet['breed']?.toString() ?? 'Mixed Breed';
@@ -75,18 +75,29 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
         context: context,
         builder: (ctx) => AlertDialog(
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(22),
           ),
+          contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
+          actionsPadding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
           title: Row(
             children: [
-              const Icon(Icons.location_off_rounded, color: AppTheme.primary, size: 24),
-              const SizedBox(width: 8),
-              Text(
-                'Address Required',
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: AppTheme.textPrimary,
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryLight,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.location_off_rounded, color: AppTheme.primary, size: 22),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Address Required',
+                  style: GoogleFonts.poppins(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.textPrimary,
+                  ),
                 ),
               ),
             ],
@@ -102,12 +113,19 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              ),
               child: Text(
                 'Cancel',
-                style: GoogleFonts.poppins(color: AppTheme.textSecondary),
+                style: GoogleFonts.poppins(
+                  color: AppTheme.textSecondary,
+                  fontWeight: FontWeight.w500,
+                  fontSize: 13,
+                ),
               ),
             ),
-            ElevatedButton(
+            ElevatedButton.icon(
               onPressed: () async {
                 Navigator.pop(ctx);
                 await Navigator.pushNamed(context, '/profile');
@@ -115,18 +133,21 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                   _handleApplyForAdoption();
                 }
               },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primary,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              child: Text(
-                '👤 Go to Profile',
+              icon: const Icon(Icons.person_outline_rounded, size: 16, color: Colors.white),
+              label: Text(
+                'Go to Profile',
                 style: GoogleFonts.poppins(
                   color: Colors.white,
                   fontWeight: FontWeight.w600,
-                  fontSize: 12,
+                  fontSize: 13,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primary,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
               ),
             ),
@@ -142,18 +163,29 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
         context: context,
         builder: (ctx) => AlertDialog(
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(22),
           ),
+          contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
+          actionsPadding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
           title: Row(
             children: [
-              const Icon(Icons.phone_iphone_rounded, color: AppTheme.primary, size: 24),
-              const SizedBox(width: 8),
-              Text(
-                'Mobile Number Required',
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: AppTheme.textPrimary,
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryLight,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.phone_iphone_rounded, color: AppTheme.primary, size: 22),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Mobile Number Required',
+                  style: GoogleFonts.poppins(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.textPrimary,
+                  ),
                 ),
               ),
             ],
@@ -169,12 +201,19 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              ),
               child: Text(
                 'Cancel',
-                style: GoogleFonts.poppins(color: AppTheme.textSecondary),
+                style: GoogleFonts.poppins(
+                  color: AppTheme.textSecondary,
+                  fontWeight: FontWeight.w500,
+                  fontSize: 13,
+                ),
               ),
             ),
-            ElevatedButton(
+            ElevatedButton.icon(
               onPressed: () async {
                 Navigator.pop(ctx);
                 await Navigator.pushNamed(context, '/profile');
@@ -182,18 +221,21 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                   _handleApplyForAdoption();
                 }
               },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primary,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              child: Text(
-                '👤 Go to Profile',
+              icon: const Icon(Icons.person_outline_rounded, size: 16, color: Colors.white),
+              label: Text(
+                'Go to Profile',
                 style: GoogleFonts.poppins(
                   color: Colors.white,
                   fontWeight: FontWeight.w600,
-                  fontSize: 12,
+                  fontSize: 13,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primary,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
               ),
             ),
@@ -441,15 +483,17 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
 
                   Row(
                     children: [
-                      _infoCard('🎂', 'Age', _age),
+                      _infoCard(Icons.cake_outlined, 'Age', _age),
                       const SizedBox(width: 8),
                       _infoCard(
-                        _gender.toLowerCase() == 'male' ? '♂️' : '♀️',
+                        _gender.toLowerCase() == 'male'
+                            ? Icons.male_rounded
+                            : Icons.female_rounded,
                         'Gender',
                         _gender,
                       ),
                       const SizedBox(width: 8),
-                      _infoCard('🎨', 'Color', _color),
+                      _infoCard(Icons.palette_outlined, 'Color', _color),
                     ],
                   ),
                   const SizedBox(height: 24),
@@ -516,7 +560,7 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                   ),
                   const SizedBox(height: 24),
                   Text(
-                    'Medical History 🩺',
+                    'Medical History',
                     style: GoogleFonts.poppins(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
@@ -624,7 +668,7 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
             ),
             child: Center(
               child: Text(
-                '🐾  Apply for Adoption',
+                'Apply for Adoption',
                 style: GoogleFonts.poppins(
                   color: Colors.white,
                   fontSize: 15,
@@ -641,13 +685,13 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
   Widget _buildPlaceholder() {
     return Container(
       color: AppTheme.primaryLight,
-      child: const Center(
-        child: Text('🐾', style: TextStyle(fontSize: 80)),
+      child: Center(
+        child: Icon(Icons.pets_rounded, size: 64, color: AppTheme.primary.withOpacity(0.35)),
       ),
     );
   }
 
-  Widget _infoCard(String emoji, String label, String value) {
+  Widget _infoCard(IconData icon, String label, String value) {
     return Expanded(
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
@@ -658,7 +702,7 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
         ),
         child: Column(
           children: [
-            Text(emoji, style: const TextStyle(fontSize: 20)),
+            Icon(icon, size: 20, color: AppTheme.primary),
             const SizedBox(height: 4),
             Text(
               label,

@@ -23,7 +23,7 @@ class _PetCardState extends State<PetCard> {
 
   String get _name {
     final n = widget.pet['name']?.toString();
-    return (n != null && n.trim().isNotEmpty && n != 'null') ? n : 'Pet #${widget.pet['id'] ?? ''}';
+    return (n != null && n.trim().isNotEmpty && n != 'null') ? n : 'Pet no. ${widget.pet['id'] ?? ''}';
   }
 
   String get _breed => widget.pet['breed']?.toString() ?? 'Mixed Breed';

@@ -395,7 +395,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  '🐾 ${role.toUpperCase()}',
+                  role.toUpperCase(),
                   style: GoogleFonts.poppins(
                     fontSize: 11,
                     color: Colors.white,

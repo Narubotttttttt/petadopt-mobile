@@ -231,7 +231,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
                           elevation: 2,
                         ),
                         child: Text(
-                          _currentStep < 3 ? 'Next Step →' : 'Find My Perfect Match 🐾',
+                          _currentStep < 3 ? 'Next Step →' : 'Find My Perfect Match',
                           style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 14, color: Colors.white),
                         ),
                       ),
@@ -283,16 +283,16 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Pet Preferences 🐾', style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
+        Text('Pet Preferences', style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
         const SizedBox(height: 4),
         Text('Tell us what kind of pet you are looking for', style: GoogleFonts.poppins(fontSize: 13, color: AppTheme.textSecondary)),
         const SizedBox(height: 24),
         _buildSectionTitle('Preferred Pet Species'),
         _buildRadioGroup(
           options: [
-            {'val': 'any', 'label': 'Any Species 🐾'},
-            {'val': 'dog', 'label': 'Dogs Only 🐶'},
-            {'val': 'cat', 'label': 'Cats Only 🐱'},
+            {'val': 'any', 'label': 'Any Species'},
+            {'val': 'dog', 'label': 'Dogs Only'},
+            {'val': 'cat', 'label': 'Cats Only'},
           ],
           selected: _preferredSpecies,
           onSelected: (val) => setState(() => _preferredSpecies = val),
@@ -315,8 +315,8 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
         _buildRadioGroup(
           options: [
             {'val': 'any', 'label': 'Any'},
-            {'val': 'male', 'label': 'Male ♂'},
-            {'val': 'female', 'label': 'Female ♀'},
+            {'val': 'male', 'label': 'Male'},
+            {'val': 'female', 'label': 'Female'},
           ],
           selected: _preferredGender,
           onSelected: (val) => setState(() => _preferredGender = val),
@@ -348,16 +348,16 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Living Space & Routine 🏡', style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
+        Text('Living Space & Routine', style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
         const SizedBox(height: 4),
         Text('Helps match pets that thrive in your living environment', style: GoogleFonts.poppins(fontSize: 13, color: AppTheme.textSecondary)),
         const SizedBox(height: 24),
         _buildSectionTitle('Your Residence Type'),
         _buildRadioGroup(
           options: [
-            {'val': 'apartment', 'label': 'Apartment / Condominium 🏢'},
-            {'val': 'house_with_yard', 'label': 'House with Fenced Yard 🏡'},
-            {'val': 'house_no_yard', 'label': 'House without Yard 🏠'},
+            {'val': 'apartment', 'label': 'Apartment / Condominium'},
+            {'val': 'house_with_yard', 'label': 'House with Fenced Yard'},
+            {'val': 'house_no_yard', 'label': 'House without Yard'},
           ],
           selected: _livingEnvironment,
           onSelected: (val) => setState(() => _livingEnvironment = val),
@@ -366,9 +366,9 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
         _buildSectionTitle('Your Activity Level'),
         _buildRadioGroup(
           options: [
-            {'val': 'relaxed', 'label': 'Calm & Relaxed 🛋️ (Indoor lounging)'},
-            {'val': 'moderate', 'label': 'Moderately Active 🚶 (Daily walks & play)'},
-            {'val': 'high', 'label': 'High Energy 🏃 (Running, hiking, outdoors)'},
+            {'val': 'relaxed', 'label': 'Calm & Relaxed (Indoor lounging)'},
+            {'val': 'moderate', 'label': 'Moderately Active (Daily walks & play)'},
+            {'val': 'high', 'label': 'High Energy (Running, hiking, outdoors)'},
           ],
           selected: _activityLevel,
           onSelected: (val) => setState(() => _activityLevel = val),
@@ -382,15 +382,15 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Experience & Household 👨‍👩‍👧‍👦', style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
+        Text('Experience & Household', style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
         const SizedBox(height: 4),
         Text('Ensures the pet is safe and friendly with everyone in your home', style: GoogleFonts.poppins(fontSize: 13, color: AppTheme.textSecondary)),
         const SizedBox(height: 24),
         _buildSectionTitle('Your Experience with Pets'),
         _buildRadioGroup(
           options: [
-            {'val': 'first_time', 'label': 'First-time Pet Owner 🔰'},
-            {'val': 'experienced', 'label': 'Experienced Pet Owner 🏆'},
+            {'val': 'first_time', 'label': 'First-time Pet Owner'},
+            {'val': 'experienced', 'label': 'Experienced Pet Owner'},
           ],
           selected: _petExperience,
           onSelected: (val) => setState(() => _petExperience = val),
@@ -423,7 +423,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Care Capacity & Traits 💖', style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
+        Text('Care Capacity & Traits', style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
         const SizedBox(height: 4),
         Text('Matches pets based on your daily schedule and desired personality', style: GoogleFonts.poppins(fontSize: 13, color: AppTheme.textSecondary)),
         const SizedBox(height: 24),
@@ -611,7 +611,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Top Matching Candidates 🌟', style: GoogleFonts.poppins(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
+                      Text('Top Matching Candidates', style: GoogleFonts.poppins(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
                       const SizedBox(height: 2),
                       Text('Ranked using Scikit-Learn Cosine Similarity',
                           style: GoogleFonts.poppins(color: Colors.white.withOpacity(0.85), fontSize: 11)),
@@ -645,7 +645,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
             onTap: () {
               final petData = {
                 'id': pet['pet_id'] ?? pet['id'],
-                'name': pet['name'] ?? 'Pet #${pet['pet_id']}',
+                'name': pet['name'] ?? 'Pet no. ${pet['pet_id']}',
                 'breed': pet['breed'] ?? 'Mixed Breed',
                 'age': pet['age'] ?? 'Adult',
                 'gender': pet['gender'] ?? 'male',

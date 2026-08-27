@@ -855,7 +855,7 @@ class _HomeTabState extends State<_HomeTab> {
                           final petData = isRec
                               ? {
                                   'id': raw['pet_id'] ?? raw['id'],
-                                  'name': raw['name'] ?? 'Pet #${raw['pet_id']}',
+                                  'name': raw['name'] ?? 'Pet no. ${raw['pet_id']}',
                                   'breed': raw['breed'] ?? 'Mixed Breed',
                                   'age': raw['age'] ?? 'Adult',
                                   'gender': raw['gender'] ?? 'male',

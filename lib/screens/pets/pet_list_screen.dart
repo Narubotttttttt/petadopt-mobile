@@ -190,7 +190,7 @@ class _PetListScreenState extends State<PetListScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Text('🔍', style: TextStyle(fontSize: 56)),
+          const Icon(Icons.search_off_rounded, size: 56, color: AppTheme.textSecondary),
           const SizedBox(height: 16),
           Text(
             'No pets found',
