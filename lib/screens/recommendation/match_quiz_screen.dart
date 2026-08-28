@@ -174,7 +174,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Running Machine Learning Cosine Similarity Model\nagainst shelter pets...',
+            'Running Random Forest Machine Learning Model\nagainst shelter pets...',
             textAlign: TextAlign.center,
             style: GoogleFonts.poppins(fontSize: 13, color: AppTheme.textSecondary, height: 1.4),
           ),

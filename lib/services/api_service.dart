@@ -617,5 +617,53 @@ class ApiService {
     }
     return false;
   }
-}
 
+  static Future<Map<String, dynamic>> signAdoptionContract({
+    required int applicationId,
+    String? signatureBase64,
+    bool useSavedSignature = false,
+  }) async {
+    final token = await getToken();
+    final response = await http.post(
+      Uri.parse('$_baseUrl/adoption-applications/$applicationId/sign'),
+      headers: {
+        ..._headers,
+        if (token != null) 'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        if (signatureBase64 != null) 'signature_data': signatureBase64,
+        if (useSavedSignature) 'use_saved_signature': true,
+      }),
+    ).timeout(const Duration(seconds: 20));
+
+    final data = jsonDecode(response.body) as Map<String, dynamic>;
+    if (response.statusCode == 200) {
+      await fetchUserProfile();
+      return data;
+    }
+    throw Exception(data['message']?.toString() ?? 'Failed to sign adoption contract.');
+  }
+
+  static Future<Map<String, dynamic>> updateUserSignature({
+    required String signatureBase64,
+  }) async {
+    final token = await getToken();
+    final response = await http.post(
+      Uri.parse('$_baseUrl/user/update-signature'),
+      headers: {
+        ..._headers,
+        if (token != null) 'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'signature_data': signatureBase64,
+      }),
+    ).timeout(const Duration(seconds: 20));
+
+    final data = jsonDecode(response.body) as Map<String, dynamic>;
+    if (response.statusCode == 200) {
+      await fetchUserProfile();
+      return data;
+    }
+    throw Exception(data['message']?.toString() ?? 'Failed to update digital signature.');
+  }
+}

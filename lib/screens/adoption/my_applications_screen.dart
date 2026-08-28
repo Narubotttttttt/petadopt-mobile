@@ -1,3 +1,4 @@
+import 'package:mobile_petadopt/widgets/sign_contract_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile_petadopt/screens/adoption/adopted_pet_hub_screen.dart';
@@ -369,6 +370,172 @@ class _ApplicationCard extends StatelessWidget {
                     ],
                   ],
                 ),
+              ),
+            ],
+
+            if (status == 'approved' || status == 'adopted') ...[
+              const SizedBox(height: 12),
+              Builder(
+                builder: (context) {
+                  final isSigned = application['is_signed'] == true || application['signature_url'] != null;
+                  final signedAt = application['signed_at']?.toString();
+                  final signatureUrl = application['signature_url']?.toString();
+
+                  if (isSigned) {
+                    return Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFECFDF5),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFA7F3D0)),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.verified_rounded, color: Color(0xFF059669), size: 18),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Adoption Agreement Signed',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: const Color(0xFF065F46),
+                                  ),
+                                ),
+                                if (signedAt != null && signedAt.isNotEmpty)
+                                  Text(
+                                    'Signed on $signedAt',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 10,
+                                      color: const Color(0xFF047857),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                          if (signatureUrl != null && signatureUrl.isNotEmpty)
+                            IconButton(
+                              icon: const Icon(Icons.visibility_outlined, size: 18, color: Color(0xFF059669)),
+                              tooltip: 'View Signature',
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                              onPressed: () {
+                                showDialog(
+                                  context: context,
+                                  builder: (ctx) => Dialog(
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(20),
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text(
+                                            'Adopter Digital Signature',
+                                            style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w700),
+                                          ),
+                                          const SizedBox(height: 14),
+                                          Container(
+                                            height: 120,
+                                            width: double.infinity,
+                                            padding: const EdgeInsets.all(12),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFFF8FAFC),
+                                              borderRadius: BorderRadius.circular(12),
+                                              border: Border.all(color: const Color(0xFFE2E8F0)),
+                                            ),
+                                            child: Image.network(signatureUrl, fit: BoxFit.contain),
+                                          ),
+                                          const SizedBox(height: 14),
+                                          ElevatedButton(
+                                            onPressed: () => Navigator.pop(ctx),
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: AppTheme.primary,
+                                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                            ),
+                                            child: const Text('Close', style: TextStyle(color: Colors.white)),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                        ],
+                      ),
+                    );
+                  }
+
+                  return Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFFBEB),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: const Color(0xFFFDE68A)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(Icons.draw_rounded, color: Color(0xFFD97706), size: 18),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                'Contract Signing Required',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: const Color(0xFF92400E),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Your application was approved! Please review the CAWS terms and provide your digital signature to finalize your pickup.',
+                          style: GoogleFonts.poppins(
+                            fontSize: 11,
+                            color: const Color(0xFFB45309),
+                            height: 1.35,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              showDialog(
+                                context: context,
+                                builder: (_) => SignContractDialog(
+                                  application: application,
+                                  onSigned: onRefresh,
+                                ),
+                              );
+                            },
+                            icon: const Icon(Icons.edit_document, size: 16, color: Colors.white),
+                            label: Text(
+                              'Review & Sign Adoption Contract',
+                              style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.white),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFD97706),
+                              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              elevation: 0,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
               ),
             ],
           ],

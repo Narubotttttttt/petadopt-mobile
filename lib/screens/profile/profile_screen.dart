@@ -1,3 +1,6 @@
+import 'package:flutter/gestures.dart';
+import 'dart:ui' as ui;
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -38,6 +41,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
       'icon': Icons.description_outlined,
       'label': 'My Applications',
       'subtitle': 'View all adoption requests',
+    },
+    {
+      'icon': Icons.draw_rounded,
+      'label': 'Digital Signature',
+      'subtitle': 'Official on-record e-signature',
     },
     {
       'icon': Icons.favorite_border_rounded,
@@ -215,6 +223,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             _buildAddressCard(context),
             const SizedBox(height: 10),
             _buildPhoneCard(context),
+            const SizedBox(height: 10),
+            _buildSignatureCard(context),
             const SizedBox(height: 14),
             _buildStatsRow(),
             const SizedBox(height: 16),
@@ -985,6 +995,172 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  
+  Widget _buildSignatureCard(BuildContext context) {
+    final signatureUrl = _user?['digital_signature_url']?.toString();
+    final hasSignature = signatureUrl != null && signatureUrl.isNotEmpty;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppTheme.background,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppTheme.cardBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryLight,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.draw_rounded,
+                  color: AppTheme.primary,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Digital Signature',
+                      style: GoogleFonts.poppins(
+                        fontSize: 11,
+                        color: AppTheme.textSecondary,
+                      ),
+                    ),
+                    Text(
+                      hasSignature ? 'Verified on Record' : 'No signature on record',
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: hasSignature ? const Color(0xFF059669) : AppTheme.errorColor,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (hasSignature)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFECFDF5),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFA7F3D0)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.verified_rounded, size: 12, color: Color(0xFF059669)),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Active',
+                        style: GoogleFonts.poppins(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF065F46),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          if (hasSignature) ...[
+            Container(
+              height: 70,
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFAFAFA),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              alignment: Alignment.centerLeft,
+              child: Image.network(
+                signatureUrl,
+                height: 58,
+                fit: BoxFit.contain,
+                errorBuilder: (_, __, ___) => Center(
+                  child: Text(
+                    'Signature on record',
+                    style: GoogleFonts.poppins(fontSize: 11, color: AppTheme.textSecondary),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            InkWell(
+              onTap: () => _showDigitalSignatureModal(context),
+              borderRadius: BorderRadius.circular(20),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEFF6FF),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: const Color(0xFFBFDBFE)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Change Signature',
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF1D4ED8),
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    const Icon(Icons.edit_document, size: 14, color: Color(0xFF1D4ED8)),
+                  ],
+                ),
+              ),
+            ),
+          ] else ...[
+            InkWell(
+              onTap: () => _showDigitalSignatureModal(context),
+              borderRadius: BorderRadius.circular(20),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEFF6FF),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: const Color(0xFFBFDBFE)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Set Signature',
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF1D4ED8),
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    const Icon(Icons.draw_rounded, size: 14, color: Color(0xFF1D4ED8)),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   Widget _buildStatsRow() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -1062,6 +1238,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       context,
                       MaterialPageRoute(builder: (_) => const MyApplicationsScreen()),
                     );
+                  } else if (item['label'] == 'Digital Signature') {
+                    _showDigitalSignatureModal(context);
                   } else if (item['label'] == 'Saved Pets') {
                     Navigator.pushNamed(context, '/favorites');
                   }
@@ -1128,6 +1306,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ],
           );
         }),
+      ),
+    );
+  }
+
+  
+  void _showDigitalSignatureModal(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => _DigitalSignatureSheet(
+        initialSignatureUrl: _user?['digital_signature_url']?.toString(),
+        onSignatureUpdated: () async {
+          await _loadUser();
+          if (mounted) setState(() {});
+        },
       ),
     );
   }
@@ -1210,4 +1404,492 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
     );
   }
+}
+
+
+class _DigitalSignatureSheet extends StatefulWidget {
+  final String? initialSignatureUrl;
+  final VoidCallback onSignatureUpdated;
+
+  const _DigitalSignatureSheet({
+    required this.initialSignatureUrl,
+    required this.onSignatureUpdated,
+  });
+
+  @override
+  State<_DigitalSignatureSheet> createState() => _DigitalSignatureSheetState();
+}
+
+class _DigitalSignatureSheetState extends State<_DigitalSignatureSheet> {
+  final List<List<Offset>> _strokes = [];
+  List<Offset> _currentStroke = [];
+  bool _isDrawing = false;
+  bool _isSaving = false;
+  bool _isSigning = false;
+  String? _signatureUrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _signatureUrl = widget.initialSignatureUrl;
+    if (_signatureUrl == null || _signatureUrl!.isEmpty) {
+      _isDrawing = true;
+    }
+  }
+
+  void _clearSignature() {
+    setState(() {
+      _strokes.clear();
+      _currentStroke.clear();
+    });
+  }
+
+  Future<String?> _exportSignatureAsBase64() async {
+    if (_strokes.isEmpty) return null;
+
+    double minX = double.infinity, minY = double.infinity;
+    double maxX = -double.infinity, maxY = -double.infinity;
+    for (final stroke in _strokes) {
+      for (final p in stroke) {
+        if (p.dx < minX) minX = p.dx;
+        if (p.dy < minY) minY = p.dy;
+        if (p.dx > maxX) maxX = p.dx;
+        if (p.dy > maxY) maxY = p.dy;
+      }
+    }
+
+    const padding = 10.0;
+    minX = (minX - padding).clamp(0.0, double.infinity);
+    minY = (minY - padding).clamp(0.0, double.infinity);
+    maxX = maxX + padding;
+    maxY = maxY + padding;
+
+    final width = (maxX - minX).clamp(60.0, 600.0);
+    final height = (maxY - minY).clamp(30.0, 300.0);
+
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder);
+
+    final paint = Paint()
+      ..color = const Color(0xFF0F172A)
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..strokeWidth = 3.5
+      ..isAntiAlias = true;
+
+    canvas.translate(-minX, -minY);
+
+    for (final stroke in _strokes) {
+      if (stroke.length > 1) {
+        for (int i = 0; i < stroke.length - 1; i++) {
+          canvas.drawLine(stroke[i], stroke[i + 1], paint);
+        }
+      } else if (stroke.length == 1) {
+        canvas.drawCircle(stroke[0], 2.0, paint);
+      }
+    }
+
+    final picture = recorder.endRecording();
+    final img = await picture.toImage(width.toInt(), height.toInt());
+    final byteData = await img.toByteData(format: ui.ImageByteFormat.png);
+    if (byteData == null) return null;
+
+    final bytes = byteData.buffer.asUint8List();
+    return 'data:image/png;base64,${base64Encode(bytes)}';
+  }
+
+  Future<void> _saveSignature() async {
+    if (_strokes.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please draw your signature before saving.'),
+          backgroundColor: AppTheme.errorColor,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isSaving = true);
+
+    try {
+      final base64Sig = await _exportSignatureAsBase64();
+      if (base64Sig == null) throw Exception('Could not process signature image.');
+
+      final res = await ApiService.updateUserSignature(signatureBase64: base64Sig);
+      final newUrl = res['digital_signature_url']?.toString();
+
+      if (mounted) {
+        setState(() {
+          _signatureUrl = newUrl;
+          _isDrawing = false;
+          _isSaving = false;
+          _strokes.clear();
+        });
+        widget.onSignatureUpdated();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.verified_rounded, color: Colors.white, size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Digital signature saved to your profile on record.',
+                    style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: const Color(0xFF10B981),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isSaving = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString().replaceFirst('Exception: ', '')),
+            backgroundColor: AppTheme.errorColor,
+          ),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final hasSignature = _signatureUrl != null && _signatureUrl!.isNotEmpty;
+
+    return Container(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+        top: 24,
+        left: 20,
+        right: 20,
+      ),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const SizedBox(height: 18),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryLight,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.draw_rounded, color: AppTheme.primary, size: 22),
+                  ),
+                  const SizedBox(width: 12),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Digital Signature',
+                        style: GoogleFonts.poppins(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: AppTheme.textPrimary,
+                        ),
+                      ),
+                      Text(
+                        'Official e-Signature Record',
+                        style: GoogleFonts.poppins(fontSize: 11, color: AppTheme.textSecondary),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              if (hasSignature && !_isDrawing)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFECFDF5),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: const Color(0xFFA7F3D0)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.verified_rounded, color: Color(0xFF059669), size: 14),
+                      const SizedBox(width: 4),
+                      Text(
+                        'On Record',
+                        style: GoogleFonts.poppins(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF065F46),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 14),
+
+          if (hasSignature && !_isDrawing) ...[
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: Column(
+                children: [
+                  Container(
+                    height: 130,
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFCBD5E1)),
+                    ),
+                    child: Image.network(
+                      _signatureUrl!,
+                      fit: BoxFit.contain,
+                      errorBuilder: (_, __, ___) => const Center(
+                        child: Text('Signature on file', style: TextStyle(color: Color(0xFF64748B))),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      const Icon(Icons.shield_outlined, size: 16, color: AppTheme.primary),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          'Your e-signature is securely saved and automatically used on your approved CAWS adoption agreements.',
+                          style: GoogleFonts.poppins(
+                            fontSize: 11,
+                            color: const Color(0xFF64748B),
+                            height: 1.35,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 18),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      setState(() {
+                        _isDrawing = true;
+                        _strokes.clear();
+                      });
+                    },
+                    icon: const Icon(Icons.edit_outlined, size: 16, color: AppTheme.primary),
+                    label: Text(
+                      'Update Signature',
+                      style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.primary),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 13),
+                      side: const BorderSide(color: AppTheme.primary),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primary,
+                      padding: const EdgeInsets.symmetric(vertical: 13),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      elevation: 0,
+                    ),
+                    child: Text(
+                      'Done',
+                      style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w700, color: Colors.white),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ] else ...[
+            Text(
+              'Draw your legal signature below using your finger (eGov Standard). It will be saved on your adopter profile.',
+              style: GoogleFonts.poppins(fontSize: 12, color: AppTheme.textSecondary, height: 1.4),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              height: 150,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: const Color(0xFFFAFAFA),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFCBD5E1), width: 1.5),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(14),
+                child: Stack(
+                  children: [
+                    if (_strokes.isEmpty)
+                      const IgnorePointer(
+                        child: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.draw_rounded, size: 24, color: Color(0xFF94A3B8)),
+                              SizedBox(height: 4),
+                              Text(
+                                'Sign inside this box',
+                                style: TextStyle(fontFamily: 'Poppins', fontSize: 12, color: Color(0xFF94A3B8)),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    Positioned(
+                      bottom: 20,
+                      left: 16,
+                      right: 16,
+                      child: const IgnorePointer(
+                        child: Divider(
+                          height: 1,
+                          thickness: 1,
+                          color: Color(0xFFCBD5E1),
+                        ),
+                      ),
+                    ),
+                    Listener(
+                      behavior: HitTestBehavior.opaque,
+                      onPointerDown: (event) {
+                        setState(() {
+                          _isSigning = true;
+                          _currentStroke = [event.localPosition];
+                          _strokes.add(_currentStroke);
+                        });
+                      },
+                      onPointerMove: (event) {
+                        setState(() {
+                          _currentStroke.add(event.localPosition);
+                        });
+                      },
+                      onPointerUp: (_) {
+                        setState(() {
+                          _isSigning = false;
+                          _currentStroke = [];
+                        });
+                      },
+                      child: SizedBox.expand(
+                        child: CustomPaint(
+                          painter: _SignaturePadPainter(strokes: _strokes),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                TextButton.icon(
+                  onPressed: _clearSignature,
+                  icon: const Icon(Icons.refresh_rounded, size: 16, color: Color(0xFF64748B)),
+                  label: Text('Clear Pad', style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFF64748B))),
+                ),
+                if (hasSignature)
+                  TextButton(
+                    onPressed: () {
+                      setState(() {
+                        _isDrawing = false;
+                        _strokes.clear();
+                      });
+                    },
+                    child: Text('Cancel Update', style: GoogleFonts.poppins(fontSize: 12, color: AppTheme.primary)),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _isSaving ? null : _saveSignature,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primary,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  elevation: 0,
+                ),
+                child: _isSaving
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                      )
+                    : Text(
+                        'Save Digital Signature',
+                        style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700, color: Colors.white),
+                      ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _SignaturePadPainter extends CustomPainter {
+  final List<List<Offset>> strokes;
+
+  _SignaturePadPainter({required this.strokes});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = const Color(0xFF0F172A)
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..strokeWidth = 3.0
+      ..isAntiAlias = true;
+
+    for (final stroke in strokes) {
+      if (stroke.length > 1) {
+        for (int i = 0; i < stroke.length - 1; i++) {
+          canvas.drawLine(stroke[i], stroke[i + 1], paint);
+        }
+      } else if (stroke.length == 1) {
+        canvas.drawCircle(stroke[0], 1.5, paint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _SignaturePadPainter oldDelegate) => true;
 }
