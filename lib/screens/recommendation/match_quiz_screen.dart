@@ -51,7 +51,18 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
   @override
   void initState() {
     super.initState();
+    _checkBanStanding();
     _loadSavedPreferences();
+  }
+
+  Future<void> _checkBanStanding() async {
+    try {
+      final user = await ApiService.getProfile();
+      if (user != null && (user['status'] == 'blacklisted' || user['status'] == 'restricted')) {
+        if (!mounted) return;
+        Navigator.pop(context);
+      }
+    } catch (_) {}
   }
 
   Future<void> _loadSavedPreferences() async {

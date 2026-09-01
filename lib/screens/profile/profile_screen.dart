@@ -76,12 +76,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _loadUser() async {
-    final user = await ApiService.getUser();
+    final user = await ApiService.getProfile();
     final userId = user != null ? user['id'] : 'guest';
     final prefs = await SharedPreferences.getInstance();
-    final address = prefs.getString('user_${userId}_full_address');
+    final address = prefs.getString('user_${userId}_full_address') ?? (user != null ? user['address'] as String? : null);
     final phone = prefs.getString('user_${userId}_phone') ?? (user != null ? user['phone'] as String? : null);
     final secondaryPhone = prefs.getString('user_${userId}_secondary_phone');
+    if (address != null && address.trim().isNotEmpty && userId != 'guest') {
+      await prefs.setString('user_${userId}_full_address', address.trim());
+    }
+    if (phone != null && phone.trim().isNotEmpty && userId != 'guest') {
+      await prefs.setString('user_${userId}_phone', phone.trim());
+    }
     if (mounted) {
       setState(() {
         _user = user;
@@ -413,6 +419,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
               ),
+              if ((_user?['status'] ?? 'active') != 'active') ...[
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: (_user?['status'] == 'blacklisted')
+                        ? const Color(0xFFEF4444)
+                        : (_user?['status'] == 'restricted')
+                            ? const Color(0xFFF59E0B)
+                            : const Color(0xFF10B981),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    (_user?['status'] == 'blacklisted')
+                        ? 'BANNED'
+                        : (_user?['status'] == 'restricted')
+                            ? 'RESTRICTED'
+                            : 'GOOD STANDING',
+                    style: GoogleFonts.poppins(
+                      fontSize: 11,
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         ],
@@ -949,7 +981,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     if (formKey.currentState!.validate()) {
                       final newPhone = phoneController.text.trim();
                       final newSecondary = secondaryController.text.trim();
-                      final user = await ApiService.getUser();
+                      final user = await ApiService.getProfile();
                       final userId = user != null ? user['id'] : 'guest';
                       final prefs = await SharedPreferences.getInstance();
                       await prefs.setString('user_${userId}_phone', newPhone);

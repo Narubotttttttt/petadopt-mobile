@@ -61,8 +61,19 @@ class _SplashScreenState extends State<SplashScreen>
       final token = await ApiService.getToken();
       if (mounted) {
         if (token != null && token.isNotEmpty) {
+          final user = await ApiService.getProfile();
+          if (user == null) {
+            await ApiService.clearSession();
+            if (mounted) {
+              Navigator.pushReplacementNamed(context, '/login');
+            }
+            return;
+          }
+
           await ApiService.updateLastActiveTime();
-          Navigator.pushReplacementNamed(context, '/home');
+          if (mounted) {
+            Navigator.pushReplacementNamed(context, '/home');
+          }
         } else {
           Navigator.pushReplacementNamed(context, '/login');
         }

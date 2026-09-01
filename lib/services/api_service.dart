@@ -6,6 +6,34 @@ import 'package:shared_preferences/shared_preferences.dart';
 class ApiService {
   static const String _baseUrl = 'http://192.168.1.46:8000/api';
   static const String _tokenKey = 'auth_token';
+
+  static String normalizeImageUrl(String? url) {
+    if (url == null || url.trim().isEmpty || url == 'null') {
+      return '';
+    }
+    final baseUri = Uri.parse(_baseUrl);
+    final hostPrefix = '${baseUri.scheme}://${baseUri.host}${baseUri.hasPort ? ':${baseUri.port}' : ''}';
+
+    if (url.startsWith('/')) {
+      return '$hostPrefix$url';
+    }
+
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      return '$hostPrefix/storage/$url';
+    }
+
+    if (url.contains('localhost') || url.contains('127.0.0.1') || url.contains('10.0.2.2')) {
+      final imgUri = Uri.tryParse(url);
+      if (imgUri != null) {
+        return imgUri.replace(
+          scheme: baseUri.scheme,
+          host: baseUri.host,
+          port: baseUri.hasPort ? baseUri.port : null,
+        ).toString();
+      }
+    }
+    return url;
+  }
   static const String _userKey = 'auth_user';
 
   static Map<String, String> get _headers => {
@@ -39,6 +67,24 @@ class ApiService {
       await prefs.setString(_tokenKey, data['token'] as String);
       await prefs.setString(_userKey, jsonEncode(data['user']));
       await prefs.setString('last_active_timestamp', DateTime.now().toIso8601String());
+      final userMap = data['user'] as Map<String, dynamic>?;
+      if (userMap != null) {
+        final userId = userMap['id'];
+        if (userId != null) {
+          final addr = userMap['address']?.toString();
+          if (addr != null && addr.trim().isNotEmpty) {
+            await prefs.setString('user_${userId}_full_address', addr.trim());
+          }
+          final phone = userMap['phone']?.toString();
+          if (phone != null && phone.trim().isNotEmpty) {
+            await prefs.setString('user_${userId}_phone', phone.trim());
+          }
+          final city = userMap['city']?.toString();
+          if (city != null && city.trim().isNotEmpty) {
+            await prefs.setString('user_${userId}_city', city.trim());
+          }
+        }
+      }
       return data;
     }
 
@@ -79,6 +125,24 @@ class ApiService {
       await prefs.setString(_tokenKey, data['token'] as String);
       await prefs.setString(_userKey, jsonEncode(data['user']));
       await prefs.setString('last_active_timestamp', DateTime.now().toIso8601String());
+      final userMap = data['user'] as Map<String, dynamic>?;
+      if (userMap != null) {
+        final userId = userMap['id'];
+        if (userId != null) {
+          final addr = userMap['address']?.toString();
+          if (addr != null && addr.trim().isNotEmpty) {
+            await prefs.setString('user_${userId}_full_address', addr.trim());
+          }
+          final phone = userMap['phone']?.toString();
+          if (phone != null && phone.trim().isNotEmpty) {
+            await prefs.setString('user_${userId}_phone', phone.trim());
+          }
+          final city = userMap['city']?.toString();
+          if (city != null && city.trim().isNotEmpty) {
+            await prefs.setString('user_${userId}_city', city.trim());
+          }
+        }
+      }
       return data;
     }
 
@@ -240,6 +304,42 @@ class ApiService {
     return jsonDecode(userJson) as Map<String, dynamic>;
   }
 
+  static Future<Map<String, dynamic>?> getProfile() async {
+    final token = await getToken();
+    if (token == null) return null;
+    final headers = Map<String, String>.from(_headers);
+    headers['Authorization'] = 'Bearer $token';
+
+    try {
+      final response = await http.get(Uri.parse('$_baseUrl/user'), headers: headers).timeout(const Duration(seconds: 10));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(_userKey, jsonEncode(data));
+        final userId = data['id'];
+        if (userId != null) {
+          final addr = data['address']?.toString();
+          if (addr != null && addr.trim().isNotEmpty) {
+            await prefs.setString('user_${userId}_full_address', addr.trim());
+          }
+          final phone = data['phone']?.toString();
+          if (phone != null && phone.trim().isNotEmpty) {
+            await prefs.setString('user_${userId}_phone', phone.trim());
+          }
+          final city = data['city']?.toString();
+          if (city != null && city.trim().isNotEmpty) {
+            await prefs.setString('user_${userId}_city', city.trim());
+          }
+        }
+        return data;
+      } else if (response.statusCode == 401 || response.statusCode == 403) {
+        await clearSession();
+        return null;
+      }
+    } catch (_) {}
+    return getUser();
+  }
+
   static Future<void> updateLastActiveTime() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('last_active_timestamp', DateTime.now().toIso8601String());
@@ -269,6 +369,7 @@ class ApiService {
     String? type,
     String? search,
   }) async {
+    final token = await getToken();
     final queryParams = <String, String>{};
     if (type != null && type.isNotEmpty && type.toLowerCase() != 'all') {
       queryParams['type'] = type.toLowerCase();
@@ -279,7 +380,12 @@ class ApiService {
 
     final uri = Uri.parse('$_baseUrl/pets').replace(queryParameters: queryParams.isNotEmpty ? queryParams : null);
 
-    final response = await http.get(uri, headers: _headers).timeout(const Duration(seconds: 15));
+    final headers = Map<String, String>.from(_headers);
+    if (token != null) {
+      headers['Authorization'] = 'Bearer $token';
+    }
+
+    final response = await http.get(uri, headers: headers).timeout(const Duration(seconds: 15));
 
     if (response.statusCode == 200) {
       final json = jsonDecode(response.body) as Map<String, dynamic>;
@@ -291,8 +397,14 @@ class ApiService {
   }
 
   static Future<Map<String, dynamic>> getPetDetail(int id) async {
+    final token = await getToken();
+    final headers = Map<String, String>.from(_headers);
+    if (token != null) {
+      headers['Authorization'] = 'Bearer $token';
+    }
+
     final response = await http
-        .get(Uri.parse('$_baseUrl/pets/$id'), headers: _headers)
+        .get(Uri.parse('$_baseUrl/pets/$id'), headers: headers)
         .timeout(const Duration(seconds: 15));
 
     if (response.statusCode == 200) {

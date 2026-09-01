@@ -109,7 +109,33 @@ class _AdoptedPetHubScreenState extends State<AdoptedPetHubScreen> {
     final dateApplied = widget.application['dateApplied'] as String? ?? '';
 
     final latestCheckin = _healthUpdates.isNotEmpty ? _healthUpdates.first : null;
-    final isUpToDate = latestCheckin != null;
+
+    DateTime? nextDueDate;
+    int? daysLeft;
+    bool isOverdue = false;
+    int overdueDays = 0;
+
+    if (latestCheckin != null && latestCheckin['check_in_date'] != null) {
+      try {
+        final lastDate = DateTime.parse(latestCheckin['check_in_date'].toString());
+        nextDueDate = lastDate.add(const Duration(days: 30));
+      } catch (_) {}
+    } else if (dateApplied.isNotEmpty) {
+      try {
+        final applied = DateTime.parse(dateApplied);
+        nextDueDate = applied.add(const Duration(days: 30));
+      } catch (_) {}
+    }
+
+    if (nextDueDate != null) {
+      final now = DateTime.now();
+      if (now.isAfter(nextDueDate)) {
+        isOverdue = true;
+        overdueDays = now.difference(nextDueDate).inDays;
+      } else {
+        daysLeft = nextDueDate.difference(now).inDays;
+      }
+    }
 
     return Scaffold(
       backgroundColor: AppTheme.background,
@@ -135,7 +161,12 @@ class _AdoptedPetHubScreenState extends State<AdoptedPetHubScreen> {
                   children: [
                     _buildPetHeroCard(petName, petBreed, petType, petImage, dateApplied),
                     const SizedBox(height: 16),
-                    _buildCheckinStatusCard(isUpToDate, latestCheckin),
+                    _buildCheckinStatusCard(
+                      isOverdue: isOverdue,
+                      overdueDays: overdueDays,
+                      daysLeft: daysLeft,
+                      latestCheckin: latestCheckin,
+                    ),
                     const SizedBox(height: 20),
                     _buildHealthJournalSection(),
                     const SizedBox(height: 20),
@@ -269,16 +300,53 @@ class _AdoptedPetHubScreenState extends State<AdoptedPetHubScreen> {
     );
   }
 
-  Widget _buildCheckinStatusCard(bool isUpToDate, Map<String, dynamic>? latestCheckin) {
+  Widget _buildCheckinStatusCard({
+    required bool isOverdue,
+    required int overdueDays,
+    required int? daysLeft,
+    required Map<String, dynamic>? latestCheckin,
+  }) {
+    final String statusTitle;
+    final String statusSubtitle;
+    final String badgeText;
+    final Color badgeBg;
+    final Color badgeTextColor;
+
+    if (isOverdue) {
+      statusTitle = 'Monthly Report Overdue';
+      statusSubtitle = 'Overdue by $overdueDays day${overdueDays == 1 ? '' : 's'}. Please submit an update to keep your Active standing with CAWS.';
+      badgeText = 'Overdue (${overdueDays}d)';
+      badgeBg = const Color(0xFFFFEAEA);
+      badgeTextColor = AppTheme.errorColor;
+    } else if (latestCheckin != null) {
+      statusTitle = 'Monthly Check-in (Active)';
+      statusSubtitle = daysLeft != null
+          ? 'Next monthly update due in $daysLeft day${daysLeft == 1 ? '' : 's'}.'
+          : 'Up to date with monthly updates.';
+      badgeText = daysLeft != null ? 'Due in ${daysLeft}d' : 'Up to Date';
+      badgeBg = const Color(0xFFE8F8F1);
+      badgeTextColor = AppTheme.successColor;
+    } else {
+      statusTitle = 'First Monthly Check-in';
+      statusSubtitle = daysLeft != null
+          ? 'First 30-day update due in $daysLeft day${daysLeft == 1 ? '' : 's'}.'
+          : 'First monthly update due in 30 days.';
+      badgeText = daysLeft != null ? 'Due in ${daysLeft}d' : 'Active (New)';
+      badgeBg = const Color(0xFFE6F6F7);
+      badgeTextColor = AppTheme.primary;
+    }
+
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: AppTheme.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppTheme.cardBorder),
+        border: Border.all(
+          color: isOverdue ? AppTheme.errorColor.withOpacity(0.3) : AppTheme.cardBorder,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: isOverdue ? AppTheme.errorColor.withOpacity(0.06) : Colors.black.withOpacity(0.03),
             blurRadius: 10,
             offset: const Offset(0, 3),
           ),
@@ -290,41 +358,43 @@ class _AdoptedPetHubScreenState extends State<AdoptedPetHubScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Monthly Check-in',
-                    style: GoogleFonts.poppins(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: AppTheme.textPrimary,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      statusTitle,
+                      style: GoogleFonts.poppins(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: isOverdue ? AppTheme.errorColor : AppTheme.textPrimary,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    isUpToDate
-                        ? 'Last report: ${latestCheckin!['check_in_date']}'
-                        : 'Report required every 30 days',
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      color: AppTheme.textSecondary,
+                    const SizedBox(height: 2),
+                    Text(
+                      statusSubtitle,
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        color: AppTheme.textSecondary,
+                        height: 1.3,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: isUpToDate ? const Color(0xFFE8F8F1) : const Color(0xFFFFFBEB),
+                  color: badgeBg,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  isUpToDate ? 'Up to Date' : 'Action Due',
+                  badgeText,
                   style: GoogleFonts.poppins(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
-                    color: isUpToDate ? AppTheme.successColor : AppTheme.warningColor,
+                    color: badgeTextColor,
                   ),
                 ),
               ),
@@ -336,7 +406,7 @@ class _AdoptedPetHubScreenState extends State<AdoptedPetHubScreen> {
             style: ElevatedButton.styleFrom(
               minimumSize: const Size.fromHeight(48),
               padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 16),
-              backgroundColor: AppTheme.primary,
+              backgroundColor: isOverdue ? AppTheme.errorColor : AppTheme.primary,
               elevation: 0,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
             ),

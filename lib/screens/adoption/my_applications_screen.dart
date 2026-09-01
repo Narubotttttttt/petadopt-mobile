@@ -163,7 +163,7 @@ class _ApplicationCard extends StatelessWidget {
                 ClipRRect(
                   borderRadius: BorderRadius.circular(14),
                   child: Image.network(
-                    application['petImage'] as String,
+                    ApiService.normalizeImageUrl(application['petImage'] as String?),
                     width: 72,
                     height: 72,
                     fit: BoxFit.cover,
@@ -447,7 +447,7 @@ class _ApplicationCard extends StatelessWidget {
                                               borderRadius: BorderRadius.circular(12),
                                               border: Border.all(color: const Color(0xFFE2E8F0)),
                                             ),
-                                            child: Image.network(signatureUrl, fit: BoxFit.contain),
+                                            child: Image.network(ApiService.normalizeImageUrl(signatureUrl), fit: BoxFit.contain, errorBuilder: (_, __, ___) => const Center(child: Text('Signature on file', style: TextStyle(fontSize: 12, color: Colors.grey)))),
                                           ),
                                           const SizedBox(height: 14),
                                           ElevatedButton(

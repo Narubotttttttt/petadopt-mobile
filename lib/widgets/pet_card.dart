@@ -1,3 +1,4 @@
+import 'package:mobile_petadopt/services/api_service.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile_petadopt/theme/app_theme.dart';
@@ -34,11 +35,11 @@ class _PetCardState extends State<PetCard> {
   String? get _imageUrl {
     final img = widget.pet['image']?.toString() ?? widget.pet['photo_url']?.toString();
     if (img != null && img.trim().isNotEmpty && img != 'null') {
-      return img;
+      return ApiService.normalizeImageUrl(img);
     }
     final path = widget.pet['photo_path']?.toString();
     if (path != null && path.trim().isNotEmpty && path != 'null') {
-      return 'http://10.0.2.2:8000/storage/$path';
+      return ApiService.normalizeImageUrl(path);
     }
     return null;
   }
@@ -132,23 +133,56 @@ class _PetCardState extends State<PetCard> {
                 Positioned(
                   top: 8,
                   left: 8,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppTheme.primary,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      _type.toUpperCase(),
-                      style: GoogleFonts.poppins(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primary,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          _type.toUpperCase(),
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ),
-                    ),
+                      if (widget.pet['has_applied'] == true || widget.pet['application_status'] != null) ...[
+                        const SizedBox(width: 4),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.7),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.check_circle_rounded, color: AppTheme.primary, size: 10),
+                              const SizedBox(width: 3),
+                              Text(
+                                'Applied',
+                                style: GoogleFonts.poppins(
+                                  color: Colors.white,
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
               ],

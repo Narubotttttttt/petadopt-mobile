@@ -54,6 +54,25 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
   @override
   void initState() {
     super.initState();
+    ApiService.getProfile().then((user) {
+      if (user != null && (user['status'] == 'blacklisted' || user['status'] == 'restricted')) {
+        if (mounted) {
+          Navigator.pop(context);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                user['status'] == 'blacklisted'
+                    ? 'Your account is banned from CAWS. You cannot submit adoption requests.'
+                    : 'Your account is restricted by CAWS administration.',
+                style: GoogleFonts.poppins(fontSize: 13),
+              ),
+              backgroundColor: AppTheme.errorColor,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
+    });
     _loadUserAndAddress();
   }
 
@@ -72,12 +91,18 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
   }
 
   Future<void> _loadUserAndAddress() async {
-    final user = await ApiService.getUser();
+    final user = await ApiService.getProfile();
     final userId = user != null ? user['id'] : 'guest';
     final prefs = await SharedPreferences.getInstance();
-    final address = prefs.getString('user_${userId}_full_address');
+    final address = prefs.getString('user_${userId}_full_address') ?? (user != null ? user['address'] as String? : null);
     final phone = prefs.getString('user_${userId}_phone') ?? (user != null ? user['phone'] as String? : null);
     final secondaryPhone = prefs.getString('user_${userId}_secondary_phone');
+    if (address != null && address.trim().isNotEmpty && userId != 'guest') {
+      await prefs.setString('user_${userId}_full_address', address.trim());
+    }
+    if (phone != null && phone.trim().isNotEmpty && userId != 'guest') {
+      await prefs.setString('user_${userId}_phone', phone.trim());
+    }
 
     if (mounted) {
       setState(() {
@@ -679,17 +704,53 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
     } catch (e) {
       if (mounted) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+        final errorMsg = e.toString().replaceFirst('Exception: ', '');
+        showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+            contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
+            actionsPadding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+            title: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFEAEA),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.block_rounded, color: AppTheme.errorColor, size: 22),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Application Restricted',
+                    style: GoogleFonts.poppins(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.textPrimary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
             content: Text(
-              e.toString().replaceFirst('Exception: ', ''),
-              style: GoogleFonts.poppins(fontSize: 13),
+              errorMsg,
+              style: GoogleFonts.poppins(fontSize: 13, color: AppTheme.textSecondary, height: 1.5),
             ),
-            backgroundColor: AppTheme.errorColor,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
+            actions: [
+              ElevatedButton(
+                onPressed: () => Navigator.pop(ctx),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primary,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: Text(
+                  'OK',
+                  style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
           ),
         );
       }
