@@ -22,6 +22,17 @@ class ApiService {
       return '$hostPrefix/storage/$url';
     }
 
+    if (url.contains('/storage/')) {
+      final imgUri = Uri.tryParse(url);
+      if (imgUri != null) {
+        return imgUri.replace(
+          scheme: baseUri.scheme,
+          host: baseUri.host,
+          port: baseUri.hasPort ? baseUri.port : null,
+        ).toString();
+      }
+    }
+
     if (url.contains('localhost') || url.contains('127.0.0.1') || url.contains('10.0.2.2')) {
       final imgUri = Uri.tryParse(url);
       if (imgUri != null) {

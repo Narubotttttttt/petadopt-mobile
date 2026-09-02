@@ -48,6 +48,44 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
   XFile? _validIdImage;
   XFile? _certificateImage;
 
+  String? _selectedIdType;
+  final List<String> _validIdTypes = [
+    'Philippine National ID (PhilSys)',
+    'Driver\'s License',
+    'Philippine Passport',
+    'UMID / SSS ID',
+    'Postal ID',
+    'Voter\'s ID / Certificate',
+    'PhilHealth ID',
+    'PRC ID',
+    'Student / School ID',
+    'Senior Citizen / PWD ID',
+    'Other Government-Issued ID',
+  ];
+
+  String? get _petImageUrl {
+    final img = widget.pet['image']?.toString() ??
+        widget.pet['photo_url']?.toString() ??
+        widget.pet['image_url']?.toString();
+    if (img != null && img.trim().isNotEmpty && img != 'null') {
+      return ApiService.normalizeImageUrl(img);
+    }
+    final path = widget.pet['photo_path']?.toString();
+    if (path != null && path.trim().isNotEmpty && path != 'null') {
+      return ApiService.normalizeImageUrl(path);
+    }
+    return null;
+  }
+
+  String get _petDisplayName {
+    final rawName = widget.pet['name']?.toString().trim();
+    if (rawName != null && rawName.isNotEmpty && rawName.toLowerCase() != 'null') {
+      return rawName;
+    }
+    final rawNo = widget.pet['pet_no'] ?? widget.pet['id'];
+    return 'Pet No. $rawNo';
+  }
+
   final ImagePicker _picker = ImagePicker();
   final List<String> _homeTypes = ['House', 'Apartment', 'Condo', 'Farm'];
 
@@ -181,6 +219,21 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
   }
 
   void _showImagePickerSheet(bool isValidId) {
+    if (isValidId && (_selectedIdType == null || _selectedIdType!.isEmpty)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Please select your Valid ID Type first before uploading.',
+            style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w500),
+          ),
+          backgroundColor: AppTheme.warningColor,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          duration: const Duration(seconds: 3),
+        ),
+      );
+      return;
+    }
     final title = isValidId ? 'Upload Valid Government ID' : 'Upload Barangay Certificate';
     showModalBottomSheet(
       context: context,
@@ -228,6 +281,22 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
       _savePhoneNumberLocally();
       setState(() => _currentStep++);
     } else if (_currentStep == 1) {
+      if (_selectedIdType == null || _selectedIdType!.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Please select your Valid ID Type',
+              style: GoogleFonts.poppins(fontSize: 13),
+            ),
+            backgroundColor: AppTheme.warningColor,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
+        return;
+      }
       if (_validIdImage == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -578,6 +647,7 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
         data: {
           'pet_id': petId,
           'full_name': fullName,
+          'id_type': _selectedIdType,
           'phone': fullContactPhone,
           'address': _addressController.text.trim(),
           'city': city,
@@ -628,7 +698,7 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    'Your adoption request for ${widget.pet['name']} has been submitted! Please wait for approval as CAWS is verifying your documents and information.',
+                    'Your adoption request for $_petDisplayName has been submitted! Please wait for approval as CAWS is verifying your documents and information.',
                     style: GoogleFonts.poppins(
                       fontSize: 13,
                       color: AppTheme.textSecondary,
@@ -952,41 +1022,60 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(10),
-            child: Image.network(
-              widget.pet['image'] as String,
-              width: 54,
-              height: 54,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
-                width: 54,
-                height: 54,
-                color: AppTheme.primaryLight,
-                child: const Center(
-                  child: Icon(Icons.pets_rounded, size: 22, color: Colors.white),
-                ),
-              ),
-            ),
+            child: _petImageUrl != null && _petImageUrl!.isNotEmpty
+                ? Image.network(
+                    _petImageUrl!,
+                    width: 54,
+                    height: 54,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
+                      width: 54,
+                      height: 54,
+                      color: AppTheme.primaryLight,
+                      child: const Center(
+                        child: Icon(Icons.pets_rounded, size: 24, color: AppTheme.primary),
+                      ),
+                    ),
+                  )
+                : Container(
+                    width: 54,
+                    height: 54,
+                    color: AppTheme.primaryLight,
+                    child: const Center(
+                      child: Icon(Icons.pets_rounded, size: 24, color: AppTheme.primary),
+                    ),
+                  ),
           ),
           const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Applying for ${widget.pet['name']}',
-                style: GoogleFonts.poppins(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: AppTheme.primaryDark,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Applying for $_petDisplayName',
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.primaryDark,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-              Text(
-                '${widget.pet['breed']} • ${widget.pet['age']} • ${widget.pet['gender']}',
-                style: GoogleFonts.poppins(
-                  fontSize: 11,
-                  color: AppTheme.primary,
+                Text(
+                  [
+                    if (widget.pet['breed'] != null && widget.pet['breed'].toString().isNotEmpty && widget.pet['breed'].toString().toLowerCase() != 'null') widget.pet['breed'].toString(),
+                    if (widget.pet['age'] != null && widget.pet['age'].toString().isNotEmpty && widget.pet['age'].toString().toLowerCase() != 'null') widget.pet['age'].toString(),
+                    if (widget.pet['gender'] != null && widget.pet['gender'].toString().isNotEmpty && widget.pet['gender'].toString().toLowerCase() != 'null') widget.pet['gender'].toString(),
+                  ].join(' • '),
+                  style: GoogleFonts.poppins(
+                    fontSize: 11,
+                    color: AppTheme.primary,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
@@ -1234,14 +1323,82 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
         ),
         const SizedBox(height: 6),
         Text(
-          'Please upload photos of your Valid Government ID and Barangay Certificate for adoption screening.',
+          'Please select your government ID type and upload clear photos for adoption verification.',
           style: GoogleFonts.poppins(
             fontSize: 12,
             color: AppTheme.textSecondary,
             height: 1.5,
           ),
         ),
-        const SizedBox(height: 18),
+        const SizedBox(height: 16),
+        Text(
+          'Valid ID Type *',
+          style: GoogleFonts.poppins(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: AppTheme.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+          decoration: BoxDecoration(
+            color: AppTheme.surface,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppTheme.cardBorder),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: _selectedIdType,
+              isExpanded: true,
+              hint: Row(
+                children: [
+                  const Icon(Icons.credit_card_rounded, size: 18, color: AppTheme.textSecondary),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Choose ID Type (e.g. National ID, Driver\'s License)...',
+                      style: GoogleFonts.poppins(
+                        fontSize: 12.5,
+                        color: AppTheme.textSecondary,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+              icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppTheme.primary),
+              items: _validIdTypes.map((String type) {
+                return DropdownMenuItem<String>(
+                  value: type,
+                  child: Row(
+                    children: [
+                      const Icon(Icons.credit_card_rounded, size: 18, color: AppTheme.primary),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          type,
+                          style: GoogleFonts.poppins(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            color: AppTheme.textPrimary,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+              onChanged: (String? newValue) {
+                if (newValue != null) {
+                  setState(() => _selectedIdType = newValue);
+                }
+              },
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
         _buildUploadBox(
           title: 'Valid Government ID',
           buttonText: 'Tap to upload Valid ID',
@@ -1463,7 +1620,7 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
         ),
         const SizedBox(height: 16),
         Text(
-          'Why do you want to adopt ${widget.pet['name']}?',
+          'Why do you want to adopt $_petDisplayName?',
           style: GoogleFonts.poppins(
             fontSize: 13,
             fontWeight: FontWeight.w600,
