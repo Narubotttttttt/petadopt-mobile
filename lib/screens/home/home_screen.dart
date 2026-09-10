@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile_petadopt/services/api_service.dart';
 import 'package:mobile_petadopt/services/notification_service.dart';
 import 'package:mobile_petadopt/theme/app_theme.dart';
+import 'package:mobile_petadopt/widgets/cute_robot_loader.dart';
 import 'package:mobile_petadopt/widgets/pet_card.dart';
 import 'package:mobile_petadopt/screens/pets/pet_list_screen.dart';
 import 'package:mobile_petadopt/screens/adoption/my_applications_screen.dart';
@@ -1419,17 +1420,26 @@ class _HomeTabState extends State<_HomeTab> {
                     child: Row(
                       children: [
                         Container(
-                          width: 46,
-                          height: 46,
+                          width: 50,
+                          height: 50,
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.18),
-                            borderRadius: BorderRadius.circular(14),
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.14),
+                                blurRadius: 8,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
                           ),
                           child: const Center(
-                            child: Icon(
-                              Icons.auto_awesome_rounded,
-                              color: Colors.white,
-                              size: 22,
+                            child: CuteRobotLoader(
+                              size: 38,
+                              headColor: AppTheme.primary,
+                              eyeColor: Colors.white,
+                              withShadow: false,
+                              onlyBlink: true,
                             ),
                           ),
                         ),

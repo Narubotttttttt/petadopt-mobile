@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile_petadopt/screens/pets/pet_detail_screen.dart';
 import 'package:mobile_petadopt/services/api_service.dart';
 import 'package:mobile_petadopt/theme/app_theme.dart';
+import 'package:mobile_petadopt/widgets/cute_robot_loader.dart';
 
 class MatchQuizScreen extends StatefulWidget {
   const MatchQuizScreen({super.key});
@@ -16,6 +17,8 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
   bool _isLoading = false;
   bool _showResults = false;
   List<Map<String, dynamic>> _recommendations = [];
+  String _loadingStatus = 'Analyzing your lifestyle & living environment...';
+  int _loadingStep = 1;
 
   // Step 1: Basics & Appearance
   String _preferredSpecies = 'any';
@@ -91,7 +94,11 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
   }
 
   Future<void> _submitQuiz() async {
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _loadingStep = 1;
+      _loadingStatus = 'Analyzing your lifestyle & living environment...';
+    });
 
     final payload = {
       'preferred_species': _preferredSpecies,
@@ -109,11 +116,38 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
     };
 
     try {
-      final recs = await ApiService.getRecommendations(profile: payload);
+      final startTime = DateTime.now();
+      final recsFuture = ApiService.getRecommendations(profile: payload);
+
+      // Multi-stage natural AI evaluation progression
+      await Future.delayed(const Duration(milliseconds: 1100));
+      if (mounted && _isLoading) {
+        setState(() {
+          _loadingStep = 2;
+          _loadingStatus = 'Evaluating pet temperaments & health compatibility...';
+        });
+      }
+
+      await Future.delayed(const Duration(milliseconds: 1200));
+      if (mounted && _isLoading) {
+        setState(() {
+          _loadingStep = 3;
+          _loadingStatus = 'Computing compatibility & ranking top matches...';
+        });
+      }
+
+      final recs = await recsFuture;
       final availableRecs = recs.where((pet) {
         final status = pet['status']?.toString().toLowerCase();
         return status == null || status == 'available';
       }).toList();
+
+      // Ensure the full robot thinking animation cycle finishes naturally (~3.5s total)
+      final elapsed = DateTime.now().difference(startTime).inMilliseconds;
+      if (elapsed < 3400) {
+        await Future.delayed(Duration(milliseconds: 3400 - elapsed));
+      }
+
       if (mounted) {
         setState(() {
           _recommendations = availableRecs;
@@ -164,32 +198,55 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
 
   Widget _buildLoadingState() {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 80,
-            height: 80,
-            decoration: BoxDecoration(
-              color: AppTheme.primaryLight,
-              shape: BoxShape.circle,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 28),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const CuteRobotLoader(size: 130),
+            const SizedBox(height: 32),
+            Text(
+              'Finding Your Perfect Match',
+              style: GoogleFonts.poppins(
+                fontSize: 19,
+                fontWeight: FontWeight.w700,
+                color: AppTheme.textPrimary,
+              ),
             ),
-            child: const Center(
-              child: CircularProgressIndicator(color: AppTheme.primary, strokeWidth: 3),
+            const SizedBox(height: 10),
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 350),
+              child: Text(
+                _loadingStatus,
+                key: ValueKey<String>(_loadingStatus),
+                textAlign: TextAlign.center,
+                style: GoogleFonts.poppins(
+                  fontSize: 13,
+                  color: AppTheme.primary,
+                  fontWeight: FontWeight.w500,
+                  height: 1.4,
+                ),
+              ),
             ),
-          ),
-          const SizedBox(height: 24),
-          Text(
-            'Analyzing Compatibility...',
-            style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w700, color: AppTheme.textPrimary),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Running Random Forest Machine Learning Model\nagainst shelter pets...',
-            textAlign: TextAlign.center,
-            style: GoogleFonts.poppins(fontSize: 13, color: AppTheme.textSecondary, height: 1.4),
-          ),
-        ],
+            const SizedBox(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(3, (index) {
+                final active = index < _loadingStep;
+                return AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                  width: active ? 22 : 8,
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: active ? AppTheme.primary : AppTheme.cardBorder,
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                );
+              }),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -613,9 +670,28 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), shape: BoxShape.circle),
-                  child: const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 24),
+                  width: 46,
+                  height: 46,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.12),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: const Center(
+                    child: CuteRobotLoader(
+                      size: 36,
+                      headColor: AppTheme.primary,
+                      eyeColor: Colors.white,
+                      withShadow: false,
+                      onlyBlink: true,
+                    ),
+                  ),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
