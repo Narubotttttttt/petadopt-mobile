@@ -162,7 +162,7 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
               width: 52,
               height: 52,
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
+              errorBuilder: (_, _, _) => Container(
                 width: 52,
                 height: 52,
                 color: AppTheme.primaryLight,
@@ -451,7 +451,7 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                color: isSelected ? accentColor.withOpacity(0.15) : AppTheme.primaryLight,
+                color: isSelected ? accentColor.withValues(alpha: 0.15) : AppTheme.primaryLight,
                 shape: BoxShape.circle,
               ),
               child: Icon(icon, size: 18, color: isSelected ? accentColor : AppTheme.primary),
@@ -479,9 +479,12 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
                 ],
               ),
             ),
+            // ignore: deprecated_member_use
             Radio<String>(
               value: key,
+              // ignore: deprecated_member_use
               groupValue: _healthStatus,
+              // ignore: deprecated_member_use
               onChanged: (val) {
                 if (val != null) setState(() => _healthStatus = val);
               },
@@ -586,7 +589,7 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
         color: AppTheme.surface,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, -4),
           ),

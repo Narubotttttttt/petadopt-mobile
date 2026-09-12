@@ -1,6 +1,4 @@
-import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile_petadopt/screens/adoption/my_applications_screen.dart';
 import 'package:mobile_petadopt/services/api_service.dart';
@@ -137,7 +135,7 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
             ],
           ),
           content: Text(
-            'You have already submitted an adoption request for ${_name}. It is currently under review by CAWS.',
+            'You have already submitted an adoption request for $_name. It is currently under review by CAWS.',
             style: GoogleFonts.poppins(
               fontSize: 13,
               color: AppTheme.textSecondary,
@@ -600,7 +598,7 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
+                        color: Colors.black.withValues(alpha: 0.1),
                         blurRadius: 8,
                       ),
                     ],
@@ -626,7 +624,7 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
+                          color: Colors.black.withValues(alpha: 0.1),
                           blurRadius: 8,
                         ),
                       ],
@@ -650,7 +648,7 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                       ? Image.network(
                           _imageUrl!,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => _buildPlaceholder(),
+                          errorBuilder: (_, _, _) => _buildPlaceholder(),
                         )
                       : _buildPlaceholder(),
                   Positioned(
@@ -665,7 +663,7 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                           end: Alignment.topCenter,
                           colors: [
                             Colors.white,
-                            Colors.white.withOpacity(0.0),
+                            Colors.white.withValues(alpha: 0.0),
                           ],
                         ),
                       ),
@@ -737,7 +735,7 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
-                            color: AppTheme.primary.withOpacity(0.2),
+                            color: AppTheme.primary.withValues(alpha: 0.2),
                             blurRadius: 10,
                             offset: const Offset(0, 4),
                           ),
@@ -766,7 +764,7 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.25),
+                                  color: Colors.white.withValues(alpha: 0.25),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(
@@ -792,7 +790,7 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                                     Expanded(
                                       child: Text(
                                         r,
-                                        style: GoogleFonts.poppins(color: Colors.white.withOpacity(0.95), fontSize: 11.5),
+                                        style: GoogleFonts.poppins(color: Colors.white.withValues(alpha: 0.95), fontSize: 11.5),
                                       ),
                                     ),
                                   ],
@@ -846,7 +844,7 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                                     color: AppTheme.primaryLight,
                                     borderRadius: BorderRadius.circular(20),
                                     border: Border.all(
-                                      color: AppTheme.primary.withOpacity(0.3),
+                                      color: AppTheme.primary.withValues(alpha: 0.3),
                                     ),
                                   ),
                                   child: Text(
@@ -951,7 +949,7 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                                 ],
                               ),
                             );
-                          }).toList(),
+                          }),
                         ],
                       ],
                     ),
@@ -968,7 +966,7 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
           color: Colors.white,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.07),
+              color: Colors.black.withValues(alpha: 0.07),
               blurRadius: 20,
               offset: const Offset(0, -4),
             ),
@@ -987,13 +985,13 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
               color: _hasApplied ? AppTheme.surface : null,
               borderRadius: BorderRadius.circular(14),
               border: _hasApplied
-                  ? Border.all(color: AppTheme.primary.withOpacity(0.4), width: 1.5)
+                  ? Border.all(color: AppTheme.primary.withValues(alpha: 0.4), width: 1.5)
                   : null,
               boxShadow: [
                 BoxShadow(
                   color: _hasApplied
-                      ? AppTheme.primary.withOpacity(0.08)
-                      : AppTheme.primary.withOpacity(0.35),
+                      ? AppTheme.primary.withValues(alpha: 0.08)
+                      : AppTheme.primary.withValues(alpha: 0.35),
                   blurRadius: 14,
                   offset: const Offset(0, 5),
                 ),
@@ -1030,7 +1028,7 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
     return Container(
       color: AppTheme.primaryLight,
       child: Center(
-        child: Icon(Icons.pets_rounded, size: 64, color: AppTheme.primary.withOpacity(0.35)),
+        child: Icon(Icons.pets_rounded, size: 64, color: AppTheme.primary.withValues(alpha: 0.35)),
       ),
     );
   }

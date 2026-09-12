@@ -39,10 +39,13 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
   bool _hasExperience = false;
   String? _adopterId;
 
+  // ignore: unused_field
   bool _isPhoneVerified = false;
+  // ignore: unused_field
   bool _isSendingOtp = false;
   String? _verificationId;
   int? _resendToken;
+  // ignore: unused_field
   String _verifiedPhoneNumber = '';
 
   XFile? _validIdImage;
@@ -895,7 +898,7 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
                               borderRadius: BorderRadius.circular(12),
                               boxShadow: [
                                 BoxShadow(
-                                  color: AppTheme.primary.withOpacity(0.3),
+                                  color: AppTheme.primary.withValues(alpha: 0.3),
                                   blurRadius: 10,
                                   offset: const Offset(0, 4),
                                 ),
@@ -1016,7 +1019,7 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
       decoration: BoxDecoration(
         color: AppTheme.primaryLight,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppTheme.primary.withOpacity(0.2)),
+        border: Border.all(color: AppTheme.primary.withValues(alpha: 0.2)),
       ),
       child: Row(
         children: [
@@ -1028,7 +1031,7 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
                     width: 54,
                     height: 54,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
+                    errorBuilder: (_, _, _) => Container(
                       width: 54,
                       height: 54,
                       color: AppTheme.primaryLight,
@@ -1105,7 +1108,7 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
                   decoration: BoxDecoration(
                     color: AppTheme.primaryLight,
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppTheme.primary.withOpacity(0.3)),
+                    border: Border.all(color: AppTheme.primary.withValues(alpha: 0.3)),
                   ),
                   child: Text(
                     'ID: $_adopterId',
@@ -1670,7 +1673,7 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
           Switch(
             value: value,
             onChanged: onChanged,
-            activeColor: AppTheme.primary,
+            activeThumbColor: AppTheme.primary,
           ),
         ],
       ),

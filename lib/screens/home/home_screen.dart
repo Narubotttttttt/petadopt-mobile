@@ -1,11 +1,10 @@
-import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile_petadopt/services/api_service.dart';
 import 'package:mobile_petadopt/services/notification_service.dart';
 import 'package:mobile_petadopt/theme/app_theme.dart';
-import 'package:mobile_petadopt/widgets/cute_robot_loader.dart';
+import 'package:mobile_petadopt/widgets/pet_recommendation_loader.dart';
 import 'package:mobile_petadopt/widgets/pet_card.dart';
 import 'package:mobile_petadopt/screens/pets/pet_list_screen.dart';
 import 'package:mobile_petadopt/screens/adoption/my_applications_screen.dart';
@@ -30,209 +29,6 @@ class _HomeScreenState extends State<HomeScreen> {
     _checkUnreadApplications();
   }
 
-  Future<bool> _checkBanNoticeForAction({String actionDescription = 'take the pet recommendation quiz'}) async {
-    try {
-      final user = await ApiService.getProfile();
-      if (user != null && (user['status'] == 'blacklisted' || user['status'] == 'restricted')) {
-        final isBlacklisted = user['status'] == 'blacklisted';
-        final rawNotes = user['admin_notes']?.toString().trim();
-        final String officialReason = (rawNotes != null && rawNotes.isNotEmpty)
-            ? rawNotes
-            : (isBlacklisted
-                ? 'Non-compliance with CAWS adoption terms and animal welfare standards.'
-                : 'Account under shelter administrative review.');
-        if (!mounted) return true;
-
-        showDialog(
-          context: context,
-          barrierDismissible: true,
-          builder: (ctx) => AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-            contentPadding: const EdgeInsets.fromLTRB(24, 22, 24, 12),
-            actionsPadding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
-            title: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: isBlacklisted ? const Color(0xFFFFEAEA) : const Color(0xFFFFFBEB),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    Icons.block_rounded,
-                    color: isBlacklisted ? AppTheme.errorColor : AppTheme.warningColor,
-                    size: 22,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    isBlacklisted ? 'Account Banned' : 'Account Restricted',
-                    style: GoogleFonts.poppins(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: AppTheme.textPrimary,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  isBlacklisted
-                      ? 'Your account has been banned from submitting adoption applications and taking match quizzes. You can browse pets in view-only mode.'
-                      : 'Your account is restricted from taking recommendation quizzes at this time.',
-                  style: GoogleFonts.poppins(
-                    fontSize: 13,
-                    color: AppTheme.textSecondary,
-                    height: 1.4,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: isBlacklisted ? const Color(0xFFFFF1F2) : const Color(0xFFFFFBEB),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: isBlacklisted ? const Color(0xFFFECDD3) : const Color(0xFFFDE68A),
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'OFFICIAL REASON',
-                        style: GoogleFonts.poppins(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w800,
-                          color: isBlacklisted ? AppTheme.errorColor : const Color(0xFFB45309),
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        officialReason,
-                        style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: AppTheme.textPrimary,
-                          height: 1.4,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF8FAFC),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: const Color(0xFFE2E8F0)),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'SHELTER CONTACT & APPEALS',
-                        style: GoogleFonts.poppins(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w800,
-                          color: AppTheme.primaryDark,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          const Icon(Icons.facebook, size: 16, color: Color(0xFF1877F2)),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              'CDO Animal Welfare Society Inc.',
-                              style: GoogleFonts.poppins(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: AppTheme.textPrimary,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      Row(
-                        children: [
-                          const Icon(Icons.email_outlined, size: 15, color: Color(0xFFEA4335)),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              'cdoanimalrescueorg@gmail.com',
-                              style: GoogleFonts.poppins(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                                color: AppTheme.textPrimary,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      Row(
-                        children: [
-                          const Icon(Icons.phone_outlined, size: 15, color: Color(0xFF10B981)),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              '0936 556 6200',
-                              style: GoogleFonts.poppins(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                                color: AppTheme.textPrimary,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            actions: [
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () => Navigator.pop(ctx),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: isBlacklisted ? AppTheme.errorColor : AppTheme.primary,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                  ),
-                  child: Text(
-                    'Understood',
-                    style: GoogleFonts.poppins(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 14,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-        return true;
-      }
-    } catch (_) {}
-    return false;
-  }
 
   Future<void> _checkAccountBanStatus() async {
     try {
@@ -1434,12 +1230,9 @@ class _HomeTabState extends State<_HomeTab> {
                             ],
                           ),
                           child: const Center(
-                            child: CuteRobotLoader(
-                              size: 38,
-                              headColor: AppTheme.primary,
-                              eyeColor: Colors.white,
-                              withShadow: false,
-                              onlyBlink: true,
+                            child: PetRecommendationIcon(
+                              size: 34,
+                              color: Color(0xFF1E293B),
                             ),
                           ),
                         ),
@@ -1468,24 +1261,23 @@ class _HomeTabState extends State<_HomeTab> {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        ElevatedButton.icon(
+                        ElevatedButton(
                           onPressed: () async {
-                            final isBanned = await _checkBanNoticeForAction(actionDescription: 'take the pet match quiz');
-                            if (isBanned) return;
+                            final isBanned = await _checkBanNoticeForAction(actionDescription: 'take the pet match');
+                            if (isBanned || !context.mounted) return;
                             await Navigator.pushNamed(context, '/match-quiz');
                             _fetchRecommendations();
                           },
-                          icon: const Icon(Icons.arrow_forward_rounded, size: 14),
-                          label: Text(
-                            'Take Quiz',
-                            style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w700),
-                          ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.white,
                             foregroundColor: AppTheme.primaryDark,
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                             elevation: 0,
+                          ),
+                          child: Text(
+                            'Match a Pets',
+                            style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w700),
                           ),
                         ),
                       ],
@@ -1502,7 +1294,7 @@ class _HomeTabState extends State<_HomeTab> {
                       isPowered: true,
                       onTap: () async {
                         final isBanned = await _checkBanNoticeForAction(actionDescription: 'access personalized recommendations');
-                        if (isBanned) return;
+                        if (isBanned || !context.mounted) return;
                         Navigator.pushNamed(context, '/match-quiz');
                       },
                     ),
@@ -1821,24 +1613,13 @@ class _HomeTabState extends State<_HomeTab> {
               minimumSize: Size.zero,
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  actionLabel,
-                  style: GoogleFonts.poppins(
-                    fontSize: 12.5,
-                    color: AppTheme.primary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(width: 2),
-                const Icon(
-                  Icons.arrow_forward_ios_rounded,
-                  size: 11,
-                  color: AppTheme.primary,
-                ),
-              ],
+            child: Text(
+              actionLabel,
+              style: GoogleFonts.poppins(
+                fontSize: 12.5,
+                color: AppTheme.primary,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
       ],

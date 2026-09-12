@@ -59,7 +59,7 @@ class _PetCardState extends State<PetCard> {
           border: Border.all(color: AppTheme.cardBorder),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 12,
               offset: const Offset(0, 3),
             ),
@@ -81,7 +81,7 @@ class _PetCardState extends State<PetCard> {
                           height: 145,
                           width: double.infinity,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => _buildPlaceholder(145),
+                          errorBuilder: (_, _, _) => _buildPlaceholder(145),
                           loadingBuilder: (_, child, progress) {
                             if (progress == null) return child;
                             return Container(
@@ -92,7 +92,7 @@ class _PetCardState extends State<PetCard> {
                                   width: 24,
                                   height: 24,
                                   child: CircularProgressIndicator(
-                                    color: AppTheme.primary.withOpacity(0.5),
+                                    color: AppTheme.primary.withValues(alpha: 0.5),
                                     strokeWidth: 2,
                                   ),
                                 ),
@@ -115,7 +115,7 @@ class _PetCardState extends State<PetCard> {
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
+                            color: Colors.black.withValues(alpha: 0.1),
                             blurRadius: 6,
                           ),
                         ],
@@ -162,7 +162,7 @@ class _PetCardState extends State<PetCard> {
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.7),
+                            color: Colors.black.withValues(alpha: 0.7),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Row(
@@ -248,7 +248,7 @@ class _PetCardState extends State<PetCard> {
           border: Border.all(color: AppTheme.cardBorder),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 10,
               offset: const Offset(0, 3),
             ),
@@ -270,7 +270,7 @@ class _PetCardState extends State<PetCard> {
                           height: 125,
                           width: double.infinity,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => _buildPlaceholder(125),
+                          errorBuilder: (_, _, _) => _buildPlaceholder(125),
                         )
                       : _buildPlaceholder(125),
                 ),
@@ -287,7 +287,7 @@ class _PetCardState extends State<PetCard> {
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
+                            color: Colors.black.withValues(alpha: 0.1),
                             blurRadius: 6,
                           ),
                         ],
@@ -318,7 +318,7 @@ class _PetCardState extends State<PetCard> {
                         borderRadius: BorderRadius.circular(7),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.12),
+                            color: Colors.black.withValues(alpha: 0.12),
                             blurRadius: 4,
                           ),
                         ],

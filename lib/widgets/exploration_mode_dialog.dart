@@ -2,6 +2,7 @@ import 'package:mobile_petadopt/services/api_service.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile_petadopt/theme/app_theme.dart';
+import 'package:mobile_petadopt/widgets/pet_recommendation_loader.dart';
 
 class ExplorationModeDialog extends StatelessWidget {
   final VoidCallback onRecommendationSelected;
@@ -98,6 +99,7 @@ class ExplorationModeDialog extends StatelessWidget {
               child: InkWell(
                 onTap: () async {
                   final user = await ApiService.getProfile();
+                  if (!context.mounted) return;
                   if (user != null && (user['status'] == 'blacklisted' || user['status'] == 'restricted')) {
                     Navigator.pop(context);
                     final isBlacklisted = user['status'] == 'blacklisted';
@@ -295,6 +297,7 @@ class ExplorationModeDialog extends StatelessWidget {
                     );
                     return;
                   }
+                  if (!context.mounted) return;
                   Navigator.pop(context);
                   onRecommendationSelected();
                 },
@@ -327,24 +330,21 @@ class ExplorationModeDialog extends StatelessWidget {
                         width: 44,
                         height: 44,
                         decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFF0A6B72), AppTheme.primary],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
+                          color: Colors.white,
                           borderRadius: BorderRadius.circular(14),
                           boxShadow: [
                             BoxShadow(
-                              color: AppTheme.primary.withValues(alpha: 0.3),
+                              color: AppTheme.primary.withValues(alpha: 0.20),
                               blurRadius: 6,
-                              offset: const Offset(0, 3),
+                              offset: const Offset(0, 2),
                             ),
                           ],
                         ),
-                        child: const Icon(
-                          Icons.auto_awesome_rounded,
-                          color: Colors.white,
-                          size: 22,
+                        child: const Center(
+                          child: PetRecommendationIcon(
+                            size: 30,
+                            color: Color(0xFF1E293B),
+                          ),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -375,7 +375,7 @@ class ExplorationModeDialog extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: Text(
-                                'AI Smart Match Quiz',
+                                'Match a Pets',
                                 style: GoogleFonts.poppins(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w600,
@@ -394,12 +394,6 @@ class ExplorationModeDialog extends StatelessWidget {
                             ),
                           ],
                         ),
-                      ),
-                      const SizedBox(width: 6),
-                      const Icon(
-                        Icons.arrow_forward_ios_rounded,
-                        size: 14,
-                        color: AppTheme.primary,
                       ),
                     ],
                   ),
@@ -469,12 +463,6 @@ class ExplorationModeDialog extends StatelessWidget {
                             ),
                           ],
                         ),
-                      ),
-                      const SizedBox(width: 6),
-                      Icon(
-                        Icons.arrow_forward_ios_rounded,
-                        size: 14,
-                        color: Colors.grey.shade400,
                       ),
                     ],
                   ),

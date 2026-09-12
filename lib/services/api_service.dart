@@ -482,6 +482,15 @@ class ApiService {
       final json = jsonDecode(response.body) as Map<String, dynamic>;
       return json['url'] as String?;
     }
+
+    if (response.statusCode == 422 || response.statusCode == 400 || response.statusCode == 403) {
+      try {
+        final json = jsonDecode(response.body) as Map<String, dynamic>;
+        throw Exception(json['message'] ?? json['error'] ?? 'Please provide a signature first before downloading the contract.');
+      } catch (e) {
+        if (e is Exception) rethrow;
+      }
+    }
     
     return null;
   }
@@ -754,7 +763,7 @@ class ApiService {
         if (token != null) 'Authorization': 'Bearer $token',
       },
       body: jsonEncode({
-        if (signatureBase64 != null) 'signature_data': signatureBase64,
+        'signature_data': ?signatureBase64,
         if (useSavedSignature) 'use_saved_signature': true,
       }),
     ).timeout(const Duration(seconds: 20));

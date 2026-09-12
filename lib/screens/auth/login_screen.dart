@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile_petadopt/services/api_service.dart';
 import 'package:mobile_petadopt/services/notification_service.dart';
@@ -431,7 +430,7 @@ class _LoginScreenState extends State<LoginScreen> {
             width: 180,
             height: 180,
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.07),
+              color: Colors.white.withValues(alpha: 0.07),
               shape: BoxShape.circle,
             ),
           ),
@@ -443,7 +442,7 @@ class _LoginScreenState extends State<LoginScreen> {
             width: 110,
             height: 110,
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.06),
+              color: Colors.white.withValues(alpha: 0.06),
               shape: BoxShape.circle,
             ),
           ),
@@ -463,7 +462,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.15),
+                          color: Colors.black.withValues(alpha: 0.15),
                           blurRadius: 10,
                           offset: const Offset(0, 4),
                         ),
@@ -491,7 +490,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   Text(
                     'CDO Animal Welfare Society Inc.',
                     style: GoogleFonts.poppins(
-                      color: Colors.white.withOpacity(0.7),
+                      color: Colors.white.withValues(alpha: 0.7),
                       fontSize: 11,
                     ),
                   ),
@@ -517,7 +516,7 @@ class _LoginScreenState extends State<LoginScreen> {
           borderRadius: BorderRadius.circular(14),
           boxShadow: [
             BoxShadow(
-              color: AppTheme.primary.withOpacity(0.35),
+              color: AppTheme.primary.withValues(alpha: 0.35),
               blurRadius: 14,
               offset: const Offset(0, 5),
             ),

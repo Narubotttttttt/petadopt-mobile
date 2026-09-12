@@ -26,7 +26,9 @@ class _MyAdoptedPetsScreenState extends State<MyAdoptedPetsScreen> {
       final list = await ApiService.getMyApplications();
       final approved = list.where((app) {
         final status = app['status'] as String? ?? '';
-        return status == 'approved' || status == 'adopted';
+        final isSigned = app['is_signed'] == true ||
+            (app['signature_url'] != null && app['signature_url'].toString().isNotEmpty);
+        return (status == 'approved' || status == 'adopted') && isSigned;
       }).toList();
 
       if (mounted) {
@@ -66,7 +68,7 @@ class _MyAdoptedPetsScreenState extends State<MyAdoptedPetsScreen> {
                   child: ListView.separated(
                     padding: const EdgeInsets.all(16),
                     itemCount: _adoptedPets.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 14),
+                    separatorBuilder: (_, _) => const SizedBox(height: 14),
                     itemBuilder: (context, index) {
                       final pet = _adoptedPets[index];
                       return _buildPetCard(pet);
@@ -122,7 +124,6 @@ class _MyAdoptedPetsScreenState extends State<MyAdoptedPetsScreen> {
     final petBreed = pet['petBreed'] as String? ?? 'Mixed';
     final petType = pet['petType'] as String? ?? 'Pet';
     final petImage = pet['petImage'] as String? ?? '';
-    final dateApplied = pet['dateApplied'] as String? ?? '';
 
     return Container(
       decoration: BoxDecoration(
@@ -130,7 +131,7 @@ class _MyAdoptedPetsScreenState extends State<MyAdoptedPetsScreen> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -159,7 +160,7 @@ class _MyAdoptedPetsScreenState extends State<MyAdoptedPetsScreen> {
                     width: 76,
                     height: 76,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
+                    errorBuilder: (_, _, _) => Container(
                       width: 76,
                       height: 76,
                       color: AppTheme.primaryLight,

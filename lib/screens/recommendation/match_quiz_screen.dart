@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile_petadopt/screens/pets/pet_detail_screen.dart';
 import 'package:mobile_petadopt/services/api_service.dart';
 import 'package:mobile_petadopt/theme/app_theme.dart';
-import 'package:mobile_petadopt/widgets/cute_robot_loader.dart';
+import 'package:mobile_petadopt/widgets/pet_recommendation_loader.dart';
 
 class MatchQuizScreen extends StatefulWidget {
   const MatchQuizScreen({super.key});
@@ -17,7 +17,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
   bool _isLoading = false;
   bool _showResults = false;
   List<Map<String, dynamic>> _recommendations = [];
-  String _loadingStatus = 'Analyzing your lifestyle & living environment...';
+  String _loadingStatus = 'Analyzing your preferred color, age & gender...';
   int _loadingStep = 1;
 
   // Step 1: Basics & Appearance
@@ -75,6 +75,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
         setState(() {
           _preferredSpecies = prefs['preferred_species'] ?? 'any';
           _preferredAge = prefs['preferred_age'] ?? 'any';
+          if (_preferredAge == 'senior') _preferredAge = 'adult';
           _preferredGender = prefs['preferred_gender'] ?? 'any';
           _preferredColor = prefs['preferred_color'] ?? 'any';
           _livingEnvironment = prefs['living_environment'] ?? 'apartment';
@@ -97,7 +98,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
     setState(() {
       _isLoading = true;
       _loadingStep = 1;
-      _loadingStatus = 'Analyzing your lifestyle & living environment...';
+      _loadingStatus = 'Analyzing your preferred color, age & gender traits...';
     });
 
     final payload = {
@@ -124,7 +125,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
       if (mounted && _isLoading) {
         setState(() {
           _loadingStep = 2;
-          _loadingStatus = 'Evaluating pet temperaments & health compatibility...';
+          _loadingStatus = 'Evaluating pet temperaments & lifestyle fit...';
         });
       }
 
@@ -132,7 +133,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
       if (mounted && _isLoading) {
         setState(() {
           _loadingStep = 3;
-          _loadingStatus = 'Computing compatibility & ranking top matches...';
+          _loadingStatus = 'Ranking top matches by demographic & lifestyle alignment...';
         });
       }
 
@@ -142,7 +143,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
         return status == null || status == 'available';
       }).toList();
 
-      // Ensure the full robot thinking animation cycle finishes naturally (~3.5s total)
+      // Ensure the full animated recommendation evaluation cycle finishes naturally (~3.5s total)
       final elapsed = DateTime.now().difference(startTime).inMilliseconds;
       if (elapsed < 3400) {
         await Future.delayed(Duration(milliseconds: 3400 - elapsed));
@@ -184,7 +185,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
           },
         ),
         title: Text(
-          _showResults ? 'Your Top Pet Matches' : 'Pet Match Quiz',
+          _showResults ? 'Your Top Pet Matches' : 'Match a Pets',
           style: GoogleFonts.poppins(fontSize: 17, fontWeight: FontWeight.w600),
         ),
       ),
@@ -203,7 +204,11 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const CuteRobotLoader(size: 130),
+            const PetRecommendationLoader(
+              size: 130,
+              color: Color(0xFF1E293B),
+              withSparkles: true,
+            ),
             const SizedBox(height: 32),
             Text(
               'Finding Your Perfect Match',
@@ -299,7 +304,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
                           elevation: 2,
                         ),
                         child: Text(
-                          _currentStep < 3 ? 'Next Step →' : 'Find My Perfect Match',
+                          _currentStep < 3 ? 'Next Step' : 'Find My Perfect Match',
                           style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 14, color: Colors.white),
                         ),
                       ),
@@ -372,8 +377,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
             {'val': 'any', 'label': 'Any Age'},
             {'val': 'kitten_puppy', 'label': 'Puppy / Kitten (< 1 yr)'},
             {'val': 'young', 'label': 'Young (1 - 3 yrs)'},
-            {'val': 'adult', 'label': 'Adult (3 - 7 yrs)'},
-            {'val': 'senior', 'label': 'Senior (8+ yrs)'},
+            {'val': 'adult', 'label': 'Adult (3+ yrs)'},
           ],
           selected: _preferredAge,
           onSelected: (val) => setState(() => _preferredAge = val),
@@ -470,7 +474,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
           title: Text('Children in home', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600)),
           subtitle: Text('Recommends gentle & family-friendly pets', style: GoogleFonts.poppins(fontSize: 12, color: AppTheme.textSecondary)),
           value: _hasChildren,
-          activeColor: AppTheme.primary,
+          activeThumbColor: AppTheme.primary,
           onChanged: (val) => setState(() => _hasChildren = val),
         ),
         const Divider(height: 20),
@@ -479,7 +483,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
           title: Text('Existing pets in home', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600)),
           subtitle: Text('Recommends pets tested friendly with other animals', style: GoogleFonts.poppins(fontSize: 12, color: AppTheme.textSecondary)),
           value: _hasOtherPets,
-          activeColor: AppTheme.primary,
+          activeThumbColor: AppTheme.primary,
           onChanged: (val) => setState(() => _hasOtherPets = val),
         ),
       ],
@@ -512,7 +516,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
           title: Text('Open to Special Care / Medical Needs', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600)),
           subtitle: Text('Open to adopting pets with special dietary or maintenance needs', style: GoogleFonts.poppins(fontSize: 12, color: AppTheme.textSecondary)),
           value: _specialCareCapacity,
-          activeColor: AppTheme.primary,
+          activeThumbColor: AppTheme.primary,
           onChanged: (val) => setState(() => _specialCareCapacity = val),
         ),
         const SizedBox(height: 20),
@@ -523,14 +527,24 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
           children: _allTemperaments.map((tag) {
             final isSelected = _desiredTemperaments.contains(tag);
             return FilterChip(
-              label: Text(tag, style: GoogleFonts.poppins(fontSize: 12, fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500)),
+              label: Text(
+                tag,
+                style: GoogleFonts.poppins(
+                  fontSize: 12,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  color: isSelected ? AppTheme.primaryDark : AppTheme.textPrimary,
+                ),
+              ),
               selected: isSelected,
               selectedColor: AppTheme.primaryLight,
-              checkmarkColor: AppTheme.primary,
+              checkmarkColor: AppTheme.primaryDark,
               backgroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
-                side: BorderSide(color: isSelected ? AppTheme.primary : Colors.grey.shade300),
+                side: BorderSide(
+                  color: isSelected ? AppTheme.primary : Colors.grey.shade300,
+                  width: isSelected ? 1.5 : 1,
+                ),
               ),
               onSelected: (selected) {
                 setState(() {
@@ -574,7 +588,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
             margin: const EdgeInsets.only(bottom: 8),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: isSelected ? AppTheme.primaryLight.withOpacity(0.4) : Colors.white,
+              color: isSelected ? AppTheme.primaryLight.withValues(alpha: 0.4) : Colors.white,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: isSelected ? AppTheme.primary : Colors.grey.shade200,
@@ -614,13 +628,25 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
       children: options.map((opt) {
         final isSelected = opt == selected;
         return ChoiceChip(
-          label: Text(opt, style: GoogleFonts.poppins(fontSize: 12, fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500)),
+          label: Text(
+            opt,
+            style: GoogleFonts.poppins(
+              fontSize: 12,
+              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+              color: isSelected ? AppTheme.primaryDark : AppTheme.textPrimary,
+            ),
+          ),
           selected: isSelected,
           selectedColor: AppTheme.primaryLight,
           backgroundColor: Colors.white,
+          showCheckmark: true,
+          checkmarkColor: AppTheme.primaryDark,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
-            side: BorderSide(color: isSelected ? AppTheme.primary : Colors.grey.shade300),
+            side: BorderSide(
+              color: isSelected ? AppTheme.primary : Colors.grey.shade300,
+              width: isSelected ? 1.5 : 1,
+            ),
           ),
           onSelected: (_) => onSelected(opt),
         );
@@ -684,12 +710,9 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
                     ],
                   ),
                   child: const Center(
-                    child: CuteRobotLoader(
-                      size: 36,
-                      headColor: AppTheme.primary,
-                      eyeColor: Colors.white,
-                      withShadow: false,
-                      onlyBlink: true,
+                    child: PetRecommendationIcon(
+                      size: 32,
+                      color: Color(0xFF1E293B),
                     ),
                   ),
                 ),
@@ -701,14 +724,14 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
                       Text('Top Matching Candidates', style: GoogleFonts.poppins(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
                       const SizedBox(height: 2),
                       Text('Ranked using Scikit-Learn Cosine Similarity',
-                          style: GoogleFonts.poppins(color: Colors.white.withOpacity(0.85), fontSize: 11)),
+                          style: GoogleFonts.poppins(color: Colors.white.withValues(alpha: 0.85), fontSize: 11)),
                     ],
                   ),
                 ),
                 TextButton(
                   onPressed: () => setState(() => _showResults = false),
                   style: TextButton.styleFrom(
-                    backgroundColor: Colors.white.withOpacity(0.2),
+                    backgroundColor: Colors.white.withValues(alpha: 0.2),
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
@@ -769,7 +792,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
                               ? Image.network(
                                   pet['photo_url'] ?? 'http://10.0.2.2:8000/storage/${pet['photo_path']}',
                                   fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) => const Icon(Icons.pets, color: Colors.grey),
+                                  errorBuilder: (_, _, _) => const Icon(Icons.pets, color: Colors.grey),
                                 )
                               : const Icon(Icons.pets, color: Colors.grey),
                         ),
@@ -794,7 +817,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                   decoration: BoxDecoration(
                                     color: matchPct >= 90
-                                        ? AppTheme.successColor.withOpacity(0.12)
+                                        ? AppTheme.successColor.withValues(alpha: 0.12)
                                         : AppTheme.primaryLight,
                                     borderRadius: BorderRadius.circular(8),
                                   ),

@@ -100,7 +100,8 @@ class AppTheme {
       chipTheme: ChipThemeData(
         backgroundColor: surface,
         selectedColor: primaryLight,
-        labelStyle: GoogleFonts.poppins(fontSize: 12),
+        labelStyle: GoogleFonts.poppins(fontSize: 12, color: textPrimary),
+        secondaryLabelStyle: GoogleFonts.poppins(fontSize: 12, color: primaryDark, fontWeight: FontWeight.w600),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),

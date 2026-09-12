@@ -166,7 +166,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (picked == null) return;
 
       setState(() => _isUploadingAvatar = true);
-      await ApiService.uploadAvatar(File(picked.path));
+      final res = await ApiService.uploadAvatar(File(picked.path));
+      if (mounted && res['avatar_url'] != null) {
+        setState(() {
+          if (_user != null) {
+            _user!['avatar_url'] = res['avatar_url'];
+            _user!['avatar'] = res['avatar_url'];
+          }
+        });
+      }
       await _loadUser();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -273,10 +281,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   width: 84,
                   height: 84,
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.25),
+                    color: Colors.white.withValues(alpha: 0.25),
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: Colors.white.withOpacity(0.6),
+                      color: Colors.white.withValues(alpha: 0.6),
                       width: 2.5,
                     ),
                   ),
@@ -288,14 +296,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
                           ),
                         )
-                      : (_user != null && _user!['avatar'] != null && _user!['avatar'].toString().isNotEmpty)
+                      : (_user != null &&
+                              ((_user!['avatar_url'] != null && _user!['avatar_url'].toString().isNotEmpty) ||
+                                  (_user!['avatar'] != null && _user!['avatar'].toString().isNotEmpty)))
                           ? ClipOval(
                               child: Image.network(
-                                _user!['avatar'],
+                                ApiService.normalizeImageUrl(
+                                  (_user!['avatar_url'] != null && _user!['avatar_url'].toString().isNotEmpty)
+                                      ? _user!['avatar_url']
+                                      : _user!['avatar'],
+                                ),
                                 width: 84,
                                 height: 84,
                                 fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => Center(
+                                errorBuilder: (_, _, _) => Center(
                                   child: Text(
                                     _getInitials(name),
                                     style: GoogleFonts.poppins(
@@ -366,7 +380,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             email,
             style: GoogleFonts.poppins(
               fontSize: 12,
-              color: Colors.white.withOpacity(0.8),
+              color: Colors.white.withValues(alpha: 0.8),
             ),
           ),
           const SizedBox(height: 10),
@@ -380,7 +394,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.08),
+                      color: Colors.black.withValues(alpha: 0.08),
                       blurRadius: 4,
                       offset: const Offset(0, 2),
                     ),
@@ -407,7 +421,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
+                  color: Colors.white.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -610,8 +624,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         try {
                           await ApiService.updateProfileName(newName);
                           if (ctx.mounted) Navigator.pop(ctx);
+                          await _loadUser();
+                          if (!mounted) return;
                           if (mounted) {
-                            await _loadUser();
+                            // ignore: use_build_context_synchronously
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text('Legal name updated to "$newName" successfully.', style: GoogleFonts.poppins(fontSize: 13)),
@@ -624,6 +640,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         } catch (e) {
                           setModalState(() => isSaving = false);
                           if (mounted) {
+                            // ignore: use_build_context_synchronously
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text('Failed to update name: $e', style: GoogleFonts.poppins(fontSize: 13)),
@@ -782,7 +799,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                         decoration: BoxDecoration(
-                          color: AppTheme.primary.withOpacity(0.1),
+                          color: AppTheme.primary.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
@@ -993,11 +1010,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       if (ctx.mounted) {
                         Navigator.pop(ctx);
                       }
+                      if (!mounted) return;
                       if (mounted) {
                         setState(() {
                           _savedPhone = newPhone;
                           _savedSecondaryPhone = newSecondary.isNotEmpty ? newSecondary : null;
                         });
+                        // ignore: use_build_context_synchronously
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text('Contact numbers saved successfully.', style: GoogleFonts.poppins(fontSize: 13)),
@@ -1123,7 +1142,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 signatureUrl,
                 height: 58,
                 fit: BoxFit.contain,
-                errorBuilder: (_, __, ___) => Center(
+                errorBuilder: (_, _, _) => Center(
                   child: Text(
                     'Signature on record',
                     style: GoogleFonts.poppins(fontSize: 11, color: AppTheme.textSecondary),
@@ -1347,6 +1366,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      enableDrag: false,
       backgroundColor: Colors.transparent,
       builder: (ctx) => _DigitalSignatureSheet(
         initialSignatureUrl: _user?['digital_signature_url']?.toString(),
@@ -1411,7 +1431,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           decoration: BoxDecoration(
             color: const Color(0xFFFEEEEE),
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppTheme.errorColor.withOpacity(0.2)),
+            border: Border.all(color: AppTheme.errorColor.withValues(alpha: 0.2)),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -1502,22 +1522,41 @@ class _DigitalSignatureSheetState extends State<_DigitalSignatureSheet> {
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(recorder);
 
-    final paint = Paint()
+    final strokePaint = Paint()
       ..color = const Color(0xFF0F172A)
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round
       ..strokeWidth = 3.5
+      ..style = PaintingStyle.stroke
+      ..isAntiAlias = true;
+
+    final dotPaint = Paint()
+      ..color = const Color(0xFF0F172A)
+      ..style = PaintingStyle.fill
       ..isAntiAlias = true;
 
     canvas.translate(-minX, -minY);
 
     for (final stroke in _strokes) {
-      if (stroke.length > 1) {
-        for (int i = 0; i < stroke.length - 1; i++) {
-          canvas.drawLine(stroke[i], stroke[i + 1], paint);
+      if (stroke.length > 2) {
+        final path = Path();
+        path.moveTo(stroke[0].dx, stroke[0].dy);
+        for (int i = 1; i < stroke.length - 1; i++) {
+          final p0 = stroke[i];
+          final p1 = stroke[i + 1];
+          path.quadraticBezierTo(
+            p0.dx,
+            p0.dy,
+            (p0.dx + p1.dx) / 2,
+            (p0.dy + p1.dy) / 2,
+          );
         }
+        path.lineTo(stroke.last.dx, stroke.last.dy);
+        canvas.drawPath(path, strokePaint);
+      } else if (stroke.length == 2) {
+        canvas.drawLine(stroke[0], stroke[1], strokePaint);
       } else if (stroke.length == 1) {
-        canvas.drawCircle(stroke[0], 2.0, paint);
+        canvas.drawCircle(stroke[0], 2.0, dotPaint);
       }
     }
 
@@ -1704,7 +1743,7 @@ class _DigitalSignatureSheetState extends State<_DigitalSignatureSheet> {
                     child: Image.network(
                       _signatureUrl!,
                       fit: BoxFit.contain,
-                      errorBuilder: (_, __, ___) => const Center(
+                      errorBuilder: (_, _, _) => const Center(
                         child: Text('Signature on file', style: TextStyle(color: Color(0xFF64748B))),
                       ),
                     ),
@@ -1782,7 +1821,10 @@ class _DigitalSignatureSheetState extends State<_DigitalSignatureSheet> {
               decoration: BoxDecoration(
                 color: const Color(0xFFFAFAFA),
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xFFCBD5E1), width: 1.5),
+                border: Border.all(
+                  color: _isSigning ? AppTheme.primary : const Color(0xFFCBD5E1),
+                  width: _isSigning ? 2.0 : 1.5,
+                ),
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(14),
@@ -1816,29 +1858,43 @@ class _DigitalSignatureSheetState extends State<_DigitalSignatureSheet> {
                         ),
                       ),
                     ),
-                    Listener(
-                      behavior: HitTestBehavior.opaque,
-                      onPointerDown: (event) {
-                        setState(() {
-                          _isSigning = true;
-                          _currentStroke = [event.localPosition];
-                          _strokes.add(_currentStroke);
-                        });
+                    RawGestureDetector(
+                      gestures: <Type, GestureRecognizerFactory>{
+                        EagerGestureRecognizer: GestureRecognizerFactoryWithHandlers<EagerGestureRecognizer>(
+                          () => EagerGestureRecognizer(),
+                          (EagerGestureRecognizer instance) {},
+                        ),
                       },
-                      onPointerMove: (event) {
-                        setState(() {
-                          _currentStroke.add(event.localPosition);
-                        });
-                      },
-                      onPointerUp: (_) {
-                        setState(() {
-                          _isSigning = false;
-                          _currentStroke = [];
-                        });
-                      },
-                      child: SizedBox.expand(
-                        child: CustomPaint(
-                          painter: _SignaturePadPainter(strokes: _strokes),
+                      child: Listener(
+                        behavior: HitTestBehavior.opaque,
+                        onPointerDown: (event) {
+                          setState(() {
+                            _isSigning = true;
+                            _currentStroke = [event.localPosition];
+                            _strokes.add(_currentStroke);
+                          });
+                        },
+                        onPointerMove: (event) {
+                          setState(() {
+                            _currentStroke.add(event.localPosition);
+                          });
+                        },
+                        onPointerUp: (_) {
+                          setState(() {
+                            _isSigning = false;
+                            _currentStroke = [];
+                          });
+                        },
+                        onPointerCancel: (_) {
+                          setState(() {
+                            _isSigning = false;
+                            _currentStroke = [];
+                          });
+                        },
+                        child: SizedBox.expand(
+                          child: CustomPaint(
+                            painter: _SignaturePadPainter(strokes: _strokes),
+                          ),
                         ),
                       ),
                     ),
@@ -1904,20 +1960,39 @@ class _SignaturePadPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
+    final strokePaint = Paint()
       ..color = const Color(0xFF0F172A)
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round
       ..strokeWidth = 3.0
+      ..style = PaintingStyle.stroke
+      ..isAntiAlias = true;
+
+    final dotPaint = Paint()
+      ..color = const Color(0xFF0F172A)
+      ..style = PaintingStyle.fill
       ..isAntiAlias = true;
 
     for (final stroke in strokes) {
-      if (stroke.length > 1) {
-        for (int i = 0; i < stroke.length - 1; i++) {
-          canvas.drawLine(stroke[i], stroke[i + 1], paint);
+      if (stroke.length > 2) {
+        final path = Path();
+        path.moveTo(stroke[0].dx, stroke[0].dy);
+        for (int i = 1; i < stroke.length - 1; i++) {
+          final p0 = stroke[i];
+          final p1 = stroke[i + 1];
+          path.quadraticBezierTo(
+            p0.dx,
+            p0.dy,
+            (p0.dx + p1.dx) / 2,
+            (p0.dy + p1.dy) / 2,
+          );
         }
+        path.lineTo(stroke.last.dx, stroke.last.dy);
+        canvas.drawPath(path, strokePaint);
+      } else if (stroke.length == 2) {
+        canvas.drawLine(stroke[0], stroke[1], strokePaint);
       } else if (stroke.length == 1) {
-        canvas.drawCircle(stroke[0], 1.5, paint);
+        canvas.drawCircle(stroke[0], 1.5, dotPaint);
       }
     }
   }

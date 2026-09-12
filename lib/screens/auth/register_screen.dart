@@ -445,7 +445,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             width: 160,
             height: 160,
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.07),
+              color: Colors.white.withValues(alpha: 0.07),
               shape: BoxShape.circle,
             ),
           ),
@@ -527,7 +527,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         boxShadow: isActive
                             ? [
                                 BoxShadow(
-                                  color: AppTheme.primary.withOpacity(0.3),
+                                  color: AppTheme.primary.withValues(alpha: 0.3),
                                   blurRadius: 8,
                                   offset: const Offset(0, 3),
                                 ),
@@ -673,6 +673,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   scale: 0.75,
                   child: Switch.adaptive(
                     value: _noMiddleName,
+                    // ignore: deprecated_member_use
                     activeColor: AppTheme.primary,
                     materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     onChanged: (val) {
@@ -760,7 +761,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           // Next Button
           _isSendingEmailOtp
               ? _loadingButton()
-              : _gradientButton('Next: Verify Email →', _handleStep1Submit),
+              : _gradientButton('Next: Verify Email', _handleStep1Submit),
 
           const SizedBox(height: 20),
           Row(
@@ -864,13 +865,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         side: BorderSide(color: Colors.grey.shade300),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                       ),
-                      child: Text('← Back', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.textPrimary)),
+                      child: Text('Back', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.textPrimary)),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     flex: 3,
-                    child: _gradientButton('Verify & Next →', _handleStep2Verify),
+                    child: _gradientButton('Verify & Next', _handleStep2Verify),
                   ),
                 ],
               ),
@@ -996,7 +997,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         Center(
           child: TextButton(
             onPressed: () => setState(() => _currentStep = 1),
-            child: Text('← Back to Email Verification', style: GoogleFonts.poppins(fontSize: 13, color: AppTheme.textSecondary, fontWeight: FontWeight.w500)),
+            child: Text('Back to Email Verification', style: GoogleFonts.poppins(fontSize: 13, color: AppTheme.textSecondary, fontWeight: FontWeight.w500)),
           ),
         ),
       ],
@@ -1057,7 +1058,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           borderRadius: BorderRadius.circular(14),
           boxShadow: [
             BoxShadow(
-              color: AppTheme.primary.withOpacity(0.35),
+              color: AppTheme.primary.withValues(alpha: 0.35),
               blurRadius: 14,
               offset: const Offset(0, 5),
             ),
@@ -1082,7 +1083,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       width: double.infinity,
       height: 52,
       decoration: BoxDecoration(
-        color: AppTheme.primary.withOpacity(0.7),
+        color: AppTheme.primary.withValues(alpha: 0.7),
         borderRadius: BorderRadius.circular(14),
       ),
       child: const Center(

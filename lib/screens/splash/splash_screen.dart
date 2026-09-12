@@ -112,7 +112,7 @@ class _SplashScreenState extends State<SplashScreen>
                   width: 240,
                   height: 240,
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.07),
+                    color: Colors.white.withValues(alpha: 0.07),
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -124,7 +124,7 @@ class _SplashScreenState extends State<SplashScreen>
                   width: 280,
                   height: 280,
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.05),
+                    color: Colors.white.withValues(alpha: 0.05),
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -145,7 +145,7 @@ class _SplashScreenState extends State<SplashScreen>
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.2),
+                                color: Colors.black.withValues(alpha: 0.2),
                                 blurRadius: 16,
                                 offset: const Offset(0, 6),
                               ),
@@ -182,7 +182,7 @@ class _SplashScreenState extends State<SplashScreen>
                               style: GoogleFonts.poppins(
                                 fontSize: 17,
                                 fontWeight: FontWeight.w400,
-                                color: Colors.white.withOpacity(0.85),
+                                color: Colors.white.withValues(alpha: 0.85),
                                 letterSpacing: 2.5,
                               ),
                             ),
@@ -193,17 +193,17 @@ class _SplashScreenState extends State<SplashScreen>
                                 vertical: 8,
                               ),
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.15),
+                                color: Colors.white.withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(24),
                                 border: Border.all(
-                                  color: Colors.white.withOpacity(0.2),
+                                  color: Colors.white.withValues(alpha: 0.2),
                                 ),
                               ),
                               child: Text(
                                 'Find your perfect companion',
                                 style: GoogleFonts.poppins(
                                   fontSize: 13,
-                                  color: Colors.white.withOpacity(0.9),
+                                  color: Colors.white.withValues(alpha: 0.9),
                                 ),
                               ),
                             ),
@@ -225,7 +225,7 @@ class _SplashScreenState extends State<SplashScreen>
                       width: 22,
                       height: 22,
                       child: CircularProgressIndicator(
-                        color: Colors.white.withOpacity(0.65),
+                        color: Colors.white.withValues(alpha: 0.65),
                         strokeWidth: 2,
                       ),
                     ),

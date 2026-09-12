@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile_petadopt/data/philippine_locations.dart';
@@ -49,7 +48,7 @@ class _EditAddressScreenState extends State<EditAddressScreen> {
       if (fullMatch != null) {
         street = fullMatch.group(1)?.trim();
         barangay = fullMatch.group(2)?.trim();
-        if (city == null) city = fullMatch.group(3)?.trim();
+        city ??= fullMatch.group(3)?.trim();
       }
     }
 
@@ -150,7 +149,7 @@ class _EditAddressScreenState extends State<EditAddressScreen> {
                 decoration: BoxDecoration(
                   color: AppTheme.primaryLight,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppTheme.primary.withOpacity(0.2)),
+                  border: Border.all(color: AppTheme.primary.withValues(alpha: 0.2)),
                 ),
                 child: Row(
                   children: [
@@ -231,7 +230,7 @@ class _EditAddressScreenState extends State<EditAddressScreen> {
               ),
               const SizedBox(height: 6),
               DropdownButtonFormField<String>(
-                value: LocationData.citiesAndMunicipalities.contains(_selectedCity)
+                initialValue: LocationData.citiesAndMunicipalities.contains(_selectedCity)
                     ? _selectedCity
                     : LocationData.citiesAndMunicipalities.first,
                 decoration: const InputDecoration(
@@ -271,7 +270,7 @@ class _EditAddressScreenState extends State<EditAddressScreen> {
               ),
               const SizedBox(height: 6),
               DropdownButtonFormField<String>(
-                value: availableBarangays.contains(_selectedBarangay)
+                initialValue: availableBarangays.contains(_selectedBarangay)
                     ? _selectedBarangay
                     : availableBarangays.first,
                 decoration: const InputDecoration(
@@ -335,7 +334,7 @@ class _EditAddressScreenState extends State<EditAddressScreen> {
                     borderRadius: BorderRadius.circular(14),
                     boxShadow: [
                       BoxShadow(
-                        color: AppTheme.primary.withOpacity(0.35),
+                        color: AppTheme.primary.withValues(alpha: 0.35),
                         blurRadius: 14,
                         offset: const Offset(0, 5),
                       ),

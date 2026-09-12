@@ -14,7 +14,7 @@ class PetListScreen extends StatefulWidget {
 class _PetListScreenState extends State<PetListScreen> {
   final _searchController = TextEditingController();
   String _selectedFilter = 'All';
-  String _searchQuery = '';
+  final String _searchQuery = '';
   List<Map<String, dynamic>> _pets = [];
   bool _isLoading = true;
 
@@ -63,13 +63,6 @@ class _PetListScreenState extends State<PetListScreen> {
     _fetchPets();
   }
 
-  void _onSearchChanged(String query) {
-    setState(() {
-      _searchQuery = query;
-    });
-    _fetchPets();
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -114,7 +107,7 @@ class _PetListScreenState extends State<PetListScreen> {
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16),
               itemCount: _filters.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              separatorBuilder: (_, _) => const SizedBox(width: 8),
               itemBuilder: (context, index) {
                 final filter = _filters[index];
                 final isSelected = _selectedFilter == filter;

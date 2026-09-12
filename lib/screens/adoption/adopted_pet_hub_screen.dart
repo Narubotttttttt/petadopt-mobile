@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile_petadopt/screens/adoption/submit_health_checkin_screen.dart';
 import 'package:mobile_petadopt/services/api_service.dart';
 import 'package:mobile_petadopt/theme/app_theme.dart';
+import 'package:mobile_petadopt/widgets/sign_contract_dialog.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class AdoptedPetHubScreen extends StatefulWidget {
@@ -48,7 +49,103 @@ class _AdoptedPetHubScreenState extends State<AdoptedPetHubScreen> {
     }
   }
 
+  void _openSignatureDialog() {
+    showDialog(
+      context: context,
+      builder: (_) => SignContractDialog(
+        application: widget.application,
+        onSigned: () {
+          setState(() {
+            widget.application['is_signed'] = true;
+            widget.application['signature_url'] = 'signed';
+          });
+          _loadHubData();
+        },
+      ),
+    );
+  }
+
+  void _showSignatureRequiredDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEF3C7),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(Icons.draw_rounded, color: Color(0xFFD97706), size: 22),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'Signature Required',
+                style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 16),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          'Please provide a signature first before downloading the contract. Your digital signature must be attached to the official CAWS adoption agreement.',
+          style: GoogleFonts.poppins(fontSize: 13, color: AppTheme.textSecondary, height: 1.4),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('Cancel', style: GoogleFonts.poppins(fontWeight: FontWeight.w600, color: Colors.grey)),
+          ),
+          ElevatedButton.icon(
+            onPressed: () {
+              Navigator.pop(ctx);
+              _openSignatureDialog();
+            },
+            icon: const Icon(Icons.edit_document, size: 16, color: Colors.white),
+            label: Text(
+              'Sign Contract Now',
+              style: GoogleFonts.poppins(fontWeight: FontWeight.w700, color: Colors.white),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFD97706),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _handleDownloadContract() async {
+    final isSigned = widget.application['is_signed'] == true || 
+        (widget.application['signature_url'] != null && widget.application['signature_url'].toString().isNotEmpty);
+
+    if (!isSigned) {
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Please provide a signature first before downloading the contract.',
+            style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w500),
+          ),
+          backgroundColor: AppTheme.errorColor,
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 6),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          action: SnackBarAction(
+            label: 'Sign Now',
+            textColor: Colors.white,
+            onPressed: _openSignatureDialog,
+          ),
+        ),
+      );
+
+      _showSignatureRequiredDialog();
+      return;
+    }
+
     final appId = widget.application['id'] as int;
     setState(() => _isDownloading = true);
 
@@ -64,17 +161,33 @@ class _AdoptedPetHubScreenState extends State<AdoptedPetHubScreen> {
       throw Exception('Could not open browser to download the contract.');
     } catch (e) {
       if (mounted) {
+        final errorMsg = e.toString().replaceFirst('Exception: ', '');
+        final isSignatureError = errorMsg.toLowerCase().contains('signature') || errorMsg.toLowerCase().contains('sign');
+
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              e.toString().replaceFirst('Exception: ', ''),
+              isSignatureError ? 'Please provide a signature first before downloading the contract.' : errorMsg,
               style: GoogleFonts.poppins(fontSize: 13),
             ),
             backgroundColor: AppTheme.errorColor,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            duration: isSignatureError ? const Duration(seconds: 6) : const Duration(seconds: 4),
+            action: isSignatureError
+                ? SnackBarAction(
+                    label: 'Sign Now',
+                    textColor: Colors.white,
+                    onPressed: _openSignatureDialog,
+                  )
+                : null,
           ),
         );
+
+        if (isSignatureError) {
+          _showSignatureRequiredDialog();
+        }
       }
     } finally {
       if (mounted) {
@@ -191,7 +304,7 @@ class _AdoptedPetHubScreenState extends State<AdoptedPetHubScreen> {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -206,7 +319,7 @@ class _AdoptedPetHubScreenState extends State<AdoptedPetHubScreen> {
               width: double.infinity,
               height: 190,
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
+              errorBuilder: (_, _, _) => Container(
                 width: double.infinity,
                 height: 190,
                 color: AppTheme.primaryLight,
@@ -285,7 +398,7 @@ class _AdoptedPetHubScreenState extends State<AdoptedPetHubScreen> {
                         style: OutlinedButton.styleFrom(
                           minimumSize: const Size.fromHeight(46),
                           padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                          side: BorderSide(color: AppTheme.primary.withOpacity(0.3)),
+                          side: BorderSide(color: AppTheme.primary.withValues(alpha: 0.3)),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
                       ),
@@ -342,11 +455,11 @@ class _AdoptedPetHubScreenState extends State<AdoptedPetHubScreen> {
         color: AppTheme.surface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isOverdue ? AppTheme.errorColor.withOpacity(0.3) : AppTheme.cardBorder,
+          color: isOverdue ? AppTheme.errorColor.withValues(alpha: 0.3) : AppTheme.cardBorder,
         ),
         boxShadow: [
           BoxShadow(
-            color: isOverdue ? AppTheme.errorColor.withOpacity(0.06) : Colors.black.withOpacity(0.03),
+            color: isOverdue ? AppTheme.errorColor.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.03),
             blurRadius: 10,
             offset: const Offset(0, 3),
           ),
@@ -476,7 +589,7 @@ class _AdoptedPetHubScreenState extends State<AdoptedPetHubScreen> {
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: _healthUpdates.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
+            separatorBuilder: (_, _) => const SizedBox(height: 12),
             itemBuilder: (context, idx) {
               final item = _healthUpdates[idx];
               final photoUrl = item['photo_url'] as String? ?? '';
@@ -502,7 +615,7 @@ class _AdoptedPetHubScreenState extends State<AdoptedPetHubScreen> {
                         width: 70,
                         height: 70,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Container(
+                        errorBuilder: (_, _, _) => Container(
                           width: 70,
                           height: 70,
                           color: Colors.grey.shade200,
@@ -597,7 +710,7 @@ class _AdoptedPetHubScreenState extends State<AdoptedPetHubScreen> {
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: _vaccineReminders.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 8),
+            separatorBuilder: (_, _) => const SizedBox(height: 8),
             itemBuilder: (context, idx) {
               final rem = _vaccineReminders[idx];
               return Container(
