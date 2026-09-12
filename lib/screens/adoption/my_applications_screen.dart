@@ -16,7 +16,7 @@ class MyApplicationsScreen extends StatefulWidget {
 class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
   List<Map<String, dynamic>> _applications = [];
   bool _isLoading = true;
-  String _selectedFilter = 'all';
+  String _selectedFilter = 'approved';
 
   @override
   void initState() {
@@ -39,6 +39,17 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
         setState(() {
           _applications = list;
           _isLoading = false;
+          final hasApproved = list.any((app) {
+            final status = (app['status'] as String? ?? '').toLowerCase();
+            return status == 'approved' || status == 'adopted';
+          });
+          final hasPending = list.any((app) {
+            final status = (app['status'] as String? ?? '').toLowerCase();
+            return status == 'pending' || status == 'under_review';
+          });
+          if (!hasApproved && hasPending && _selectedFilter == 'approved') {
+            _selectedFilter = 'pending';
+          }
         });
       }
     } catch (_) {
@@ -91,7 +102,7 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
         return status == 'rejected' || isAdoptedByOther;
       }).length;
     }
-    return _applications.length;
+    return 0;
   }
 
   @override
@@ -125,7 +136,7 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
           ? const Center(child: CircularProgressIndicator(color: AppTheme.primary, strokeWidth: 2))
           : Column(
               children: [
-                // Filter Tabs
+                // Filter Tabs: Approved first, then Pending, then Declined (No "All")
                 if (_applications.isNotEmpty)
                   Container(
                     width: double.infinity,
@@ -136,11 +147,9 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
                       physics: const BouncingScrollPhysics(),
                       child: Row(
                         children: [
-                          _buildFilterChip('all', 'All', _countForFilter('all')),
+                          _buildFilterChip('approved', 'Approved', _countForFilter('approved')),
                           const SizedBox(width: 8),
                           _buildFilterChip('pending', 'Pending', _countForFilter('pending')),
-                          const SizedBox(width: 8),
-                          _buildFilterChip('approved', 'Approved', _countForFilter('approved')),
                           const SizedBox(width: 8),
                           _buildFilterChip('declined', 'Declined', _countForFilter('declined')),
                         ],
@@ -149,23 +158,25 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
                   ),
 
                 Expanded(
-                  child: filteredList.isEmpty
-                      ? _buildEmptyState()
-                      : RefreshIndicator(
-                          onRefresh: _fetchApplications,
-                          color: AppTheme.primary,
-                          child: ListView.separated(
-                            padding: const EdgeInsets.all(16),
-                            itemCount: filteredList.length,
-                            separatorBuilder: (_, _) => const SizedBox(height: 12),
-                            itemBuilder: (context, index) {
-                              return _ApplicationCard(
-                                application: filteredList[index],
-                                onRefresh: _fetchApplications,
-                              );
-                            },
-                          ),
-                        ),
+                  child: _applications.isEmpty
+                      ? _buildEmptyState(isTotalEmpty: true)
+                      : filteredList.isEmpty
+                          ? _buildEmptyState(isTotalEmpty: false)
+                          : RefreshIndicator(
+                              onRefresh: _fetchApplications,
+                              color: AppTheme.primary,
+                              child: ListView.separated(
+                                padding: const EdgeInsets.all(16),
+                                itemCount: filteredList.length,
+                                separatorBuilder: (_, _) => const SizedBox(height: 12),
+                                itemBuilder: (context, index) {
+                                  return _ApplicationCard(
+                                    application: filteredList[index],
+                                    onRefresh: _fetchApplications,
+                                  );
+                                },
+                              ),
+                            ),
                 ),
               ],
             ),
@@ -195,7 +206,7 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState({required bool isTotalEmpty}) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 32),
@@ -217,7 +228,7 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
             ),
             const SizedBox(height: 14),
             Text(
-              _selectedFilter == 'all' ? 'No applications yet' : 'No $_selectedFilter applications',
+              isTotalEmpty ? 'No applications yet' : 'No $_selectedFilter applications',
               style: GoogleFonts.poppins(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
@@ -226,9 +237,9 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
             ),
             const SizedBox(height: 4),
             Text(
-              _selectedFilter == 'all'
+              isTotalEmpty
                   ? 'Browse adoptable pets and submit your adoption request.'
-                  : 'Try switching to another filter tab above.',
+                  : 'You have no applications under $_selectedFilter status.',
               style: GoogleFonts.poppins(
                 fontSize: 12,
                 color: const Color(0xFF64748B),
