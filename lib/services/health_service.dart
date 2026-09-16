@@ -83,4 +83,23 @@ class HealthService {
 
     return [];
   }
+  static Future<Map<String, dynamic>> getPetMedicalPassport(int petId) async {
+    final token = await AuthService.getToken();
+    final response = await http
+        .get(
+          Uri.parse('${ApiConfig.baseUrl}/pets/$petId/medical-passport'),
+          headers: ApiClient.headersWithToken(token),
+        )
+        .timeout(ApiConfig.defaultTimeout);
+
+    if (response.statusCode == 200) {
+      final json = jsonDecode(response.body) as Map<String, dynamic>;
+      if (json['success'] == true && json['passport'] != null) {
+        return Map<String, dynamic>.from(json['passport'] as Map);
+      }
+    }
+
+    final errData = jsonDecode(response.body) as Map<String, dynamic>?;
+    throw Exception(errData?['message']?.toString() ?? 'Failed to load pet card.');
+  }
 }

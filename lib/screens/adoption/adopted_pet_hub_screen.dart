@@ -1,3 +1,4 @@
+import 'package:mobile_petadopt/screens/adoption/pet_medical_card_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile_petadopt/screens/adoption/submit_health_checkin_screen.dart';
@@ -385,20 +386,58 @@ class _AdoptedPetHubScreenState extends State<AdoptedPetHubScreen> {
                                 height: 14,
                                 child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primary),
                               )
-                            : const Icon(Icons.download_rounded, size: 16, color: AppTheme.primary),
+                            : const Icon(Icons.download_rounded, size: 15, color: AppTheme.primary),
                         label: Text(
-                          _isDownloading ? 'Downloading...' : 'Adoption Contract',
+                          _isDownloading ? 'Downloading...' : 'Contract',
                           style: GoogleFonts.poppins(
-                            fontSize: 13,
+                            fontSize: 12.5,
                             fontWeight: FontWeight.w600,
                             color: AppTheme.primaryDark,
                             height: 1.2,
                           ),
                         ),
                         style: OutlinedButton.styleFrom(
-                          minimumSize: const Size.fromHeight(46),
-                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                          minimumSize: const Size.fromHeight(44),
+                          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
                           side: BorderSide(color: AppTheme.primary.withValues(alpha: 0.3)),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          final petId = (widget.application['pet_id'] ?? widget.application['petId'] ?? widget.application['pet']?['id']) as int?;
+                          if (petId != null) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => PetMedicalCardScreen(
+                                  petId: petId,
+                                  applicationId: widget.application['id'] as int?,
+                                  petName: name,
+                                  petImage: image,
+                                ),
+                              ),
+                            );
+                          }
+                        },
+                        icon: const Icon(Icons.medical_services_outlined, size: 15, color: Colors.white),
+                        label: Text(
+                          'Pet Card',
+                          style: GoogleFonts.poppins(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                            height: 1.2,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.primary,
+                          minimumSize: const Size.fromHeight(44),
+                          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+                          elevation: 0,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
                       ),
@@ -679,13 +718,50 @@ class _AdoptedPetHubScreenState extends State<AdoptedPetHubScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Shelter Medical Records',
-          style: GoogleFonts.poppins(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-            color: AppTheme.textPrimary,
-          ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Shelter Medical Records',
+              style: GoogleFonts.poppins(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: AppTheme.textPrimary,
+              ),
+            ),
+            InkWell(
+              onTap: () {
+                final petId = (widget.application['pet_id'] ?? widget.application['petId'] ?? widget.application['pet']?['id']) as int?;
+                if (petId != null) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => PetMedicalCardScreen(
+                        petId: petId,
+                        applicationId: widget.application['id'] as int?,
+                        petName: widget.application['petName'] as String? ?? 'Adopted Pet',
+                        petImage: widget.application['petImage'] as String? ?? '',
+                      ),
+                    ),
+                  );
+                }
+              },
+              child: Row(
+                children: [
+                  const Icon(Icons.badge_outlined, size: 14, color: AppTheme.primary),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Pet Card',
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.primary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 10),
         if (_vaccineReminders.isEmpty)

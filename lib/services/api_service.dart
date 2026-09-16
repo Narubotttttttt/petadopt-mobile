@@ -132,6 +132,10 @@ class ApiService {
   static Future<List<Map<String, dynamic>>> getVaccineReminders() =>
       HealthService.getVaccineReminders();
 
+  static Future<Map<String, dynamic>> getPetMedicalPassport(int petId) =>
+      HealthService.getPetMedicalPassport(petId);
+
+
   // Recommendations & Quiz
   static Future<List<Map<String, dynamic>>> getRecommendations({
     Map<String, dynamic>? profile,

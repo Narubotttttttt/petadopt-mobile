@@ -1,3 +1,6 @@
+/// Standard Geographic Reference Data for Cagayan de Oro City and Misamis Oriental.
+/// Source: Philippine Standard Geographic Code (PSGC), Philippine Statistics Authority (PSA) / DILG.
+/// Purpose: Standardized address dropdown selection for adopter profile verification.
 class LocationData {
   static const String defaultProvince = 'Misamis Oriental';
 
