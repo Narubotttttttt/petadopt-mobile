@@ -762,7 +762,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
                 'type': pet['type'] ?? 'cat',
                 'image': pet['photo_url'] ??
                     (pet['photo_path'] != null
-                        ? 'http://10.0.2.2:8000/storage/${pet['photo_path']}'
+                        ? ApiService.normalizeImageUrl(pet['photo_path'])
                         : 'https://images.unsplash.com/photo-1543466835-00a7907e9de1'),
                 'match_percentage': pet['match_percentage'],
                 'isRecommended': true,
@@ -790,7 +790,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
                           color: Colors.grey.shade200,
                           child: pet['photo_url'] != null || pet['photo_path'] != null
                               ? Image.network(
-                                  pet['photo_url'] ?? 'http://10.0.2.2:8000/storage/${pet['photo_path']}',
+                                  pet['photo_url'] ?? ApiService.normalizeImageUrl(pet['photo_path']),
                                   fit: BoxFit.cover,
                                   errorBuilder: (_, _, _) => const Icon(Icons.pets, color: Colors.grey),
                                 )

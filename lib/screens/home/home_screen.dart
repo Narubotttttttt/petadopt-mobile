@@ -1319,7 +1319,7 @@ class _HomeTabState extends State<_HomeTab> {
                                   'type': raw['type'] ?? 'cat',
                                   'image': raw['photo_url'] ??
                                       (raw['photo_path'] != null
-                                          ? 'http://10.0.2.2:8000/storage/${raw['photo_path']}'
+                                          ? ApiService.normalizeImageUrl(raw['photo_path'])
                                           : 'https://images.unsplash.com/photo-1543466835-00a7907e9de1'),
                                   'match_percentage': raw['match_percentage'],
                                   'isRecommended': true,
