@@ -372,9 +372,9 @@ class _PetMedicalCardScreenState extends State<PetMedicalCardScreen> {
 
   Widget _buildStatusSummary(Map<String, dynamic>? summary) {
     final status = summary?['vaccine_status'] as String? ?? 'Not Vaccinated';
-    final nextDue = summary?['next_vaccine_due_date'] as String?;
     final latestVac = summary?['latest_vaccine_date'] as String?;
     final latestDeworming = summary?['latest_deworming_date'] as String?;
+    final totalRecords = summary?['total_records_count'] as int? ?? 0;
 
     Color statusColor;
     String statusLabel;
@@ -400,7 +400,7 @@ class _PetMedicalCardScreenState extends State<PetMedicalCardScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'VACCINATION STATUS',
+                'CLINICAL STATUS',
                 style: GoogleFonts.poppins(
                   fontSize: 10,
                   fontWeight: FontWeight.w700,
@@ -433,20 +433,9 @@ class _PetMedicalCardScreenState extends State<PetMedicalCardScreen> {
             children: [
               Expanded(
                 child: _buildMetricCol(
-                  'Next Booster',
-                  nextDue ?? 'None',
+                  'Last Vaccine',
+                  latestVac ?? 'None',
                   AppTheme.textPrimary,
-                ),
-              ),
-              Container(width: 1, height: 28, color: const Color(0xFFF1F5F9)),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.only(left: 12),
-                  child: _buildMetricCol(
-                    'Last Vaccine',
-                    latestVac ?? 'None',
-                    AppTheme.textPrimary,
-                  ),
                 ),
               ),
               Container(width: 1, height: 28, color: const Color(0xFFF1F5F9)),
@@ -456,6 +445,17 @@ class _PetMedicalCardScreenState extends State<PetMedicalCardScreen> {
                   child: _buildMetricCol(
                     'Deworming',
                     latestDeworming ?? 'Pending',
+                    AppTheme.textPrimary,
+                  ),
+                ),
+              ),
+              Container(width: 1, height: 28, color: const Color(0xFFF1F5F9)),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 12),
+                  child: _buildMetricCol(
+                    'Total Logs',
+                    '$totalRecords',
                     AppTheme.textPrimary,
                   ),
                 ),
@@ -554,69 +554,217 @@ class _PetMedicalCardScreenState extends State<PetMedicalCardScreen> {
   }
 
   Widget _buildRecordRow(Map<String, dynamic> log) {
+    final category = (log['category'] as String? ?? '').toLowerCase();
     final categoryLabel = log['category_label'] as String? ?? 'Treatment';
+    final vaccineName = log['vaccine_name'] as String?;
     final dateFormatted = log['date_formatted'] as String? ?? 'N/A';
-    final nextDueFormatted = log['next_due_formatted'] as String?;
     final administeredBy = log['administered_by'] as String? ?? 'Shelter Staff';
+
+    final isVaccination = category == 'vaccination';
+    final isDeworming = category == 'deworming';
+
+    final Color badgeBg = isVaccination
+        ? const Color(0xFFE6F4F5)
+        : (isDeworming ? const Color(0xFFF3E8FF) : const Color(0xFFF1F5F9));
+    final Color badgeColor = isVaccination
+        ? const Color(0xFF15838B)
+        : (isDeworming ? const Color(0xFF7E22CE) : const Color(0xFF475569));
+
+    final primaryTitle = (vaccineName != null &&
+            vaccineName.trim().isNotEmpty &&
+            vaccineName.trim().toLowerCase() != category)
+        ? vaccineName.trim()
+        : categoryLabel;
 
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                categoryLabel,
-                style: GoogleFonts.poppins(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w700,
-                  color: AppTheme.textPrimary,
-                ),
-              ),
-              Text(
-                dateFormatted,
-                style: GoogleFonts.poppins(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
-                  color: const Color(0xFF64748B),
-                ),
-              ),
-            ],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 4,
+            offset: const Offset(0, 1),
           ),
-          const SizedBox(height: 4),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Text(
-                  administeredBy,
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () => _showRecordDetails(log, primaryTitle, categoryLabel),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                      decoration: BoxDecoration(
+                        color: badgeBg,
+                        borderRadius: BorderRadius.circular(5),
+                      ),
+                      child: Text(
+                        categoryLabel.toUpperCase(),
+                        style: GoogleFonts.poppins(
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.4,
+                          color: badgeColor,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      dateFormatted,
+                      style: GoogleFonts.poppins(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                        color: const Color(0xFF64748B),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  primaryTitle,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.poppins(
-                    fontSize: 11,
-                    color: const Color(0xFF475569),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.textPrimary,
                   ),
                 ),
-              ),
-              if (nextDueFormatted != null) ...[
-                const SizedBox(width: 8),
-                Text(
-                  'Next: $nextDueFormatted',
-                  style: GoogleFonts.poppins(
-                    fontSize: 10.5,
-                    fontWeight: FontWeight.w600,
-                    color: const Color(0xFF15838B),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.verified_user_outlined,
+                        size: 13,
+                        color: Color(0xFF15838B),
+                      ),
+                      const SizedBox(width: 5),
+                      Text(
+                        'Administered by: $administeredBy',
+                        style: GoogleFonts.poppins(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w500,
+                          color: const Color(0xFF475569),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
-            ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showRecordDetails(Map<String, dynamic> log, String title, String categoryLabel) {
+    final dateFormatted = log['date_formatted'] as String? ?? 'N/A';
+    final administeredBy = log['administered_by'] as String? ?? 'Shelter Staff';
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE2E8F0),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Clinical Administration Record',
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.textPrimary,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close, size: 18, color: Color(0xFF64748B)),
+                      onPressed: () => Navigator.pop(ctx),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                _buildDetailTile('Treatment / Dose', title),
+                _buildDetailTile('Record Category', categoryLabel),
+                _buildDetailTile('Administration Date', dateFormatted),
+                _buildDetailTile('Administered By', administeredBy),
+                _buildDetailTile('Authorized Facility', 'CDO Animal Welfare Society (CAWS)'),
+                _buildDetailTile('Verification Status', 'Official Shelter Record Verified'),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildDetailTile(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 140,
+            child: Text(
+              label,
+              style: GoogleFonts.poppins(
+                fontSize: 11.5,
+                fontWeight: FontWeight.w500,
+                color: const Color(0xFF64748B),
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: GoogleFonts.poppins(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: AppTheme.textPrimary,
+              ),
+            ),
           ),
         ],
       ),
@@ -632,14 +780,26 @@ class _PetMedicalCardScreenState extends State<PetMedicalCardScreen> {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
-      child: Text(
-        'Official record of clinical care administered at CAWS. Present this card to your veterinarian during routine checkups.',
-        textAlign: TextAlign.center,
-        style: GoogleFonts.poppins(
-          fontSize: 10.5,
-          color: const Color(0xFF64748B),
-          height: 1.4,
-        ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(
+            Icons.verified_outlined,
+            size: 18,
+            color: Color(0xFF15838B),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Official record of clinical care administered at CAWS. Present this card to your veterinarian during routine checkups.',
+              style: GoogleFonts.poppins(
+                fontSize: 10.5,
+                color: const Color(0xFF64748B),
+                height: 1.4,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

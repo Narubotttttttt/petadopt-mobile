@@ -59,52 +59,6 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
     }
   }
 
-  List<Map<String, dynamic>> get _filteredApplications {
-    if (_selectedFilter == 'approved') {
-      return _applications.where((app) {
-        final status = (app['status'] as String? ?? '').toLowerCase();
-        return status == 'approved' || status == 'adopted';
-      }).toList();
-    }
-    if (_selectedFilter == 'pending') {
-      return _applications.where((app) {
-        final status = (app['status'] as String? ?? '').toLowerCase();
-        return status == 'pending' || status == 'under_review';
-      }).toList();
-    }
-    if (_selectedFilter == 'declined') {
-      return _applications.where((app) {
-        final status = (app['status'] as String? ?? '').toLowerCase();
-        final isAdoptedByOther = app['isAdoptedByOther'] == true;
-        return status == 'rejected' || isAdoptedByOther;
-      }).toList();
-    }
-    return _applications;
-  }
-
-  int _countForFilter(String filter) {
-    if (filter == 'approved') {
-      return _applications.where((app) {
-        final status = (app['status'] as String? ?? '').toLowerCase();
-        return status == 'approved' || status == 'adopted';
-      }).length;
-    }
-    if (filter == 'pending') {
-      return _applications.where((app) {
-        final status = (app['status'] as String? ?? '').toLowerCase();
-        return status == 'pending' || status == 'under_review';
-      }).length;
-    }
-    if (filter == 'declined') {
-      return _applications.where((app) {
-        final status = (app['status'] as String? ?? '').toLowerCase();
-        final isAdoptedByOther = app['isAdoptedByOther'] == true;
-        return status == 'rejected' || isAdoptedByOther;
-      }).length;
-    }
-    return 0;
-  }
-
   @override
   Widget build(BuildContext context) {
     final filteredList = _filteredApplications;
@@ -251,6 +205,52 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
         ),
       ),
     );
+  }
+
+  List<Map<String, dynamic>> get _filteredApplications {
+    if (_selectedFilter == 'approved') {
+      return _applications.where((app) {
+        final status = (app['status'] as String? ?? '').toLowerCase();
+        return status == 'approved' || status == 'adopted';
+      }).toList();
+    }
+    if (_selectedFilter == 'pending') {
+      return _applications.where((app) {
+        final status = (app['status'] as String? ?? '').toLowerCase();
+        return status == 'pending' || status == 'under_review';
+      }).toList();
+    }
+    if (_selectedFilter == 'declined') {
+      return _applications.where((app) {
+        final status = (app['status'] as String? ?? '').toLowerCase();
+        final isAdoptedByOther = app['isAdoptedByOther'] == true;
+        return status == 'rejected' || isAdoptedByOther;
+      }).toList();
+    }
+    return _applications;
+  }
+
+  int _countForFilter(String filter) {
+    if (filter == 'approved') {
+      return _applications.where((app) {
+        final status = (app['status'] as String? ?? '').toLowerCase();
+        return status == 'approved' || status == 'adopted';
+      }).length;
+    }
+    if (filter == 'pending') {
+      return _applications.where((app) {
+        final status = (app['status'] as String? ?? '').toLowerCase();
+        return status == 'pending' || status == 'under_review';
+      }).length;
+    }
+    if (filter == 'declined') {
+      return _applications.where((app) {
+        final status = (app['status'] as String? ?? '').toLowerCase();
+        final isAdoptedByOther = app['isAdoptedByOther'] == true;
+        return status == 'rejected' || isAdoptedByOther;
+      }).length;
+    }
+    return 0;
   }
 }
 
