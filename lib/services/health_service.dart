@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'api_config.dart';
@@ -77,7 +77,7 @@ class HealthService {
 
     if (response.statusCode == 200) {
       final json = jsonDecode(response.body) as Map<String, dynamic>;
-      final list = json['data'] as List<dynamic>;
+      final list = (json['data'] as List<dynamic>?) ?? [];
       return list.map((item) => Map<String, dynamic>.from(item as Map)).toList();
     }
 

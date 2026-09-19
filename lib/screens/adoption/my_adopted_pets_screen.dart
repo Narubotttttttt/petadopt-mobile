@@ -120,7 +120,9 @@ class _MyAdoptedPetsScreenState extends State<MyAdoptedPetsScreen> {
   }
 
   Widget _buildPetCard(Map<String, dynamic> pet) {
-    final petName = pet['petName'] as String? ?? 'Adopted Pet';
+    final petName = (pet['adoptedPetName'] ?? pet['proposedName'] ?? pet['petName'])?.toString() ?? 'Adopted Pet';
+    final shelterId = pet['shelterPetId'] ?? pet['pet_id'] ?? pet['petId'] ?? pet['pet']?['id'];
+    final shelterCode = pet['shelterPetCode']?.toString() ?? (shelterId != null ? 'Pet no. $shelterId' : '');
     final petBreed = pet['petBreed'] as String? ?? 'Mixed';
     final petType = pet['petType'] as String? ?? 'Pet';
     final petImage = pet['petImage'] as String? ?? '';
@@ -206,7 +208,7 @@ class _MyAdoptedPetsScreenState extends State<MyAdoptedPetsScreen> {
                       ),
                       const SizedBox(height: 3),
                       Text(
-                        '$petBreed • $petType',
+                        shelterCode.isNotEmpty ? '$shelterCode • $petBreed' : '$petBreed • $petType',
                         style: GoogleFonts.poppins(
                           fontSize: 12,
                           color: AppTheme.textSecondary,

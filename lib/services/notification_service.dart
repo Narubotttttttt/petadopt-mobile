@@ -116,20 +116,29 @@ class NotificationService {
     required String title,
     required String body,
   }) async {
-    const androidDetails = AndroidNotificationDetails(
+    final bigTextStyleInformation = BigTextStyleInformation(
+      body,
+      htmlFormatBigText: false,
+      contentTitle: title,
+      htmlFormatContentTitle: false,
+      summaryText: 'CAWS PetAdopt',
+      htmlFormatSummaryText: false,
+    );
+
+    final androidDetails = AndroidNotificationDetails(
       'adoption_status_channel',
       'CAWS Alerts',
       channelDescription: 'Real-time alerts for adoption applications & medical updates',
       importance: Importance.max,
       priority: Priority.max,
       ticker: 'ticker',
-      fullScreenIntent: true,
       icon: '@mipmap/ic_launcher',
       playSound: true,
       enableVibration: true,
+      styleInformation: bigTextStyleInformation,
     );
 
-    const details = NotificationDetails(android: androidDetails);
+    final details = NotificationDetails(android: androidDetails);
     await _plugin.show(id, title, body, details);
   }
 }

@@ -8,6 +8,8 @@ import 'package:mobile_petadopt/widgets/pet_recommendation_loader.dart';
 import 'package:mobile_petadopt/widgets/pet_card.dart';
 import 'package:mobile_petadopt/screens/pets/pet_list_screen.dart';
 import 'package:mobile_petadopt/screens/adoption/my_applications_screen.dart';
+import 'package:mobile_petadopt/screens/adoption/adopted_pet_hub_screen.dart';
+import 'package:mobile_petadopt/screens/adoption/pet_medical_card_screen.dart';
 import 'package:mobile_petadopt/screens/profile/profile_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -767,6 +769,120 @@ class _HomeTabState extends State<_HomeTab> {
     }).toList();
   }
 
+  Widget _buildMinimalNotificationCard({
+    required IconData icon,
+    required Color iconColor,
+    required Color iconBg,
+    required String title,
+    required String subtitle,
+    required String badgeText,
+    required Color badgeColor,
+    required Color badgeBg,
+    VoidCallback? onTap,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 4,
+            offset: const Offset(0, 1.5),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: iconBg,
+                    borderRadius: BorderRadius.circular(9),
+                  ),
+                  child: Center(
+                    child: Icon(icon, color: iconColor, size: 17),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              title,
+                              style: GoogleFonts.poppins(
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w600,
+                                color: AppTheme.textPrimary,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: badgeBg,
+                              borderRadius: BorderRadius.circular(5),
+                            ),
+                            child: Text(
+                              badgeText,
+                              style: GoogleFonts.poppins(
+                                fontSize: 9.5,
+                                fontWeight: FontWeight.w600,
+                                color: badgeColor,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 2.5),
+                      Text(
+                        subtitle,
+                        style: GoogleFonts.poppins(
+                          fontSize: 11,
+                          color: AppTheme.textSecondary,
+                          height: 1.3,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                if (onTap != null) ...[
+                  const SizedBox(width: 4),
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    color: Colors.grey.shade400,
+                    size: 16,
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Future<void> _showNotificationsBottomSheet() async {
     final user = await ApiService.getUser();
     if (user != null) {
@@ -778,22 +894,23 @@ class _HomeTabState extends State<_HomeTab> {
     setState(() {
       _hasUnreadNotifications = false;
     });
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (modalContext) {
         return Container(
-          height: MediaQuery.of(context).size.height * 0.65,
+          height: MediaQuery.of(context).size.height * 0.70,
           decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            color: Color(0xFFF8FAFC),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
           ),
           child: Column(
             children: [
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
               Container(
-                width: 40,
+                width: 36,
                 height: 4,
                 decoration: BoxDecoration(
                   color: Colors.grey.shade300,
@@ -801,28 +918,61 @@ class _HomeTabState extends State<_HomeTab> {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.fromLTRB(18, 14, 14, 12),
                 child: Row(
                   children: [
-                    const Icon(Icons.notifications_active_rounded, color: AppTheme.primary, size: 22),
+                    Container(
+                      width: 30,
+                      height: 30,
+                      decoration: BoxDecoration(
+                        color: AppTheme.primary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        Icons.notifications_none_rounded,
+                        color: AppTheme.primary,
+                        size: 17,
+                      ),
+                    ),
                     const SizedBox(width: 10),
-                    Text(
-                      'Notifications & Alerts',
-                      style: GoogleFonts.poppins(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w700,
-                        color: AppTheme.textPrimary,
+                    Expanded(
+                      child: Text(
+                        'Notifications & Alerts',
+                        style: GoogleFonts.poppins(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: AppTheme.textPrimary,
+                        ),
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () => Navigator.pop(modalContext),
+                      child: Container(
+                        width: 28,
+                        height: 28,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade200,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.close_rounded,
+                          size: 16,
+                          color: Colors.grey.shade600,
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
+              const Divider(height: 1, thickness: 1, color: Color(0xFFE2E8F0)),
               Expanded(
                 child: FutureBuilder<List<dynamic>>(
                   future: ApiService.getMyApplications(),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator(color: AppTheme.primary));
+                      return const Center(
+                        child: CircularProgressIndicator(color: AppTheme.primary, strokeWidth: 2.5),
+                      );
                     }
                     final apps = snapshot.data ?? [];
                     if (apps.isEmpty && _vaccineReminders.isEmpty) {
@@ -831,325 +981,235 @@ class _HomeTabState extends State<_HomeTab> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(
-                              Icons.notifications_none_rounded,
-                              size: 48,
+                              Icons.notifications_off_outlined,
+                              size: 40,
                               color: Colors.grey.shade400,
                             ),
-                            const SizedBox(height: 12),
+                            const SizedBox(height: 10),
                             Text(
                               'No notifications right now',
                               style: GoogleFonts.poppins(
-                                fontSize: 14,
+                                fontSize: 13.5,
                                 color: AppTheme.textSecondary,
-                                fontWeight: FontWeight.w500,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'You are all caught up',
+                              style: GoogleFonts.poppins(
+                                fontSize: 11.5,
+                                color: Colors.grey.shade400,
                               ),
                             ),
                           ],
                         ),
                       );
                     }
+
                     return ListView(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
                       children: [
-                        // Vaccine Reminders
-                        if (_vaccineReminders.isNotEmpty) ...
-                          _vaccineReminders.map((reminder) {
+                        // Health Reminders Section
+                        if (_vaccineReminders.isNotEmpty) ...[
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 6, left: 2),
+                            child: Text(
+                              'HEALTH REMINDERS',
+                              style: GoogleFonts.poppins(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.grey.shade500,
+                                letterSpacing: 0.6,
+                              ),
+                            ),
+                          ),
+                          ..._vaccineReminders.map((reminder) {
                             final days = reminder['days_until_due'] as int? ?? 999;
                             final dueLabel = reminder['next_due_label'] as String? ?? '';
                             final petName = reminder['pet_name'] as String? ?? 'Your pet';
-                            final category = reminder['category'] as String? ?? 'Checkup';
+                            final category = reminder['category'] as String? ?? 'Health';
+                            final petId = reminder['pet_id'] as int?;
 
-                            final urgencyColor = days == 0
+                            final bool isToday = days == 0;
+                            final bool isTomorrow = days == 1;
+                            final bool isUrgent = days <= 3;
+
+                            final Color iconColor = isToday
                                 ? const Color(0xFFDC2626)
-                                : days <= 1
+                                : isUrgent
                                     ? const Color(0xFFEA580C)
-                                    : const Color(0xFF7C3AED);
-                            final urgencyBg = days == 0
+                                    : const Color(0xFF0D9488);
+                            final Color iconBg = isToday
                                 ? const Color(0xFFFEF2F2)
-                                : days <= 1
+                                : isUrgent
                                     ? const Color(0xFFFFF7ED)
-                                    : const Color(0xFFF5F3FF);
-                            final urgencyBorder = days == 0
-                                ? const Color(0xFFFECACA)
-                                : days <= 1
-                                    ? const Color(0xFFFED7AA)
-                                    : const Color(0xFFDDD6FE);
-                            final dueText = days == 0
-                                ? 'Due Today'
-                                : days == 1
-                                    ? 'Due Tomorrow'
-                                    : 'Due in $days days ($dueLabel)';
+                                    : const Color(0xFFF0FDFA);
 
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: Container(
-                                padding: const EdgeInsets.all(14),
-                                decoration: BoxDecoration(
-                                  color: urgencyBg,
-                                  borderRadius: BorderRadius.circular(14),
-                                  border: Border.all(color: urgencyBorder),
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Icon(Icons.vaccines_rounded, color: urgencyColor, size: 18),
-                                        const SizedBox(width: 8),
-                                        Expanded(
-                                          child: Text(
-                                            '$category Reminder - $petName',
-                                            style: GoogleFonts.poppins(
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.w700,
-                                              color: urgencyColor,
-                                            ),
+                            final String badgeText = isToday
+                                ? 'Due Today'
+                                : isTomorrow
+                                    ? 'Tomorrow'
+                                    : 'In $days days';
+                            final Color badgeColor = isToday
+                                ? const Color(0xFFDC2626)
+                                : isUrgent
+                                    ? const Color(0xFFEA580C)
+                                    : const Color(0xFF0D9488);
+                            final Color badgeBg = isToday
+                                ? const Color(0xFFFEE2E2)
+                                : isUrgent
+                                    ? const Color(0xFFFFEDD5)
+                                    : const Color(0xFFCCFBF1);
+
+                            final String subtitle = isToday
+                                ? '$category due today ($dueLabel)'
+                                : isTomorrow
+                                    ? '$category due tomorrow ($dueLabel)'
+                                    : '$category due on $dueLabel';
+
+                            return _buildMinimalNotificationCard(
+                              icon: Icons.vaccines_rounded,
+                              iconColor: iconColor,
+                              iconBg: iconBg,
+                              title: '$petName - $category',
+                              subtitle: subtitle,
+                              badgeText: badgeText,
+                              badgeColor: badgeColor,
+                              badgeBg: badgeBg,
+                              onTap: petId != null
+                                  ? () {
+                                      Navigator.pop(modalContext);
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) => PetMedicalCardScreen(
+                                            petId: petId,
+                                            petName: petName,
                                           ),
                                         ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 6),
-                                    Text(
-                                      dueText,
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 11,
-                                        color: urgencyColor,
-                                        fontWeight: FontWeight.w600,
-                                        height: 1.4,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      'Make sure your adopted pet is up to date with their $category schedule.',
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 11,
-                                        color: AppTheme.textSecondary,
-                                        height: 1.4,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
+                                      );
+                                    }
+                                  : null,
                             );
                           }),
+                        ],
 
-                        // Application Status Cards
-                        ...apps.map((item) {
-                          final isAdoptedByOther = (item['isAdoptedByOther'] as bool?) ?? false;
-                          final isApproved = item['status'] == 'approved';
+                        // Application Status Updates Section
+                        if (apps.isNotEmpty) ...[
+                          if (_vaccineReminders.isNotEmpty) const SizedBox(height: 10),
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 6, left: 2),
+                            child: Text(
+                              'APPLICATION UPDATES',
+                              style: GoogleFonts.poppins(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.grey.shade500,
+                                letterSpacing: 0.6,
+                              ),
+                            ),
+                          ),
+                          ...apps.map((item) {
+                            final petName = item['petName'] as String? ?? 'Pet';
+                            final isAdoptedByOther = (item['isAdoptedByOther'] as bool?) ?? false;
+                            final status = (item['status'] as String? ?? '').toLowerCase();
 
-                          if (isAdoptedByOther) {
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: Container(
-                                padding: const EdgeInsets.all(14),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFFFF4ED),
-                                  borderRadius: BorderRadius.circular(14),
-                                  border: Border.all(color: const Color(0xFFFFD8BF)),
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        const Icon(Icons.home_outlined, color: Color(0xFFD9363E), size: 18),
-                                        const SizedBox(width: 8),
-                                        Expanded(
-                                          child: Text(
-                                            '${item['petName']} Has Found a Home',
-                                            style: GoogleFonts.poppins(
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.w700,
-                                              color: const Color(0xFFD9363E),
-                                            ),
-                                          ),
-                                        ),
-                                      ],
+                            if (isAdoptedByOther) {
+                              return _buildMinimalNotificationCard(
+                                icon: Icons.home_outlined,
+                                iconColor: const Color(0xFFE11D48),
+                                iconBg: const Color(0xFFFFF1F2),
+                                title: '$petName - Adopted',
+                                subtitle: 'Pet found a home with another applicant',
+                                badgeText: 'Closed',
+                                badgeColor: const Color(0xFFE11D48),
+                                badgeBg: const Color(0xFFFFE4E6),
+                                onTap: null,
+                              );
+                            }
+
+                            if (status == 'approved') {
+                              final eventDate = item['scheduledAt'] ?? 'Sunday Event';
+                              return _buildMinimalNotificationCard(
+                                icon: Icons.check_circle_outline_rounded,
+                                iconColor: const Color(0xFF059669),
+                                iconBg: const Color(0xFFECFDF5),
+                                title: '$petName - Approved',
+                                subtitle: 'Event: $eventDate',
+                                badgeText: 'Approved',
+                                badgeColor: const Color(0xFF059669),
+                                badgeBg: const Color(0xFFD1FAE5),
+                                onTap: () {
+                                  Navigator.pop(modalContext);
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => AdoptedPetHubScreen(application: item),
                                     ),
-                                    const SizedBox(height: 6),
-                                    Text(
-                                      'The pet you requested (${item['petName']}) has already found a forever home with another verified applicant.',
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 11,
-                                        color: AppTheme.textSecondary,
-                                        height: 1.4,
-                                      ),
+                                  );
+                                },
+                              );
+                            }
+
+                            if (status == 'rejected') {
+                              return _buildMinimalNotificationCard(
+                                icon: Icons.info_outline_rounded,
+                                iconColor: const Color(0xFFDC2626),
+                                iconBg: const Color(0xFFFEF2F2),
+                                title: '$petName - Application',
+                                subtitle: 'Application was not approved',
+                                badgeText: 'Declined',
+                                badgeColor: const Color(0xFFDC2626),
+                                badgeBg: const Color(0xFFFEE2E2),
+                                onTap: null,
+                              );
+                            }
+
+                            if (status == 'under_review') {
+                              return _buildMinimalNotificationCard(
+                                icon: Icons.manage_search_rounded,
+                                iconColor: const Color(0xFF2563EB),
+                                iconBg: const Color(0xFFEFF6FF),
+                                title: '$petName - In Review',
+                                subtitle: 'Staff is reviewing your application',
+                                badgeText: 'In Review',
+                                badgeColor: const Color(0xFF2563EB),
+                                badgeBg: const Color(0xFFDBEAFE),
+                                onTap: () {
+                                  Navigator.pop(modalContext);
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => const MyApplicationsScreen(),
                                     ),
-                                  ],
-                                ),
-                              ),
+                                  );
+                                },
+                              );
+                            }
+
+                            // Pending / default
+                            return _buildMinimalNotificationCard(
+                              icon: Icons.hourglass_top_rounded,
+                              iconColor: const Color(0xFFD97706),
+                              iconBg: const Color(0xFFFFFBEB),
+                              title: '$petName - Pending',
+                              subtitle: 'Awaiting review by CAWS staff',
+                              badgeText: 'Pending',
+                              badgeColor: const Color(0xFFD97706),
+                              badgeBg: const Color(0xFFFEF3C7),
+                              onTap: () {
+                                Navigator.pop(modalContext);
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const MyApplicationsScreen(),
+                                  ),
+                                );
+                              },
                             );
-                          } else if (isApproved) {
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: Container(
-                                padding: const EdgeInsets.all(14),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFE8F8F1),
-                                  borderRadius: BorderRadius.circular(14),
-                                  border: Border.all(color: AppTheme.successColor.withValues(alpha: 0.3)),
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        const Icon(Icons.check_circle_outline_rounded, color: AppTheme.successColor, size: 18),
-                                        const SizedBox(width: 8),
-                                        Expanded(
-                                          child: Text(
-                                            'Adoption Approved for ${item['petName']}',
-                                            style: GoogleFonts.poppins(
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.w700,
-                                              color: AppTheme.successColor,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 6),
-                                    Text(
-                                      'Your request is approved! Event Date: ${item['scheduledAt'] ?? 'Sunday Adoption Event'}. Location: ${item['eventLocation'] ?? 'CAWS Sunday Event'}.',
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 11,
-                                        color: AppTheme.textSecondary,
-                                        height: 1.4,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          } else if (item['status'] == 'rejected') {
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: Container(
-                                padding: const EdgeInsets.all(14),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFFEF2F2),
-                                  borderRadius: BorderRadius.circular(14),
-                                  border: Border.all(color: const Color(0xFFFECACA)),
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        const Icon(Icons.info_outline_rounded, color: Color(0xFFDC2626), size: 18),
-                                        const SizedBox(width: 8),
-                                        Expanded(
-                                          child: Text(
-                                            'Application Update - ${item['petName']}',
-                                            style: GoogleFonts.poppins(
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.w700,
-                                              color: const Color(0xFFDC2626),
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 6),
-                                    Text(
-                                      'Thank you for your interest in adopting ${item['petName']}. Your application was not approved at this time.',
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 11,
-                                        color: AppTheme.textSecondary,
-                                        height: 1.4,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          } else if (item['status'] == 'under_review') {
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: Container(
-                                padding: const EdgeInsets.all(14),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFEFF6FF),
-                                  borderRadius: BorderRadius.circular(14),
-                                  border: Border.all(color: const Color(0xFFBFDBFE)),
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        const Icon(Icons.manage_search_rounded, color: Color(0xFF2563EB), size: 18),
-                                        const SizedBox(width: 8),
-                                        Expanded(
-                                          child: Text(
-                                            'Application Under Review - ${item['petName']}',
-                                            style: GoogleFonts.poppins(
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.w700,
-                                              color: const Color(0xFF2563EB),
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 6),
-                                    Text(
-                                      'CAWS staff is actively reviewing your verification documents and questionnaire.',
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 11,
-                                        color: AppTheme.textSecondary,
-                                        height: 1.4,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          } else {
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: Container(
-                                padding: const EdgeInsets.all(14),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFFFFBEB),
-                                  borderRadius: BorderRadius.circular(14),
-                                  border: Border.all(color: const Color(0xFFFDE68A)),
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        const Icon(Icons.hourglass_top_rounded, color: AppTheme.warningColor, size: 18),
-                                        const SizedBox(width: 8),
-                                        Expanded(
-                                          child: Text(
-                                            'Adoption Request Pending - ${item['petName']}',
-                                            style: GoogleFonts.poppins(
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.w700,
-                                              color: AppTheme.warningColor,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 6),
-                                    Text(
-                                      'Your application is awaiting review by CAWS staff.',
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 11,
-                                        color: AppTheme.textSecondary,
-                                        height: 1.4,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          }
-                        }),
+                          }),
+                        ],
                       ],
                     );
                   },
@@ -1161,6 +1221,7 @@ class _HomeTabState extends State<_HomeTab> {
       },
     );
   }
+
 
   @override
   Widget build(BuildContext context) {

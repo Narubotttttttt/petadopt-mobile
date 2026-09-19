@@ -95,6 +95,26 @@ class AdoptionService {
     throw Exception('Failed to load applications.');
   }
 
+  static Future<Map<String, dynamic>> updatePetName({
+    required int petId,
+    required String name,
+  }) async {
+    final token = await AuthService.getToken();
+    final response = await http
+        .post(
+          Uri.parse('${ApiConfig.baseUrl}/pets/$petId/update-name'),
+          headers: ApiClient.headersWithToken(token),
+          body: jsonEncode({'name': name}),
+        )
+        .timeout(ApiConfig.defaultTimeout);
+
+    final data = jsonDecode(response.body) as Map<String, dynamic>;
+    if (response.statusCode == 200 && data['success'] == true) {
+      return data;
+    }
+    throw Exception(data['message']?.toString() ?? 'Failed to update pet name.');
+  }
+
   static Future<Map<String, dynamic>> signAdoptionContract({
     required int applicationId,
     String? signatureBase64,

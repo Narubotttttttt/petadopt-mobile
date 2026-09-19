@@ -101,6 +101,14 @@ class ApiService {
   static Future<List<Map<String, dynamic>>> getMyApplications() =>
       AdoptionService.getMyApplications();
 
+  static Future<Map<String, dynamic>> updatePetName({
+    required int petId,
+    required String name,
+  }) => AdoptionService.updatePetName(
+    petId: petId,
+    name: name,
+  );
+
   static Future<Map<String, dynamic>> signAdoptionContract({
     required int applicationId,
     String? signatureBase64,

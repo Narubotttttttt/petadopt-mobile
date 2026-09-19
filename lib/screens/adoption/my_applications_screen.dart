@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile_petadopt/screens/adoption/adopted_pet_hub_screen.dart';
 import 'package:mobile_petadopt/services/api_service.dart';
@@ -278,6 +278,16 @@ class _ApplicationCard extends StatelessWidget {
     final signedAt = application['signed_at']?.toString();
     final signatureUrl = application['signature_url']?.toString();
 
+    final shelterId = application['shelterPetId'] ?? application['pet_id'] ?? application['petId'] ?? application['pet']?['id'];
+    final shelterCode = application['shelterPetCode']?.toString() ?? (shelterId != null ? 'Pet no. $shelterId' : 'Pet');
+
+    String adoptedName = (application['adoptedPetName'] ?? application['proposedName'] ?? application['petName'])?.toString() ?? 'Adopted Pet';
+    final petBreed = (application['petBreed'] ?? '').toString().trim();
+    if (adoptedName.isEmpty || (petBreed.isNotEmpty && adoptedName.toLowerCase() == petBreed.toLowerCase())) {
+      final proposed = application['proposedName']?.toString();
+      adoptedName = (proposed != null && proposed.isNotEmpty) ? proposed : 'Adopted Pet';
+    }
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -326,14 +336,20 @@ class _ApplicationCard extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Expanded(
-                            child: Text(
-                              application['petName'] as String? ?? 'Rescued Pet',
-                              style: GoogleFonts.poppins(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w600,
-                                color: const Color(0xFF0F172A),
-                              ),
-                              overflow: TextOverflow.ellipsis,
+                            child: Row(
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    adoptedName,
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w600,
+                                      color: const Color(0xFF0F172A),
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                           _buildStatusBadge(status, isScheduled, isAdoptedByOther),
@@ -341,9 +357,10 @@ class _ApplicationCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        '${application['petBreed']} - ${application['petType']}',
+                        shelterCode,
                         style: GoogleFonts.poppins(
                           fontSize: 12,
+                          fontWeight: FontWeight.w500,
                           color: const Color(0xFF64748B),
                         ),
                         maxLines: 1,
@@ -501,33 +518,64 @@ class _ApplicationCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 8),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => AdoptedPetHubScreen(application: application),
+              // Show 'Name Your Pet' if pet has no custom name, otherwise show Health Hub
+              Builder(builder: (context) {
+                final hasCustomName = adoptedName.isNotEmpty &&
+                    adoptedName.toLowerCase() != 'adopted pet' &&
+                    adoptedName.toLowerCase() != 'rescued pet';
+
+                if (!hasCustomName) {
+                  return SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () => _showEditNameDialog(context, application, adoptedName, onRefresh),
+                      icon: const Icon(Icons.drive_file_rename_outline_rounded, size: 15, color: Colors.white),
+                      label: Text(
+                        'Name Your Adopted Pet First',
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
                       ),
-                    ).then((_) => onRefresh());
-                  },
-                  icon: const Icon(Icons.pets_rounded, size: 15, color: AppTheme.primary),
-                  label: Text(
-                    'View Adopted Pet Health Hub',
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.primary,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF199CA4),
+                        padding: const EdgeInsets.symmetric(vertical: 9),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                    ),
+                  );
+                }
+
+                return SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => AdoptedPetHubScreen(application: application),
+                        ),
+                      ).then((_) => onRefresh());
+                    },
+                    icon: const Icon(Icons.pets_rounded, size: 15, color: AppTheme.primary),
+                    label: Text(
+                      'View Adopted Pet Health Hub',
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.primary,
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 9),
+                      side: const BorderSide(color: Color(0xFFCBD5E1)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     ),
                   ),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 9),
-                    side: const BorderSide(color: Color(0xFFCBD5E1)),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-                ),
-              ),
+                );
+              }),
             ] else if (status == 'rejected' && rejectionReason != null && rejectionReason.isNotEmpty) ...[
               // State: Declined Note
               const SizedBox(height: 10),
@@ -552,6 +600,203 @@ class _ApplicationCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  void _showEditNameDialog(
+    BuildContext context,
+    Map<String, dynamic> application,
+    String currentName,
+    VoidCallback onRefresh,
+  ) {
+    final petId = (application['shelterPetId'] ?? application['pet_id'] ?? application['petId'] ?? application['pet']?['id']) as int?;
+    if (petId == null) return;
+
+    final isDefault = currentName.toLowerCase() == 'adopted pet' || currentName.toLowerCase() == 'rescued pet';
+    final controller = TextEditingController(text: isDefault ? '' : currentName);
+    bool isSaving = false;
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return Dialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 22, 20, 20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: AppTheme.primary.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(
+                            Icons.drive_file_rename_outline_rounded,
+                            color: AppTheme.primary,
+                            size: 20,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            isDefault ? 'Name Your Adopted Pet' : 'Change Pet Name',
+                            style: GoogleFonts.poppins(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF0F172A),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      isDefault
+                          ? 'Enter your decided name for this pet. This name will appear on your health records and shelter documents.'
+                          : 'You may rename this pet or leave the field empty to keep the current name.',
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        color: const Color(0xFF64748B),
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: controller,
+                      autofocus: true,
+                      textCapitalization: TextCapitalization.words,
+                      decoration: InputDecoration(
+                        hintText: 'e.g. Bella, Milo, Rocky',
+                        hintStyle: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade400),
+                        prefixIcon: const Icon(Icons.pets_rounded, size: 18, color: AppTheme.primary),
+                        filled: true,
+                        fillColor: const Color(0xFFF8FAFC),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: AppTheme.primary, width: 1.5),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: isSaving ? null : () => Navigator.pop(dialogContext),
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              side: const BorderSide(color: Color(0xFFE2E8F0)),
+                            ),
+                            child: Text(
+                              'Cancel',
+                              style: GoogleFonts.poppins(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFF64748B),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: isSaving
+                                ? null
+                                : () async {
+                                    final entered = controller.text.trim();
+                                    // If the pet already has a real name and the field is empty,
+                                    // the user chose not to rename — just close the dialog.
+                                    if (entered.isEmpty) {
+                                      if (!isDefault) Navigator.pop(dialogContext);
+                                      return;
+                                    }
+                                    setDialogState(() => isSaving = true);
+                                    try {
+                                      await ApiService.updatePetName(
+                                        petId: petId,
+                                        name: entered,
+                                      );
+                                      if (context.mounted) {
+                                        Navigator.pop(dialogContext);
+                                        onRefresh();
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              'Pet name updated to "$entered"',
+                                              style: GoogleFonts.poppins(fontSize: 13),
+                                            ),
+                                            backgroundColor: AppTheme.successColor,
+                                            behavior: SnackBarBehavior.floating,
+                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                          ),
+                                        );
+                                      }
+                                    } catch (e) {
+                                      setDialogState(() => isSaving = false);
+                                      if (context.mounted) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              e.toString().replaceAll('Exception: ', ''),
+                                              style: GoogleFonts.poppins(fontSize: 13),
+                                            ),
+                                            backgroundColor: const Color(0xFFDC2626),
+                                            behavior: SnackBarBehavior.floating,
+                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                          ),
+                                        );
+                                      }
+                                    }
+                                  },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.primary,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              elevation: 0,
+                            ),
+                            child: isSaving
+                                ? const SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                  )
+                                : Text(
+                                    'Save Name',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 

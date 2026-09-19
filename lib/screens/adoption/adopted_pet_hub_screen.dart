@@ -1,4 +1,4 @@
-import 'package:mobile_petadopt/screens/adoption/pet_medical_card_screen.dart';
+﻿import 'package:mobile_petadopt/screens/adoption/pet_medical_card_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile_petadopt/screens/adoption/submit_health_checkin_screen.dart';
@@ -32,7 +32,7 @@ class _AdoptedPetHubScreenState extends State<AdoptedPetHubScreen> {
   }
 
   Future<void> _loadHubData() async {
-    final appId = widget.application['id'] as int;
+    final appId = (widget.application['id'] as num?)?.toInt() ?? 0;
     try {
       final updates = await ApiService.getMyHealthUpdates(applicationId: appId);
       final reminders = await ApiService.getVaccineReminders();
@@ -147,7 +147,7 @@ class _AdoptedPetHubScreenState extends State<AdoptedPetHubScreen> {
       return;
     }
 
-    final appId = widget.application['id'] as int;
+    final appId = (widget.application['id'] as num?)?.toInt() ?? 0;
     setState(() => _isDownloading = true);
 
     try {
@@ -202,9 +202,9 @@ class _AdoptedPetHubScreenState extends State<AdoptedPetHubScreen> {
       context,
       MaterialPageRoute(
         builder: (_) => SubmitHealthCheckinScreen(
-          applicationId: widget.application['id'] as int,
-          petName: widget.application['petName'] as String,
-          petImage: widget.application['petImage'] as String,
+          applicationId: (widget.application['id'] as num?)?.toInt() ?? 0,
+          petName: widget.application['petName']?.toString() ?? widget.application['adoptedPetName']?.toString() ?? 'Adopted Pet',
+          petImage: widget.application['petImage']?.toString() ?? '',
         ),
       ),
     ).then((result) {
