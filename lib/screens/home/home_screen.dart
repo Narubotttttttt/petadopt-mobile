@@ -1372,6 +1372,7 @@ class _HomeTabState extends State<_HomeTab> {
 
                           final petData = isRec
                               ? {
+                                  ...raw,
                                   'id': raw['pet_id'] ?? raw['id'],
                                   'name': raw['name'] ?? 'Pet no. ${raw['pet_id']}',
                                   'breed': raw['breed'] ?? 'Mixed Breed',
@@ -1383,8 +1384,9 @@ class _HomeTabState extends State<_HomeTab> {
                                           ? ApiService.normalizeImageUrl(raw['photo_path'])
                                           : 'https://images.unsplash.com/photo-1543466835-00a7907e9de1'),
                                   'match_percentage': raw['match_percentage'],
+                                  'compatibility_score': raw['match_percentage'],
                                   'isRecommended': true,
-                                  ...raw,
+                                  'application_source': 'recommendation',
                                 }
                               : raw;
 

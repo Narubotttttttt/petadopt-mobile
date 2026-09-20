@@ -569,10 +569,19 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
     }
 
     if (!mounted) return;
+    final petData = Map<String, dynamic>.from(widget.pet);
+    if (_matchPercentage != null || widget.pet['isRecommended'] == true || widget.pet['application_source'] == 'recommendation') {
+      petData['isRecommended'] = true;
+      petData['application_source'] = 'recommendation';
+      if (_matchPercentage != null) {
+        petData['match_percentage'] = _matchPercentage;
+        petData['compatibility_score'] = _matchPercentage;
+      }
+    }
     Navigator.pushNamed(
       context,
       '/adoption-form',
-      arguments: widget.pet,
+      arguments: petData,
     );
   }
 

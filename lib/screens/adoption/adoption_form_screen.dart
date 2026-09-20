@@ -89,6 +89,24 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
     return 'Pet No. $rawNo';
   }
 
+  bool get _isFromRecommendation {
+    final appSource = widget.pet['application_source']?.toString().toLowerCase();
+    if (appSource == 'recommendation') return true;
+    if (widget.pet['isRecommended'] == true || widget.pet['is_recommended'] == true) return true;
+    final matchPct = widget.pet['match_percentage'] ?? widget.pet['compatibility_score'];
+    if (matchPct != null) {
+      final numVal = num.tryParse(matchPct.toString());
+      if (numVal != null && numVal > 0) return true;
+    }
+    return false;
+  }
+
+  num? get _compatibilityScore {
+    final raw = widget.pet['match_percentage'] ?? widget.pet['compatibility_score'];
+    if (raw == null) return null;
+    return num.tryParse(raw.toString());
+  }
+
   final ImagePicker _picker = ImagePicker();
   final List<String> _homeTypes = ['House', 'Apartment', 'Condo', 'Farm'];
 
@@ -626,7 +644,7 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
     );
 
     try {
-      final petId = widget.pet['id'];
+      final petId = widget.pet['id'] ?? widget.pet['pet_id'];
       final user = await ApiService.getUser();
       final userId = user != null ? user['id'] : 'guest';
       final prefs = await SharedPreferences.getInstance();
@@ -646,22 +664,32 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
 
       await _savePhoneNumberLocally();
 
+      final isFromRec = _isFromRecommendation;
+      final appSource = isFromRec ? 'recommendation' : 'manual_browsing';
+      final compScore = isFromRec ? _compatibilityScore : null;
+
+      final submitData = <String, dynamic>{
+        'pet_id': petId,
+        'full_name': fullName,
+        'id_type': _selectedIdType,
+        'phone': fullContactPhone,
+        'address': _addressController.text.trim(),
+        'city': city,
+        'barangay': barangay,
+        'home_type': _homeType,
+        'has_other_pets': _hasOtherPets,
+        'other_pets_details': _hasOtherPets ? _otherPetsDetailsController.text.trim() : null,
+        'has_experience': _hasExperience,
+        'proposed_pet_name': _proposedPetNameController.text.trim(),
+        'reason': _reasonController.text.trim(),
+        'application_source': appSource,
+      };
+      if (compScore != null) {
+        submitData['compatibility_score'] = compScore;
+      }
+
       await ApiService.submitAdoptionApplication(
-        data: {
-          'pet_id': petId,
-          'full_name': fullName,
-          'id_type': _selectedIdType,
-          'phone': fullContactPhone,
-          'address': _addressController.text.trim(),
-          'city': city,
-          'barangay': barangay,
-          'home_type': _homeType,
-          'has_other_pets': _hasOtherPets,
-          'other_pets_details': _hasOtherPets ? _otherPetsDetailsController.text.trim() : null,
-          'has_experience': _hasExperience,
-          'proposed_pet_name': _proposedPetNameController.text.trim(),
-          'reason': _reasonController.text.trim(),
-        },
+        data: submitData,
         validIdPath: _validIdImage?.path,
         certificatePath: _certificateImage?.path,
       );
@@ -1077,6 +1105,26 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
+                if (_isFromRecommendation) ...[
+                  const SizedBox(height: 4),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primary,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      _compatibilityScore != null
+                          ? 'AI Recommended Match (${_compatibilityScore!.toInt()}%)'
+                          : 'AI Recommended Match',
+                      style: GoogleFonts.poppins(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

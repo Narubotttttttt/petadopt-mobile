@@ -754,6 +754,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
             borderRadius: BorderRadius.circular(16),
             onTap: () {
               final petData = {
+                ...pet,
                 'id': pet['pet_id'] ?? pet['id'],
                 'name': pet['name'] ?? 'Pet no. ${pet['pet_id']}',
                 'breed': pet['breed'] ?? 'Mixed Breed',
@@ -765,8 +766,9 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
                         ? ApiService.normalizeImageUrl(pet['photo_path'])
                         : 'https://images.unsplash.com/photo-1543466835-00a7907e9de1'),
                 'match_percentage': pet['match_percentage'],
+                'compatibility_score': pet['match_percentage'],
                 'isRecommended': true,
-                ...pet,
+                'application_source': 'recommendation',
               };
               Navigator.push(
                 context,
