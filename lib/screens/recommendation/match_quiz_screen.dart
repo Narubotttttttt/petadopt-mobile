@@ -21,24 +21,24 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
   int _loadingStep = 1;
 
   // Step 1: Basics & Appearance
-  String _preferredSpecies = 'any';
-  String _preferredAge = 'any';
-  String _preferredGender = 'any';
-  String _preferredColor = 'any';
+  String? _preferredSpecies;
+  String? _preferredAge;
+  String? _preferredGender;
+  String? _preferredColor;
 
   // Step 2: Living & Lifestyle
-  String _livingEnvironment = 'apartment';
-  String _activityLevel = 'moderate';
+  String? _livingEnvironment;
+  String? _activityLevel;
 
   // Step 3: Experience & Household
-  String _petExperience = 'first_time';
-  bool _hasChildren = false;
-  bool _hasOtherPets = false;
+  String? _petExperience;
+  bool? _hasChildren;
+  bool? _hasOtherPets;
 
   // Step 4: Capacity & Temperament
-  String _hoursAlone = '4_7';
-  bool _specialCareCapacity = false;
-  final Set<String> _desiredTemperaments = {'Friendly', 'Calm', 'Affectionate'};
+  String? _hoursAlone;
+  bool? _specialCareCapacity;
+  final Set<String> _desiredTemperaments = {};
 
   final List<String> _allTemperaments = [
     'Friendly',
@@ -51,11 +51,42 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
     'Shy',
   ];
 
+  bool get _hasAnySelection =>
+      _preferredSpecies != null ||
+      _preferredAge != null ||
+      _preferredGender != null ||
+      _preferredColor != null ||
+      _livingEnvironment != null ||
+      _activityLevel != null ||
+      _petExperience != null ||
+      _hasChildren != null ||
+      _hasOtherPets != null ||
+      _hoursAlone != null ||
+      _specialCareCapacity != null ||
+      _desiredTemperaments.isNotEmpty;
+
+  void _resetQuiz() {
+    setState(() {
+      _currentStep = 0;
+      _preferredSpecies = null;
+      _preferredAge = null;
+      _preferredGender = null;
+      _preferredColor = null;
+      _livingEnvironment = null;
+      _activityLevel = null;
+      _petExperience = null;
+      _hasChildren = null;
+      _hasOtherPets = null;
+      _hoursAlone = null;
+      _specialCareCapacity = null;
+      _desiredTemperaments.clear();
+    });
+  }
+
   @override
   void initState() {
     super.initState();
     _checkBanStanding();
-    _loadSavedPreferences();
   }
 
   Future<void> _checkBanStanding() async {
@@ -68,31 +99,6 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
     } catch (_) {}
   }
 
-  Future<void> _loadSavedPreferences() async {
-    try {
-      final prefs = await ApiService.getSavedPreferences();
-      if (prefs != null && mounted) {
-        setState(() {
-          _preferredSpecies = prefs['preferred_species'] ?? 'any';
-          _preferredAge = prefs['preferred_age'] ?? 'any';
-          if (_preferredAge == 'senior') _preferredAge = 'adult';
-          _preferredGender = prefs['preferred_gender'] ?? 'any';
-          _preferredColor = prefs['preferred_color'] ?? 'any';
-          _livingEnvironment = prefs['living_environment'] ?? 'apartment';
-          _activityLevel = prefs['activity_level'] ?? 'moderate';
-          _petExperience = prefs['pet_experience'] ?? 'first_time';
-          _hasChildren = prefs['has_children'] == true || prefs['has_children'] == 1;
-          _hasOtherPets = prefs['has_other_pets'] == true || prefs['has_other_pets'] == 1;
-          _hoursAlone = prefs['hours_alone'] ?? '4_7';
-          _specialCareCapacity = prefs['special_care_capacity'] == true || prefs['special_care_capacity'] == 1;
-          if (prefs['desired_temperaments'] != null) {
-            _desiredTemperaments.clear();
-            _desiredTemperaments.addAll(List<String>.from(prefs['desired_temperaments']));
-          }
-        });
-      }
-    } catch (_) {}
-  }
 
   Future<void> _submitQuiz() async {
     setState(() {
@@ -102,17 +108,17 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
     });
 
     final payload = {
-      'preferred_species': _preferredSpecies,
-      'preferred_age': _preferredAge,
-      'preferred_gender': _preferredGender,
-      'preferred_color': _preferredColor,
-      'living_environment': _livingEnvironment,
-      'activity_level': _activityLevel,
-      'pet_experience': _petExperience,
-      'has_children': _hasChildren,
-      'has_other_pets': _hasOtherPets,
-      'hours_alone': _hoursAlone,
-      'special_care_capacity': _specialCareCapacity,
+      'preferred_species': _preferredSpecies ?? 'any',
+      'preferred_age': _preferredAge ?? 'any',
+      'preferred_gender': _preferredGender ?? 'any',
+      'preferred_color': _preferredColor ?? 'any',
+      'living_environment': _livingEnvironment ?? 'apartment',
+      'activity_level': _activityLevel ?? 'moderate',
+      'pet_experience': _petExperience ?? 'first_time',
+      'has_children': _hasChildren ?? false,
+      'has_other_pets': _hasOtherPets ?? false,
+      'hours_alone': _hoursAlone ?? '4_7',
+      'special_care_capacity': _specialCareCapacity ?? false,
       'desired_temperaments': _desiredTemperaments.toList(),
     };
 
@@ -185,9 +191,23 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
           },
         ),
         title: Text(
-          _showResults ? 'Your Top Pet Matches' : 'Match a Pets',
+          _showResults ? 'Your Top Pet Matches' : 'Match a Pet',
           style: GoogleFonts.poppins(fontSize: 17, fontWeight: FontWeight.w600),
         ),
+        actions: [
+          if (!_showResults && !_isLoading && _hasAnySelection)
+            TextButton(
+              onPressed: _resetQuiz,
+              child: Text(
+                'Clear',
+                style: GoogleFonts.poppins(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.textSecondary,
+                ),
+              ),
+            ),
+        ],
       ),
       body: _isLoading
           ? _buildLoadingState()
@@ -256,6 +276,84 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
     );
   }
 
+  void _handleNextStep() {
+    if (_currentStep == 0) {
+      if (_preferredSpecies == null) {
+        _showValidationError('Please select a preferred species (or Any Species).');
+        return;
+      }
+      if (_preferredAge == null) {
+        _showValidationError('Please select a preferred age group (or Any Age).');
+        return;
+      }
+      if (_preferredGender == null) {
+        _showValidationError('Please select a preferred gender (or Any).');
+        return;
+      }
+      if (_preferredColor == null) {
+        _showValidationError('Please select a preferred coat color (or Any Color).');
+        return;
+      }
+    } else if (_currentStep == 1) {
+      if (_livingEnvironment == null) {
+        _showValidationError('Please select your residence type.');
+        return;
+      }
+      if (_activityLevel == null) {
+        _showValidationError('Please select your activity level.');
+        return;
+      }
+    } else if (_currentStep == 2) {
+      if (_petExperience == null) {
+        _showValidationError('Please select your experience with pets.');
+        return;
+      }
+      if (_hasChildren == null) {
+        _showValidationError('Please indicate if children live in your household.');
+        return;
+      }
+      if (_hasOtherPets == null) {
+        _showValidationError('Please indicate if you have other pets.');
+        return;
+      }
+    } else if (_currentStep == 3) {
+      if (_hoursAlone == null) {
+        _showValidationError('Please select daily hours the pet will be left alone.');
+        return;
+      }
+      if (_specialCareCapacity == null) {
+        _showValidationError('Please indicate your special care capacity.');
+        return;
+      }
+      if (_desiredTemperaments.isEmpty) {
+        _showValidationError('Please select at least one desired pet temperament.');
+        return;
+      }
+    }
+
+    if (_currentStep < 3) {
+      setState(() => _currentStep++);
+    } else {
+      _submitQuiz();
+    }
+  }
+
+  void _showValidationError(String message) {
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w500, color: Colors.white),
+        ),
+        backgroundColor: AppTheme.errorColor,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
   Widget _buildQuizView() {
     return Column(
       children: [
@@ -290,13 +388,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
                     Expanded(
                       flex: 2,
                       child: ElevatedButton(
-                        onPressed: () {
-                          if (_currentStep < 3) {
-                            setState(() => _currentStep++);
-                          } else {
-                            _submitQuiz();
-                          }
-                        },
+                        onPressed: _handleNextStep,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.primary,
                           padding: const EdgeInsets.symmetric(vertical: 14),
@@ -375,9 +467,8 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
         _buildRadioGroup(
           options: [
             {'val': 'any', 'label': 'Any Age'},
-            {'val': 'kitten_puppy', 'label': 'Puppy / Kitten (< 1 yr)'},
-            {'val': 'young', 'label': 'Young (1 - 3 yrs)'},
-            {'val': 'adult', 'label': 'Adult (3+ yrs)'},
+            {'val': 'kitten_puppy', 'label': 'Puppy / Kitten (1-6months)'},
+            {'val': 'adult', 'label': 'Adult (1+ yrs)'},
           ],
           selected: _preferredAge,
           onSelected: (val) => setState(() => _preferredAge = val),
@@ -468,23 +559,24 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
           onSelected: (val) => setState(() => _petExperience = val),
         ),
         const SizedBox(height: 20),
-        _buildSectionTitle('Household Members'),
-        SwitchListTile(
-          contentPadding: EdgeInsets.zero,
-          title: Text('Children in home', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600)),
-          subtitle: Text('Recommends gentle & family-friendly pets', style: GoogleFonts.poppins(fontSize: 12, color: AppTheme.textSecondary)),
-          value: _hasChildren,
-          activeThumbColor: AppTheme.primary,
-          onChanged: (val) => setState(() => _hasChildren = val),
+        _buildSectionTitle('Children in Household'),
+        _buildRadioGroup(
+          options: [
+            {'val': 'yes', 'label': 'Yes, children live in household'},
+            {'val': 'no', 'label': 'No children in household'},
+          ],
+          selected: _hasChildren == null ? null : (_hasChildren! ? 'yes' : 'no'),
+          onSelected: (val) => setState(() => _hasChildren = val == 'yes'),
         ),
-        const Divider(height: 20),
-        SwitchListTile(
-          contentPadding: EdgeInsets.zero,
-          title: Text('Existing pets in home', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600)),
-          subtitle: Text('Recommends pets tested friendly with other animals', style: GoogleFonts.poppins(fontSize: 12, color: AppTheme.textSecondary)),
-          value: _hasOtherPets,
-          activeThumbColor: AppTheme.primary,
-          onChanged: (val) => setState(() => _hasOtherPets = val),
+        const SizedBox(height: 20),
+        _buildSectionTitle('Existing Pets in Household'),
+        _buildRadioGroup(
+          options: [
+            {'val': 'yes', 'label': 'Yes, have other pets in home'},
+            {'val': 'no', 'label': 'No other pets in home'},
+          ],
+          selected: _hasOtherPets == null ? null : (_hasOtherPets! ? 'yes' : 'no'),
+          onSelected: (val) => setState(() => _hasOtherPets = val == 'yes'),
         ),
       ],
     );
@@ -511,13 +603,13 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
         ),
         const SizedBox(height: 20),
         _buildSectionTitle('Special Care Capacity'),
-        SwitchListTile(
-          contentPadding: EdgeInsets.zero,
-          title: Text('Open to Special Care / Medical Needs', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600)),
-          subtitle: Text('Open to adopting pets with special dietary or maintenance needs', style: GoogleFonts.poppins(fontSize: 12, color: AppTheme.textSecondary)),
-          value: _specialCareCapacity,
-          activeThumbColor: AppTheme.primary,
-          onChanged: (val) => setState(() => _specialCareCapacity = val),
+        _buildRadioGroup(
+          options: [
+            {'val': 'yes', 'label': 'Open to special care or medical needs'},
+            {'val': 'no', 'label': 'Standard care only (no special needs)'},
+          ],
+          selected: _specialCareCapacity == null ? null : (_specialCareCapacity! ? 'yes' : 'no'),
+          onSelected: (val) => setState(() => _specialCareCapacity = val == 'yes'),
         ),
         const SizedBox(height: 20),
         _buildSectionTitle('Desired Pet Temperaments (Select traits)'),
@@ -551,9 +643,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
                   if (selected) {
                     _desiredTemperaments.add(tag);
                   } else {
-                    if (_desiredTemperaments.length > 1) {
-                      _desiredTemperaments.remove(tag);
-                    }
+                    _desiredTemperaments.remove(tag);
                   }
                 });
               },
@@ -576,7 +666,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
 
   Widget _buildRadioGroup({
     required List<Map<String, String>> options,
-    required String selected,
+    required String? selected,
     required Function(String) onSelected,
   }) {
     return Column(
@@ -619,7 +709,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
 
   Widget _buildChipGroup({
     required List<String> options,
-    required String selected,
+    required String? selected,
     required Function(String) onSelected,
   }) {
     return Wrap(

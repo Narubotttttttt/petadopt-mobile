@@ -375,7 +375,7 @@ class ExplorationModeDialog extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: Text(
-                                'Match a Pets',
+                                'Match a Pet',
                                 style: GoogleFonts.poppins(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w600,

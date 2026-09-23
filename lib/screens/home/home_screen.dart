@@ -1337,7 +1337,7 @@ class _HomeTabState extends State<_HomeTab> {
                             elevation: 0,
                           ),
                           child: Text(
-                            'Match a Pets',
+                            'Match a Pet',
                             style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w700),
                           ),
                         ),

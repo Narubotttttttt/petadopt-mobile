@@ -1,7 +1,5 @@
 class ApiConfig {
-  // Configure the backend server host and port here
-  // When testing on a physical mobile device, use your machine's local Wi-Fi IP.
-  // When testing on the Android Emulator, you can use '10.0.2.2'.
+  
   static const String serverIp = '192.168.1.46';
   static const String serverPort = '8000';
 
