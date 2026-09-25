@@ -275,6 +275,9 @@ class _ApplicationCard extends StatelessWidget {
     final isScheduled = scheduledAt != null && scheduledAt.isNotEmpty;
     final isSigned = application['is_signed'] == true ||
         (application['signature_url'] != null && application['signature_url'].toString().isNotEmpty);
+    final isContractUnlocked = application['contract_unlocked'] == true ||
+        application['contractUnlocked'] == true ||
+        application['is_finalized'] == true;
     final signedAt = application['signed_at']?.toString();
     final signatureUrl = application['signature_url']?.toString();
 
@@ -491,7 +494,7 @@ class _ApplicationCard extends StatelessWidget {
                   },
                   icon: const Icon(Icons.draw_rounded, size: 16, color: Colors.white),
                   label: Text(
-                    'Sign Adoption Contract',
+                    'Pre-Sign Adoption Agreement',
                     style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white),
                   ),
                   style: ElevatedButton.styleFrom(
@@ -505,7 +508,7 @@ class _ApplicationCard extends StatelessWidget {
               const SizedBox(height: 4),
               Center(
                 child: Text(
-                  'Signature required to confirm pickup release',
+                  'Pre-signing saves time at your scheduled event',
                   style: GoogleFonts.poppins(fontSize: 11, color: const Color(0xFFB45309)),
                 ),
               ),
@@ -514,28 +517,40 @@ class _ApplicationCard extends StatelessWidget {
               const SizedBox(height: 12),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      const Icon(Icons.check_circle_rounded, size: 14, color: Color(0xFF059669)),
-                      const SizedBox(width: 5),
-                      Text(
-                        signedAt != null && signedAt.isNotEmpty
-                            ? 'Agreement Signed ($signedAt)'
-                            : 'Agreement Signed',
-                        style: GoogleFonts.poppins(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500,
-                          color: const Color(0xFF059669),
+                children:
+                  [
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Icon(
+                          isContractUnlocked ? Icons.verified_rounded : Icons.schedule_rounded,
+                          size: 14,
+                          color: isContractUnlocked ? const Color(0xFF059669) : const Color(0xFFD97706),
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: 5),
+                        Expanded(
+                          child: Text(
+                            isContractUnlocked
+                                ? (signedAt != null && signedAt.isNotEmpty
+                                    ? 'Handover Finalized · Contract Unlocked ($signedAt)'
+                                    : 'Handover Finalized · Contract Unlocked')
+                                : 'Pre-Signed · Pending Venue Verification',
+                            style: GoogleFonts.poppins(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: isContractUnlocked ? const Color(0xFF059669) : const Color(0xFFD97706),
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                   if (signatureUrl != null && signatureUrl.isNotEmpty)
                     GestureDetector(
                       onTap: () => _showSignatureDialog(context, signatureUrl),
                       child: Text(
-                        'View Signature',
+                        'View Pre-Signature',
                         style: GoogleFonts.poppins(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
@@ -546,6 +561,34 @@ class _ApplicationCard extends StatelessWidget {
                     ),
                 ],
               ),
+              if (!isContractUnlocked) ...[
+                const SizedBox(height: 6),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFFBEB),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0xFFFDE68A)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.info_outline_rounded, size: 14, color: Color(0xFFB45309)),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          'Note: This is only a pre-signing step. Please bring the original copies of your uploaded Valid ID and Barangay Certificate on your scheduled date. You can only download the adoption contract after CAWS verifies your identification.',
+                          style: GoogleFonts.poppins(
+                            fontSize: 10.5,
+                            color: const Color(0xFF92400E),
+                            height: 1.35,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
               const SizedBox(height: 8),
               // Show 'Name Your Pet' if pet has no custom name, otherwise show Health Hub
               Builder(builder: (context) {

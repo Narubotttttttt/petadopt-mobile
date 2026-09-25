@@ -119,6 +119,72 @@ class _AdoptedPetHubScreenState extends State<AdoptedPetHubScreen> {
     );
   }
 
+  void _showContractLockedDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEF3C7),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(Icons.lock_clock_rounded, color: Color(0xFFD97706), size: 22),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'Contract Locked',
+                style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 16),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Adoption agreement pre-signed!',
+              style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textPrimary),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFFBEB),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFFFDE68A)),
+              ),
+              child: Text(
+                'Note: This is only a pre-signing step. Please bring the original copies of your uploaded Valid ID and Barangay Certificate on your scheduled date. You can only download the adoption contract after CAWS verifies your identification.',
+                style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w500, color: const Color(0xFF92400E), height: 1.4),
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'Please bring your original Valid ID and Barangay Certificate to the venue on your scheduled date to finalize your adoption.',
+              style: GoogleFonts.poppins(fontSize: 12, color: AppTheme.textSecondary, height: 1.4),
+            ),
+          ],
+        ),
+        actions: [
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primary,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: Text('Understood', style: GoogleFonts.poppins(fontWeight: FontWeight.w600, color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _handleDownloadContract() async {
     final isSigned = widget.application['is_signed'] == true || 
         (widget.application['signature_url'] != null && widget.application['signature_url'].toString().isNotEmpty);
@@ -128,7 +194,7 @@ class _AdoptedPetHubScreenState extends State<AdoptedPetHubScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Please provide a signature first before downloading the contract.',
+            'Please provide a pre-signature first before downloading the contract.',
             style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w500),
           ),
           backgroundColor: AppTheme.errorColor,
@@ -144,6 +210,15 @@ class _AdoptedPetHubScreenState extends State<AdoptedPetHubScreen> {
       );
 
       _showSignatureRequiredDialog();
+      return;
+    }
+
+    final isContractUnlocked = widget.application['contract_unlocked'] == true ||
+        widget.application['contractUnlocked'] == true ||
+        widget.application['is_finalized'] == true;
+
+    if (!isContractUnlocked) {
+      _showContractLockedDialog();
       return;
     }
 
@@ -386,13 +461,27 @@ class _AdoptedPetHubScreenState extends State<AdoptedPetHubScreen> {
                                 height: 14,
                                 child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primary),
                               )
-                            : const Icon(Icons.download_rounded, size: 15, color: AppTheme.primary),
+                            : Icon(
+                                (widget.application['contract_unlocked'] == true || widget.application['contractUnlocked'] == true || widget.application['is_finalized'] == true)
+                                    ? Icons.download_rounded
+                                    : Icons.lock_outline_rounded,
+                                size: 15,
+                                color: (widget.application['contract_unlocked'] == true || widget.application['contractUnlocked'] == true || widget.application['is_finalized'] == true)
+                                    ? AppTheme.primary
+                                    : const Color(0xFFD97706),
+                              ),
                         label: Text(
-                          _isDownloading ? 'Downloading...' : 'Contract',
+                          _isDownloading
+                              ? 'Downloading...'
+                              : ((widget.application['contract_unlocked'] == true || widget.application['contractUnlocked'] == true || widget.application['is_finalized'] == true)
+                                  ? 'Contract'
+                                  : 'Contract (Locked)'),
                           style: GoogleFonts.poppins(
                             fontSize: 12.5,
                             fontWeight: FontWeight.w600,
-                            color: AppTheme.primaryDark,
+                            color: (widget.application['contract_unlocked'] == true || widget.application['contractUnlocked'] == true || widget.application['is_finalized'] == true)
+                                ? AppTheme.primaryDark
+                                : const Color(0xFFB45309),
                             height: 1.2,
                           ),
                         ),

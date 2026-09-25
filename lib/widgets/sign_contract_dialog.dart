@@ -194,7 +194,7 @@ class _SignContractDialogState extends State<SignContractDialog> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Adoption agreement signed successfully!',
+                    'Adoption agreement pre-signed! Bring your original Valid ID and Barangay Certificate to the event for verification.',
                     style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600),
                   ),
                 ),
@@ -224,8 +224,11 @@ class _SignContractDialogState extends State<SignContractDialog> {
     final pet = widget.application['pet'] as Map<String, dynamic>?;
     final petName = pet != null ? (pet['name'] ?? 'Pet no. ') : 'Pet';
     final petBreed = pet?['breed'] ?? 'Aspin / Puspin';
-    final scheduledAt = widget.application['scheduled_at']?.toString() ?? '';
-    final eventLocation = widget.application['event_location']?.toString() ?? '';
+    final petPhotoUrl = widget.application['petImage']?.toString() ??
+        pet?['photo_url']?.toString() ??
+        pet?['photo']?.toString();
+    final scheduledAt = widget.application['scheduled_at']?.toString() ?? widget.application['scheduledAt']?.toString() ?? '';
+    final eventLocation = widget.application['event_location']?.toString() ?? widget.application['eventLocation']?.toString() ?? '';
     final hasSavedSignature = _savedSignatureUrl != null && _savedSignatureUrl!.isNotEmpty;
 
     return Dialog(
@@ -302,7 +305,7 @@ class _SignContractDialogState extends State<SignContractDialog> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          _currentStep == 0 ? 'Adopter Commitments' : 'Digital Signature',
+                          _currentStep == 0 ? 'Adopter Commitments' : 'Pre-Sign Agreement',
                           style: GoogleFonts.poppins(
                             fontSize: 15,
                             fontWeight: FontWeight.w700,
@@ -312,7 +315,7 @@ class _SignContractDialogState extends State<SignContractDialog> {
                         Text(
                           _currentStep == 0
                               ? 'Step 1 of 2: Review terms and conditions'
-                              : 'Step 2 of 2: Sign to finalize adoption',
+                              : 'Step 2 of 2: Pre-sign agreement in advance',
                           style: GoogleFonts.poppins(fontSize: 11, color: AppTheme.textSecondary),
                         ),
                       ],
@@ -338,6 +341,7 @@ class _SignContractDialogState extends State<SignContractDialog> {
                   _buildCommitmentsStep(
                     petName: petName,
                     petBreed: petBreed,
+                    petPhotoUrl: petPhotoUrl,
                     scheduledAt: scheduledAt,
                     eventLocation: eventLocation,
                   ),
@@ -395,8 +399,8 @@ class _SignContractDialogState extends State<SignContractDialog> {
                               ),
                         label: Text(
                           _isSubmitting
-                              ? 'Applying Signature...'
-                              : (_useSavedSignature ? 'Confirm & Apply Saved Signature' : 'Sign & Finalize Agreement'),
+                              ? 'Applying Pre-Signature...'
+                              : (_useSavedSignature ? 'Confirm & Apply Pre-Signature' : 'Pre-Sign Adoption Agreement'),
                           style: GoogleFonts.poppins(
                             fontSize: 13,
                             fontWeight: FontWeight.w700,
@@ -421,6 +425,7 @@ class _SignContractDialogState extends State<SignContractDialog> {
   Widget _buildCommitmentsStep({
     required String petName,
     required String petBreed,
+    String? petPhotoUrl,
     required String scheduledAt,
     required String eventLocation,
   }) {
@@ -440,14 +445,27 @@ class _SignContractDialogState extends State<SignContractDialog> {
             ),
             child: Row(
               children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: AppTheme.primary.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(10),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: AppTheme.primary.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: (petPhotoUrl != null && petPhotoUrl.isNotEmpty)
+                        ? Image.network(
+                            ApiService.normalizeImageUrl(petPhotoUrl),
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) => const Center(
+                              child: Icon(Icons.pets_rounded, color: AppTheme.primary, size: 22),
+                            ),
+                          )
+                        : const Center(
+                            child: Icon(Icons.pets_rounded, color: AppTheme.primary, size: 22),
+                          ),
                   ),
-                  child: const Icon(Icons.pets_rounded, color: AppTheme.primary, size: 22),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -511,6 +529,32 @@ class _SignContractDialogState extends State<SignContractDialog> {
                 _buildTermItem('I consent to mandatory Spay & Neuter (Kapon) to fight pet overpopulation.'),
                 _buildTermItem('I agree to submit monthly pet health updates and photos through this mobile app.'),
                 _buildTermItem('Adoption is a lifetime commitment for the entire life of the animal.'),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFEFF6FF),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFBFDBFE)),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.info_outline_rounded, size: 16, color: Color(0xFF1D4ED8)),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Note: This is only a pre-signing step. Please bring the original copies of your uploaded Valid ID and Barangay Certificate on your scheduled date. You can only download the adoption contract after CAWS verifies your identification.',
+                    style: GoogleFonts.poppins(
+                      fontSize: 11,
+                      color: const Color(0xFF1E40AF),
+                      height: 1.35,
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
