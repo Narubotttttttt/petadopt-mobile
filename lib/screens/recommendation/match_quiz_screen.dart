@@ -443,6 +443,45 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
     );
   }
 
+  List<String> get _currentColorOptions {
+    if (_preferredSpecies == 'dog') {
+      return const [
+        'Any Color',
+        'Black',
+        'Brown/Tan',
+        'White',
+        'Golden/Cream',
+        'Brindle',
+        'Tricolor',
+        'Gray',
+      ];
+    } else if (_preferredSpecies == 'cat') {
+      return const [
+        'Any Color',
+        'Orange/Ginger',
+        'Black',
+        'White',
+        'Brown',
+        'Calico',
+        'Tortoiseshell',
+        'Tabby/Striped',
+        'Gray',
+      ];
+    } else {
+      return const [
+        'Any Color',
+        'Black',
+        'Brown/Tan',
+        'White',
+        'Golden/Cream',
+        'Orange/Ginger',
+        'Tricolor/Calico',
+        'Tabby/Brindle',
+        'Gray',
+      ];
+    }
+  }
+
   // STEP 1: Species, Age, Gender, Color
   Widget _buildStep1() {
     return Column(
@@ -460,14 +499,32 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
             {'val': 'cat', 'label': 'Cats Only'},
           ],
           selected: _preferredSpecies,
-          onSelected: (val) => setState(() => _preferredSpecies = val),
+          onSelected: (val) {
+            setState(() {
+              if (_preferredSpecies != val) {
+                _preferredSpecies = val;
+                if (_preferredColor != null &&
+                    _preferredColor != 'any' &&
+                    !_currentColorOptions.contains(_preferredColor)) {
+                  _preferredColor = null;
+                }
+              }
+            });
+          },
         ),
         const SizedBox(height: 20),
         _buildSectionTitle('Preferred Age Group'),
         _buildRadioGroup(
           options: [
             {'val': 'any', 'label': 'Any Age'},
-            {'val': 'kitten_puppy', 'label': 'Puppy / Kitten (1-6months)'},
+            {
+              'val': 'kitten_puppy',
+              'label': _preferredSpecies == 'dog'
+                  ? 'Puppy (1-6 months)'
+                  : (_preferredSpecies == 'cat'
+                      ? 'Kitten (1-6 months)'
+                      : 'Puppy / Kitten (1-6 months)'),
+            },
             {'val': 'adult', 'label': 'Adult (1+ yrs)'},
           ],
           selected: _preferredAge,
@@ -485,18 +542,13 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
           onSelected: (val) => setState(() => _preferredGender = val),
         ),
         const SizedBox(height: 20),
-        _buildSectionTitle('Preferred Coat Color'),
+        _buildSectionTitle(_preferredSpecies == 'dog'
+            ? 'Preferred Dog Coat Color'
+            : (_preferredSpecies == 'cat'
+                ? 'Preferred Cat Coat Color'
+                : 'Preferred Coat Color')),
         _buildChipGroup(
-          options: [
-            'Any Color',
-            'Orange/Ginger',
-            'Black',
-            'White',
-            'Brown/Tan',
-            'Tricolor/Calico',
-            'Gray',
-            'Tabby/Striped',
-          ],
+          options: _currentColorOptions,
           selected: _preferredColor == 'any' ? 'Any Color' : _preferredColor,
           onSelected: (val) {
             setState(() => _preferredColor = val == 'Any Color' ? 'any' : val);

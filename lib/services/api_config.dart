@@ -1,6 +1,5 @@
 class ApiConfig {
-  
-  static const String serverIp = '192.168.1.46';
+  static const String serverIp = '192.168.1.59';
   static const String serverPort = '8000';
 
   static const String host = 'http://$serverIp:$serverPort';
@@ -18,7 +17,8 @@ class ApiConfig {
       return '';
     }
     final baseUri = Uri.parse(baseUrl);
-    final hostPrefix = '${baseUri.scheme}://${baseUri.host}${baseUri.hasPort ? ':${baseUri.port}' : ''}';
+    final hostPrefix =
+        '${baseUri.scheme}://${baseUri.host}${baseUri.hasPort ? ':${baseUri.port}' : ''}';
 
     if (url.startsWith('/')) {
       return '$hostPrefix$url';
@@ -31,22 +31,28 @@ class ApiConfig {
     if (url.contains('/storage/')) {
       final imgUri = Uri.tryParse(url);
       if (imgUri != null) {
-        return imgUri.replace(
-          scheme: baseUri.scheme,
-          host: baseUri.host,
-          port: baseUri.hasPort ? baseUri.port : null,
-        ).toString();
+        return imgUri
+            .replace(
+              scheme: baseUri.scheme,
+              host: baseUri.host,
+              port: baseUri.hasPort ? baseUri.port : null,
+            )
+            .toString();
       }
     }
 
-    if (url.contains('localhost') || url.contains('127.0.0.1') || url.contains('10.0.2.2')) {
+    if (url.contains('localhost') ||
+        url.contains('127.0.0.1') ||
+        url.contains('10.0.2.2')) {
       final imgUri = Uri.tryParse(url);
       if (imgUri != null) {
-        return imgUri.replace(
-          scheme: baseUri.scheme,
-          host: baseUri.host,
-          port: baseUri.hasPort ? baseUri.port : null,
-        ).toString();
+        return imgUri
+            .replace(
+              scheme: baseUri.scheme,
+              host: baseUri.host,
+              port: baseUri.hasPort ? baseUri.port : null,
+            )
+            .toString();
       }
     }
     return url;

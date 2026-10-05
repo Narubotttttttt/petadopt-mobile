@@ -101,7 +101,7 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
                       physics: const BouncingScrollPhysics(),
                       child: Row(
                         children: [
-                          _buildFilterChip('approved', 'Approved', _countForFilter('approved')),
+                          _buildFilterChip('approved', 'Pre-Approved', _countForFilter('approved')),
                           const SizedBox(width: 8),
                           _buildFilterChip('pending', 'Pending', _countForFilter('pending')),
                           const SizedBox(width: 8),
@@ -386,8 +386,8 @@ class _ApplicationCard extends StatelessWidget {
                               ),
                               child: Text(
                                 (application['compatibility_score'] ?? application['compatibilityScore']) != null
-                                    ? 'AI Match ${((application['compatibility_score'] ?? application['compatibilityScore']) as num).toInt()}%'
-                                    : 'AI Match',
+                                    ? 'Quiz Match ${((application['compatibility_score'] ?? application['compatibilityScore']) as num).toInt()}%'
+                                    : 'Quiz Match',
                                 style: GoogleFonts.poppins(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w700,
@@ -508,7 +508,7 @@ class _ApplicationCard extends StatelessWidget {
               const SizedBox(height: 4),
               Center(
                 child: Text(
-                  'Pre-signing saves time at your scheduled event',
+                  'Pre-signing saves time. Original documents must still be presented on-site.',
                   style: GoogleFonts.poppins(fontSize: 11, color: const Color(0xFFB45309)),
                 ),
               ),
@@ -883,14 +883,14 @@ class _ApplicationCard extends StatelessWidget {
       bgColor = const Color(0xFFFEF2F2);
     } else if (isScheduled && status != 'approved' && status != 'rejected') {
       label = 'Scheduled';
-      dotColor = const Color(0xFF0284C7);
-      bgColor = const Color(0xFFF0F9FF);
+      dotColor = const Color(0xFF9333EA);
+      bgColor = const Color(0xFFF3E8FF);
     } else {
       switch (status) {
         case 'approved':
-          label = 'Approved';
-          dotColor = const Color(0xFF059669);
-          bgColor = const Color(0xFFECFDF5);
+          label = 'Pre-Approved';
+          dotColor = const Color(0xFF9333EA);
+          bgColor = const Color(0xFFF3E8FF);
           break;
         case 'rejected':
           label = 'Declined';

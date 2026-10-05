@@ -1115,8 +1115,8 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
                     ),
                     child: Text(
                       _compatibilityScore != null
-                          ? 'AI Recommended Match (${_compatibilityScore!.toInt()}%)'
-                          : 'AI Recommended Match',
+                          ? 'Quiz Match (${_compatibilityScore!.toInt()}%)'
+                          : 'Quiz Match',
                       style: GoogleFonts.poppins(
                         fontSize: 10,
                         fontWeight: FontWeight.w700,

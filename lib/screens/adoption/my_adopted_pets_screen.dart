@@ -105,7 +105,7 @@ class _MyAdoptedPetsScreenState extends State<MyAdoptedPetsScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'When your adoption application is approved by CAWS, your pet health check-in hub will appear here.',
+              'When your adoption is completed and verified by CAWS, your pet health check-in hub will appear here.',
               textAlign: TextAlign.center,
               style: GoogleFonts.poppins(
                 fontSize: 13,

@@ -20,15 +20,30 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   int _selectedIndex = 0;
   bool _hasUnreadApplications = false;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _checkAccountBanStatus();
     _checkUnreadApplications();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _checkAccountBanStatus();
+      _checkUnreadApplications();
+    }
   }
 
 
@@ -354,6 +369,8 @@ class _HomeScreenState extends State<HomeScreen> {
             });
             if (index == 2) {
               _markApplicationsAsViewed();
+            } else if (index == 3) {
+              ApiService.getProfile();
             }
           },
           type: BottomNavigationBarType.fixed,
@@ -1132,14 +1149,14 @@ class _HomeTabState extends State<_HomeTab> {
                             if (status == 'approved') {
                               final eventDate = item['scheduledAt'] ?? 'Sunday Event';
                               return _buildMinimalNotificationCard(
-                                icon: Icons.check_circle_outline_rounded,
-                                iconColor: const Color(0xFF059669),
-                                iconBg: const Color(0xFFECFDF5),
-                                title: '$petName - Approved',
-                                subtitle: 'Event: $eventDate',
-                                badgeText: 'Approved',
-                                badgeColor: const Color(0xFF059669),
-                                badgeBg: const Color(0xFFD1FAE5),
+                                icon: Icons.assignment_turned_in_outlined,
+                                iconColor: const Color(0xFF0D9488),
+                                iconBg: const Color(0xFFF0FDFA),
+                                title: '$petName - Pre-Approved',
+                                subtitle: 'Event: $eventDate · Bring ID & Brgy Cert',
+                                badgeText: 'Pre-Approved',
+                                badgeColor: const Color(0xFF0D9488),
+                                badgeBg: const Color(0xFFCCFBF1),
                                 onTap: () {
                                   Navigator.pop(modalContext);
                                   Navigator.push(

@@ -1016,7 +1016,7 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                   ],
                   Text(
                     _hasApplied
-                        ? (_applicationStatus == 'approved' ? 'Adoption Approved' : 'Application Under Review')
+                        ? (_applicationStatus == 'approved' ? 'Pre-Approved (Pending Event Verification)' : 'Application Under Review')
                         : 'Apply for Adoption',
                     style: GoogleFonts.poppins(
                       color: _hasApplied ? AppTheme.primary : Colors.white,
