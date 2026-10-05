@@ -34,7 +34,7 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
   final _otherPetsDetailsController = TextEditingController();
   final _proposedPetNameController = TextEditingController();
 
-  String _homeType = 'House';
+  String? _homeType;
   bool _hasOtherPets = false;
   bool _hasExperience = false;
   String? _adopterId;
@@ -635,6 +635,23 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
   }
 
   Future<void> _submitForm() async {
+    if (_homeType == null || _homeType!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Please select your Type of Home',
+            style: GoogleFonts.poppins(fontSize: 13),
+          ),
+          backgroundColor: AppTheme.warningColor,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
+      );
+      return;
+    }
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -1594,7 +1611,7 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
         ),
         const SizedBox(height: 16),
         Text(
-          'Type of Home',
+          'Type of Home *',
           style: GoogleFonts.poppins(
             fontSize: 13,
             fontWeight: FontWeight.w600,
