@@ -455,7 +455,7 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
               Builder(
                 builder: (context) {
                   final status = (_user?['status'] ?? 'active').toString().toLowerCase();
-                  if (status == 'blacklisted') {
+                  if (status == 'blacklisted' || status == 'banned' || status == 'restricted') {
                     return Padding(
                       padding: const EdgeInsets.only(left: 8),
                       child: Container(
@@ -465,26 +465,7 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
-                          'BANNED',
-                          style: GoogleFonts.poppins(
-                            fontSize: 11,
-                            color: Colors.white,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    );
-                  } else if (status == 'restricted') {
-                    return Padding(
-                      padding: const EdgeInsets.only(left: 8),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF59E0B),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          'RESTRICTED',
+                          'BLACKLISTED',
                           style: GoogleFonts.poppins(
                             fontSize: 11,
                             color: Colors.white,
@@ -503,7 +484,7 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
-                          status == 'good_standing' ? 'GOOD STANDING' : 'ACTIVE',
+                          'ACTIVE',
                           style: GoogleFonts.poppins(
                             fontSize: 11,
                             color: Colors.white,

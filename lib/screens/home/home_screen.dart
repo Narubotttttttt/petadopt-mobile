@@ -6,6 +6,7 @@ import 'package:mobile_petadopt/services/notification_service.dart';
 import 'package:mobile_petadopt/theme/app_theme.dart';
 import 'package:mobile_petadopt/widgets/pet_recommendation_loader.dart';
 import 'package:mobile_petadopt/widgets/pet_card.dart';
+import 'package:mobile_petadopt/widgets/exploration_mode_dialog.dart';
 import 'package:mobile_petadopt/screens/pets/pet_list_screen.dart';
 import 'package:mobile_petadopt/screens/adoption/my_applications_screen.dart';
 import 'package:mobile_petadopt/screens/adoption/adopted_pet_hub_screen.dart';
@@ -457,6 +458,8 @@ class _HomeTabState extends State<_HomeTab> {
   List<Map<String, dynamic>> _vaccineReminders = [];
   String _selectedCategory = 'all';
 
+  bool _hasCheckedExplorationModal = false;
+
   @override
   void initState() {
     super.initState();
@@ -465,6 +468,37 @@ class _HomeTabState extends State<_HomeTab> {
     _fetchRecommendations();
     _checkUnreadNotifications();
     NotificationService.setupFirebaseFCM();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await Future.delayed(const Duration(milliseconds: 350));
+      if (!mounted) return;
+      _checkExplorationModal();
+    });
+  }
+
+  void _checkExplorationModal() {
+    if (_hasCheckedExplorationModal || !mounted) return;
+    _hasCheckedExplorationModal = true;
+
+    final rawArgs = ModalRoute.of(context)?.settings.arguments;
+    if (rawArgs is Map && rawArgs['showExplorationModal'] == true) {
+      try {
+        rawArgs['showExplorationModal'] = false;
+      } catch (_) {}
+
+      ExplorationModeDialog.show(
+        context,
+        onRecommendationSelected: () async {
+          final isBanned = await _checkBanNoticeForAction(actionDescription: 'take the pet match');
+          if (isBanned || !mounted) return;
+          await Navigator.pushNamed(context, '/match-quiz');
+          if (mounted) {
+            _fetchRecommendations();
+          }
+        },
+        onManualSelected: () {},
+      );
+    }
   }
 
   Future<bool> _checkBanNoticeForAction({String actionDescription = 'take the pet recommendation quiz'}) async {
@@ -1362,8 +1396,8 @@ class _HomeTabState extends State<_HomeTab> {
                     ),
                   ),
 
-                  // Recommendations Carousel (if available)
-                  if (_recommendations.isNotEmpty || _pets.isNotEmpty) ...[
+                  // Recommendations Carousel (only if adopter has completed the quiz and has recommendations)
+                  if (_recommendations.isNotEmpty) ...[
                     const SizedBox(height: 24),
                     _sectionHeader(
                       context,
@@ -1381,7 +1415,7 @@ class _HomeTabState extends State<_HomeTab> {
                       height: 235,
                       child: ListView.separated(
                         scrollDirection: Axis.horizontal,
-                        itemCount: _recommendations.isNotEmpty ? _recommendations.length : _pets.length,
+                        itemCount: _recommendations.length,
                         separatorBuilder: (context, index) => const SizedBox(width: 12),
                         itemBuilder: (context, index) {
                           final isRec = _recommendations.isNotEmpty;

@@ -6,7 +6,6 @@ import 'package:mobile_petadopt/services/api_service.dart';
 import 'package:mobile_petadopt/services/notification_service.dart';
 import 'package:mobile_petadopt/services/phone_auth_service.dart';
 import 'package:mobile_petadopt/theme/app_theme.dart';
-import 'package:mobile_petadopt/widgets/exploration_mode_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -21,13 +20,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   // Step 1: Personal Information & Credentials
   final _step1FormKey = GlobalKey<FormState>();
-  final _firstNameController = TextEditingController();
-  final _middleNameController = TextEditingController();
-  final _lastNameController = TextEditingController();
+  final _fullNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  bool _noMiddleName = false;
   bool _obscurePassword = true;
   bool _obscureConfirm = true;
 
@@ -54,9 +50,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   void dispose() {
-    _firstNameController.dispose();
-    _middleNameController.dispose();
-    _lastNameController.dispose();
+    _fullNameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
@@ -68,20 +62,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.dispose();
   }
 
-  String get _fullName {
-    final first = _firstNameController.text.trim();
-    var middle = _noMiddleName ? '' : _middleNameController.text.trim();
-    final last = _lastNameController.text.trim();
-    if (middle.isNotEmpty) {
-      if (middle.length == 1 && RegExp(r'^[a-zA-Z]$').hasMatch(middle)) {
-        middle = '${middle.toUpperCase()}.';
-      } else if (middle.length == 2 && middle.endsWith('.')) {
-        middle = '${middle[0].toUpperCase()}.';
-      }
-      return '$first $middle $last';
-    }
-    return '$first $last';
-  }
+  String get _fullName => _fullNameController.text.trim();
 
   // --- Step 1 Action ---
   Future<void> _handleStep1Submit() async {
@@ -363,15 +344,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
         );
-        ExplorationModeDialog.show(
+        Navigator.pushNamedAndRemoveUntil(
           context,
-          onRecommendationSelected: () {
-            Navigator.pushReplacementNamed(context, '/home');
-            Navigator.pushNamed(context, '/match-quiz');
-          },
-          onManualSelected: () {
-            Navigator.pushReplacementNamed(context, '/home');
-          },
+          '/home',
+          (route) => false,
+          arguments: {'showExplorationModal': true},
         );
       }
     } catch (e) {
@@ -502,7 +479,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   // --- Step Indicator (Matches Adoption Form) ---
   Widget _buildStepIndicator() {
-    final steps = ['Credentials', 'Email OTP', 'Phone SMS'];
+    final steps = ['Identity & Email', 'Google Email Code', 'Number Verify'];
     return Row(
       children: List.generate(steps.length, (index) {
         final isActive = index == _currentStep;
@@ -580,6 +557,60 @@ class _RegisterScreenState extends State<RegisterScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Account Access Level Card (Matches Admin/Staff registration styling)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF0FBFB),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AppTheme.primary.withValues(alpha: 0.25)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'ACCOUNT ACCESS LEVEL',
+                      style: GoogleFonts.poppins(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.8,
+                        color: AppTheme.primary,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Adopter',
+                      style: GoogleFonts.poppins(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primary,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    'Adopter Account',
+                    style: GoogleFonts.poppins(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+
           Row(
             children: [
               Container(
@@ -592,7 +623,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
               const SizedBox(width: 10),
               Text(
-                'Personal & Account Info',
+                'Identity & Account Info',
                 style: GoogleFonts.poppins(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
@@ -616,7 +647,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Reminder: Please enter your exact real full name as it appears on your Government ID for adoption verification.',
+                    'Reminder: Please enter your real full name as it appears on your Government ID for adoption verification and contract signing.',
                     style: GoogleFonts.poppins(
                       fontSize: 11.5,
                       color: const Color(0xFF1E40AF),
@@ -630,74 +661,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ),
           const SizedBox(height: 16),
 
-          // First Name
+          // Full Name (Single unified field matching admin/staff creation)
           _buildTextField(
-            controller: _firstNameController,
-            label: 'First Name *',
-            hint: 'e.g. Juan',
+            controller: _fullNameController,
+            label: 'Full Name *',
+            hint: 'e.g. Juan Dela Cruz',
             icon: Icons.person_outline_rounded,
             validator: (val) {
-              if (val == null || val.trim().isEmpty) return 'Please enter your first name';
-              if (val.trim().length < 2) return 'First name is too short';
-              return null;
-            },
-          ),
-          const SizedBox(height: 14),
-
-          // Middle Name / Initial Input (Visible by default, hidden when toggle is ON)
-          if (!_noMiddleName) ...[
-            _buildTextField(
-              controller: _middleNameController,
-              label: 'Middle Name / Initial',
-              hint: 'e.g. Santos or S.',
-              icon: Icons.person_outline_rounded,
-            ),
-            const SizedBox(height: 14),
-          ],
-
-          // Middle Name Toggle Switch (Clean, compact, no outer box)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  "I don't have a middle name",
-                  style: GoogleFonts.poppins(
-                    fontSize: 12,
-                    color: _noMiddleName ? AppTheme.primary : AppTheme.textSecondary,
-                    fontWeight: _noMiddleName ? FontWeight.w600 : FontWeight.w400,
-                  ),
-                ),
-                Transform.scale(
-                  scale: 0.75,
-                  child: Switch.adaptive(
-                    value: _noMiddleName,
-                    // ignore: deprecated_member_use
-                    activeColor: AppTheme.primary,
-                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    onChanged: (val) {
-                      setState(() {
-                        _noMiddleName = val;
-                        if (val) _middleNameController.clear();
-                      });
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 10),
-
-          // Last Name
-          _buildTextField(
-            controller: _lastNameController,
-            label: 'Last Name *',
-            hint: 'e.g. Dela Cruz',
-            icon: Icons.person_outline_rounded,
-            validator: (val) {
-              if (val == null || val.trim().isEmpty) return 'Please enter your last name';
-              if (val.trim().length < 2) return 'Last name is too short';
+              if (val == null || val.trim().isEmpty) return 'Please enter your full name';
+              if (val.trim().length < 3) return 'Full name is too short';
               return null;
             },
           ),
@@ -799,7 +771,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
               const SizedBox(height: 16),
               Text(
-                'Verify Email Address',
+                'Google Email Code Verification',
                 style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w700, color: AppTheme.textPrimary),
               ),
               const SizedBox(height: 6),

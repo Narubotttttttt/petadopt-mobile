@@ -26,9 +26,10 @@ class _MyAdoptedPetsScreenState extends State<MyAdoptedPetsScreen> {
       final list = await ApiService.getMyApplications();
       final approved = list.where((app) {
         final status = app['status'] as String? ?? '';
-        final isSigned = app['is_signed'] == true ||
-            (app['signature_url'] != null && app['signature_url'].toString().isNotEmpty);
-        return (status == 'approved' || status == 'adopted') && isSigned;
+        final isFinalized = app['is_finalized'] == true ||
+            app['isFinalized'] == true ||
+            app['contract_unlocked'] == true;
+        return (status == 'approved' || status == 'adopted') && isFinalized;
       }).toList();
 
       if (mounted) {
