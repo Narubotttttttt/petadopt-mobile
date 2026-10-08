@@ -6,7 +6,6 @@ import 'package:mobile_petadopt/services/notification_service.dart';
 import 'package:mobile_petadopt/theme/app_theme.dart';
 import 'package:mobile_petadopt/widgets/pet_recommendation_loader.dart';
 import 'package:mobile_petadopt/widgets/pet_card.dart';
-import 'package:mobile_petadopt/widgets/exploration_mode_dialog.dart';
 import 'package:mobile_petadopt/screens/pets/pet_list_screen.dart';
 import 'package:mobile_petadopt/screens/adoption/my_applications_screen.dart';
 import 'package:mobile_petadopt/screens/adoption/adopted_pet_hub_screen.dart';
@@ -384,9 +383,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               label: 'Home',
             ),
             const BottomNavigationBarItem(
-              icon: Icon(Icons.pets_outlined),
-              activeIcon: Icon(Icons.pets_rounded),
-              label: 'Pets',
+              icon: Icon(Icons.auto_awesome_outlined),
+              activeIcon: Icon(Icons.auto_awesome_rounded),
+              label: 'Matches',
             ),
             BottomNavigationBarItem(
               icon: Stack(
@@ -451,7 +450,6 @@ class _HomeTab extends StatefulWidget {
 
 class _HomeTabState extends State<_HomeTab> {
   String _userName = 'Adopter';
-  List<Map<String, dynamic>> _pets = [];
   List<Map<String, dynamic>> _recommendations = [];
   bool _isLoading = true;
   bool _hasUnreadNotifications = false;
@@ -464,7 +462,6 @@ class _HomeTabState extends State<_HomeTab> {
   void initState() {
     super.initState();
     _loadUser();
-    _fetchPets();
     _fetchRecommendations();
     _checkUnreadNotifications();
     NotificationService.setupFirebaseFCM();
@@ -486,18 +483,15 @@ class _HomeTabState extends State<_HomeTab> {
         rawArgs['showExplorationModal'] = false;
       } catch (_) {}
 
-      ExplorationModeDialog.show(
-        context,
-        onRecommendationSelected: () async {
-          final isBanned = await _checkBanNoticeForAction(actionDescription: 'take the pet match');
-          if (isBanned || !mounted) return;
-          await Navigator.pushNamed(context, '/match-quiz');
-          if (mounted) {
-            _fetchRecommendations();
+      if (_recommendations.isEmpty) {
+        _checkBanNoticeForAction(actionDescription: 'take the pet match').then((isBanned) {
+          if (!isBanned && mounted) {
+            Navigator.pushNamed(context, '/match-quiz').then((_) {
+              if (mounted) _fetchRecommendations();
+            });
           }
-        },
-        onManualSelected: () {},
-      );
+        });
+      }
     }
   }
 
@@ -712,12 +706,45 @@ class _HomeTabState extends State<_HomeTab> {
         final status = pet['status']?.toString().toLowerCase();
         return status == null || status == 'available';
       }).toList();
+
+      final mappedRecs = availableRecs.map((raw) {
+        final photoUrl = raw['photo_url'] ??
+            (raw['photo_path'] != null
+                ? ApiService.normalizeImageUrl(raw['photo_path'])
+                : 'https://images.unsplash.com/photo-1543466835-00a7907e9de1');
+
+        return {
+          ...raw,
+          'id': raw['pet_id'] ?? raw['id'],
+          'name': raw['name'] ?? 'Pet no. ${raw['pet_id'] ?? raw['id']}',
+          'breed': raw['breed'] ?? 'Mixed Breed',
+          'age': raw['age'] ?? 'Adult',
+          'gender': raw['gender'] ?? 'male',
+          'type': raw['type'] ?? 'dog',
+          'image': photoUrl,
+          'photo_url': photoUrl,
+          'match_percentage': raw['match_percentage'],
+          'compatibility_score': raw['match_percentage'],
+          'isRecommended': true,
+          'application_source': 'recommendation',
+          'temperaments': raw['temperaments'] ?? raw['temperament'] ?? [],
+          'match_reasons': raw['match_reasons'] ?? [],
+        };
+      }).toList();
+
       if (mounted) {
         setState(() {
-          _recommendations = availableRecs;
+          _recommendations = mappedRecs;
+          _isLoading = false;
         });
       }
-    } catch (_) {}
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   Future<void> _checkUnreadNotifications() async {
@@ -790,31 +817,10 @@ class _HomeTabState extends State<_HomeTab> {
     }
   }
 
-  Future<void> _fetchPets() async {
-    try {
-      final pets = await ApiService.getPets();
-      final availablePets = pets.where((pet) {
-        final status = pet['status']?.toString().toLowerCase();
-        return status == null || status == 'available';
-      }).toList();
-      if (mounted) {
-        setState(() {
-          _pets = availablePets;
-          _isLoading = false;
-        });
-      }
-    } catch (_) {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
-  }
 
   List<Map<String, dynamic>> get _filteredPets {
-    if (_selectedCategory == 'all') return _pets;
-    return _pets.where((pet) {
+    if (_selectedCategory == 'all') return _recommendations;
+    return _recommendations.where((pet) {
       final type = (pet['type'] ?? '').toString().toLowerCase();
       return type == _selectedCategory;
     }).toList();
@@ -1280,7 +1286,6 @@ class _HomeTabState extends State<_HomeTab> {
 
     return RefreshIndicator(
       onRefresh: () async {
-        await _fetchPets();
         await _fetchRecommendations();
       },
       color: AppTheme.primary,
@@ -1418,28 +1423,7 @@ class _HomeTabState extends State<_HomeTab> {
                         itemCount: _recommendations.length,
                         separatorBuilder: (context, index) => const SizedBox(width: 12),
                         itemBuilder: (context, index) {
-                          final isRec = _recommendations.isNotEmpty;
-                          final raw = isRec ? _recommendations[index] : _pets[index];
-
-                          final petData = isRec
-                              ? {
-                                  ...raw,
-                                  'id': raw['pet_id'] ?? raw['id'],
-                                  'name': raw['name'] ?? 'Pet no. ${raw['pet_id']}',
-                                  'breed': raw['breed'] ?? 'Mixed Breed',
-                                  'age': raw['age'] ?? 'Adult',
-                                  'gender': raw['gender'] ?? 'male',
-                                  'type': raw['type'] ?? 'cat',
-                                  'image': raw['photo_url'] ??
-                                      (raw['photo_path'] != null
-                                          ? ApiService.normalizeImageUrl(raw['photo_path'])
-                                          : 'https://images.unsplash.com/photo-1543466835-00a7907e9de1'),
-                                  'match_percentage': raw['match_percentage'],
-                                  'compatibility_score': raw['match_percentage'],
-                                  'isRecommended': true,
-                                  'application_source': 'recommendation',
-                                }
-                              : raw;
+                          final petData = _recommendations[index];
 
                           return PetCard(
                             pet: petData,
@@ -1455,12 +1439,13 @@ class _HomeTabState extends State<_HomeTab> {
                     ),
                   ],
 
-                  // Available Pets Section
+                  // Machine Learning Compatible Pets Section
                   const SizedBox(height: 28),
                   _sectionHeader(
                     context,
-                    'Available for Adoption',
-                    'See All',
+                    'Compatible Companions',
+                    'View All',
+                    isPowered: true,
                     onTap: widget.onSeeAllPressed,
                   ),
                   const SizedBox(height: 14),
@@ -1484,7 +1469,7 @@ class _HomeTabState extends State<_HomeTab> {
                                     ),
                                     const SizedBox(height: 12),
                                     Text(
-                                      'No available pets in this category',
+                                      'No matches found in this category',
                                       style: GoogleFonts.poppins(
                                         fontSize: 15,
                                         fontWeight: FontWeight.w600,
@@ -1493,7 +1478,7 @@ class _HomeTabState extends State<_HomeTab> {
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
-                                      'Newly listed adoptable pets will appear here.',
+                                      'Complete or update your quiz to view tailored matches.',
                                       style: GoogleFonts.poppins(
                                         fontSize: 12,
                                         color: AppTheme.textSecondary,

@@ -50,6 +50,8 @@ class _PetCardState extends State<PetCard> {
   }
 
   Widget _buildVertical() {
+    final matchPct = widget.pet['match_percentage'] as num?;
+
     return GestureDetector(
       onTap: widget.onTap,
       child: Container(
@@ -136,6 +138,37 @@ class _PetCardState extends State<PetCard> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                      if (matchPct != null || widget.pet['isRecommended'] == true) ...[
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF0A6B72), AppTheme.primary],
+                            ),
+                            borderRadius: BorderRadius.circular(8),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.15),
+                                blurRadius: 4,
+                              ),
+                            ],
+                          ),
+                          child: Text(
+                            matchPct != null
+                                ? '${matchPct.toInt()}% Match'
+                                : 'Top Match',
+                            style: GoogleFonts.poppins(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                      ],
                       Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 8,
