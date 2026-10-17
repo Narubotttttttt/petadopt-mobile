@@ -9,12 +9,14 @@ class SubmitHealthCheckinScreen extends StatefulWidget {
   final int applicationId;
   final String petName;
   final String petImage;
+  final bool isDeceasedReport;
 
   const SubmitHealthCheckinScreen({
     super.key,
     required this.applicationId,
     required this.petName,
     required this.petImage,
+    this.isDeceasedReport = false,
   });
 
   @override
@@ -23,15 +25,36 @@ class SubmitHealthCheckinScreen extends StatefulWidget {
 
 class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
   File? _photo;
-  String _healthStatus = 'healthy';
+  late String _healthStatus;
   final TextEditingController _weightCtrl = TextEditingController();
   final TextEditingController _notesCtrl = TextEditingController();
+  final TextEditingController _clinicCtrl = TextEditingController();
+  DateTime? _passingDate;
+  String _deceasedCause = 'Natural Causes / Old Age';
+  String? _notesError;
   bool _isSubmitting = false;
+
+  final List<String> _deceasedCauses = [
+    'Natural Causes / Old Age',
+    'Severe Illness / Medical Condition',
+    'Accident / Trauma',
+    'Humane Euthanasia (Veterinary Advice)',
+    'Sudden Illness / Unknown Cause',
+    'Other (specified in notes)',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _healthStatus = widget.isDeceasedReport ? 'deceased' : 'healthy';
+    _passingDate = DateTime.now();
+  }
 
   @override
   void dispose() {
     _weightCtrl.dispose();
     _notesCtrl.dispose();
+    _clinicCtrl.dispose();
     super.dispose();
   }
 
@@ -43,8 +66,34 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
     }
   }
 
+  Future<void> _pickPassingDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _passingDate ?? DateTime.now(),
+      firstDate: DateTime.now().subtract(const Duration(days: 365)),
+      lastDate: DateTime.now(),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: Color(0xFF475569),
+              onPrimary: Colors.white,
+              onSurface: AppTheme.textPrimary,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null && mounted) {
+      setState(() => _passingDate = picked);
+    }
+  }
+
   Future<void> _handleSubmit() async {
-    if (_photo == null) {
+    final isDeceased = _healthStatus == 'deceased';
+
+    if (!isDeceased && _photo == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -59,26 +108,133 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
       return;
     }
 
-    final weight = double.tryParse(_weightCtrl.text.trim());
+    if (isDeceased) {
+      final reasonText = _notesCtrl.text.trim();
+      if (reasonText.isEmpty) {
+        setState(() {
+          _notesError = 'Please explain what happened to your pet. This reason is required.';
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Please explain what happened to your pet. The explanation field is required.',
+              style: GoogleFonts.poppins(fontSize: 13),
+            ),
+            backgroundColor: AppTheme.errorColor,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+        );
+        return;
+      }
+
+      if (reasonText.length < 10) {
+        setState(() {
+          _notesError = 'Please provide a more detailed explanation of what happened (at least 10 characters).';
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Explanation is too short. Please provide at least 10 characters explaining what happened.',
+              style: GoogleFonts.poppins(fontSize: 13),
+            ),
+            backgroundColor: AppTheme.errorColor,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+        );
+        return;
+      }
+
+      setState(() => _notesError = null);
+
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.favorite_border_rounded, color: Color(0xFF475569), size: 22),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Confirm Life Event Report',
+                  style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 16),
+                ),
+              ),
+            ],
+          ),
+          content: Text(
+            'Are you sure you want to officially report that ${widget.petName} has passed away? This will update CAWS organization records and close recurring monthly check-ins for this pet.',
+            style: GoogleFonts.poppins(fontSize: 13, color: AppTheme.textSecondary, height: 1.4),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text('Cancel', style: GoogleFonts.poppins(fontWeight: FontWeight.w600, color: Colors.grey)),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF475569),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              child: Text(
+                'Confirm & Submit',
+                style: GoogleFonts.poppins(fontWeight: FontWeight.w700, color: Colors.white),
+              ),
+            ),
+          ],
+        ),
+      );
+
+      if (confirmed != true) return;
+    }
+
+    final weight = isDeceased ? null : double.tryParse(_weightCtrl.text.trim());
     setState(() => _isSubmitting = true);
+
+    String formattedNotes;
+    if (isDeceased) {
+      final passDateStr = _passingDate != null
+          ? '${_passingDate!.year}-${_passingDate!.month.toString().padLeft(2, '0')}-${_passingDate!.day.toString().padLeft(2, '0')}'
+          : 'Recent';
+      final clinic = _clinicCtrl.text.trim();
+      formattedNotes = '[PET LIFE EVENT: DECEASED REPORT]\n'
+          'Date of Passing: $passDateStr\n'
+          'Cause Category: $_deceasedCause\n'
+          '${clinic.isNotEmpty ? 'Attending Vet / Clinic: $clinic\n' : ''}'
+          'Reason & Circumstances: ${_notesCtrl.text.trim()}';
+    } else {
+      formattedNotes = _notesCtrl.text.trim();
+    }
 
     try {
       await ApiService.submitHealthUpdate(
         applicationId: widget.applicationId,
-        photo: _photo!,
+        photo: _photo,
         healthStatus: _healthStatus,
         weight: weight,
-        notes: _notesCtrl.text.trim(),
+        notes: formattedNotes,
       );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Monthly health report submitted successfully.',
+              isDeceased
+                  ? 'Deceased notification received. CAWS records have been respectfully updated.'
+                  : 'Monthly health report submitted successfully.',
               style: GoogleFonts.poppins(fontSize: 13),
             ),
-            backgroundColor: AppTheme.successColor,
+            backgroundColor: isDeceased ? const Color(0xFF475569) : AppTheme.successColor,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
@@ -108,11 +264,13 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDeceased = _healthStatus == 'deceased';
+
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
         title: Text(
-          'Monthly Health Check-in',
+          isDeceased ? 'Report Pet Passing' : 'Monthly Health Check-in',
           style: GoogleFonts.poppins(
             fontSize: 18,
             fontWeight: FontWeight.w700,
@@ -132,9 +290,13 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
                   const SizedBox(height: 20),
                   _buildPhotoSection(),
                   const SizedBox(height: 20),
-                  _buildHealthConditionSection(),
-                  const SizedBox(height: 20),
-                  _buildWeightAndNotesSection(),
+                  if (isDeceased)
+                    _buildDeceasedDetailsSection()
+                  else ...[
+                    _buildHealthConditionSection(),
+                    const SizedBox(height: 20),
+                    _buildWeightAndNotesSection(),
+                  ],
                 ],
               ),
             ),
@@ -146,6 +308,8 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
   }
 
   Widget _buildPetHeader() {
+    final isDeceased = _healthStatus == 'deceased';
+
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -184,7 +348,9 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
                   ),
                 ),
                 Text(
-                  'Post-Adoption Monthly Health Report',
+                  isDeceased
+                      ? 'Official Notification of Pet Passing'
+                      : 'Post-Adoption Monthly Health Report',
                   style: GoogleFonts.poppins(
                     fontSize: 12,
                     color: AppTheme.textSecondary,
@@ -199,20 +365,49 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
   }
 
   Widget _buildPhotoSection() {
+    final isDeceased = _healthStatus == 'deceased';
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          '1. Recent Pet Photo',
-          style: GoogleFonts.poppins(
-            fontSize: 14,
-            fontWeight: FontWeight.w700,
-            color: AppTheme.textPrimary,
-          ),
+        Row(
+          children: [
+            Text(
+              isDeceased ? '1. Memorial Photo or Document' : '1. Recent Pet Photo',
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: AppTheme.textPrimary,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+              decoration: BoxDecoration(
+                color: isDeceased ? const Color(0xFFF1F5F9) : const Color(0xFFFEE2E2),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(
+                  color: isDeceased ? const Color(0xFFCBD5E1) : const Color(0xFFF87171),
+                  width: 0.8,
+                ),
+              ),
+              child: Text(
+                isDeceased ? 'OPTIONAL' : 'REQUIRED',
+                style: GoogleFonts.poppins(
+                  fontSize: 9.5,
+                  fontWeight: FontWeight.w800,
+                  color: isDeceased ? const Color(0xFF475569) : const Color(0xFFDC2626),
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 4),
         Text(
-          'Take or upload a clear, current photo of your pet.',
+          isDeceased
+              ? 'Upload a memorial photo of your pet, or an official veterinary document / death certificate if available.'
+              : 'Take or upload a clear, current photo of your pet.',
           style: GoogleFonts.poppins(
             fontSize: 12,
             color: AppTheme.textSecondary,
@@ -226,7 +421,7 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
             decoration: BoxDecoration(
               color: AppTheme.surface,
               borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: AppTheme.primary, width: 1.5),
+              border: Border.all(color: isDeceased ? const Color(0xFF475569) : AppTheme.primary, width: 1.5),
             ),
             child: Column(
               children: [
@@ -261,7 +456,7 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
                               style: GoogleFonts.poppins(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
-                                color: AppTheme.primary,
+                                color: isDeceased ? const Color(0xFF475569) : AppTheme.primary,
                               ),
                             ),
                           ),
@@ -272,7 +467,7 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
                               style: GoogleFonts.poppins(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
-                                color: AppTheme.primary,
+                                color: isDeceased ? const Color(0xFF475569) : AppTheme.primary,
                               ),
                             ),
                           ),
@@ -302,11 +497,15 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
                         Container(
                           width: 48,
                           height: 48,
-                          decoration: const BoxDecoration(
-                            color: AppTheme.primaryLight,
+                          decoration: BoxDecoration(
+                            color: isDeceased ? const Color(0xFFF1F5F9) : AppTheme.primaryLight,
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.camera_alt_outlined, color: AppTheme.primary, size: 24),
+                          child: Icon(
+                            Icons.camera_alt_outlined,
+                            color: isDeceased ? const Color(0xFF475569) : AppTheme.primary,
+                            size: 24,
+                          ),
                         ),
                         const SizedBox(height: 10),
                         Text(
@@ -342,11 +541,15 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
                         Container(
                           width: 48,
                           height: 48,
-                          decoration: const BoxDecoration(
-                            color: AppTheme.primaryLight,
+                          decoration: BoxDecoration(
+                            color: isDeceased ? const Color(0xFFF1F5F9) : AppTheme.primaryLight,
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.photo_library_outlined, color: AppTheme.primary, size: 24),
+                          child: Icon(
+                            Icons.photo_library_outlined,
+                            color: isDeceased ? const Color(0xFF475569) : AppTheme.primary,
+                            size: 24,
+                          ),
                         ),
                         const SizedBox(height: 10),
                         Text(
@@ -386,7 +589,7 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
         ),
         const SizedBox(height: 4),
         Text(
-          'Select the option that best describes your pet current state.',
+          'Select the option that best describes your pet current status.',
           style: GoogleFonts.poppins(
             fontSize: 12,
             color: AppTheme.textSecondary,
@@ -434,7 +637,12 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
     final isSelected = _healthStatus == key;
 
     return GestureDetector(
-      onTap: () => setState(() => _healthStatus = key),
+      onTap: () {
+        setState(() {
+          _healthStatus = key;
+          _notesError = null;
+        });
+      },
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
@@ -486,13 +694,284 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
               groupValue: _healthStatus,
               // ignore: deprecated_member_use
               onChanged: (val) {
-                if (val != null) setState(() => _healthStatus = val);
+                if (val != null) {
+                  setState(() {
+                    _healthStatus = val;
+                    _notesError = null;
+                  });
+                }
               },
               activeColor: accentColor,
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildDeceasedDetailsSection() {
+    final passDateStr = _passingDate != null
+        ? '${_passingDate!.year}-${_passingDate!.month.toString().padLeft(2, '0')}-${_passingDate!.day.toString().padLeft(2, '0')}'
+        : 'Select Date of Passing';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '2. Pet Passing Details',
+          style: GoogleFonts.poppins(
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            color: AppTheme.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Please share the circumstances to help CAWS update their records respectfully.',
+          style: GoogleFonts.poppins(
+            fontSize: 12,
+            color: AppTheme.textSecondary,
+          ),
+        ),
+        const SizedBox(height: 10),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppTheme.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFFCBD5E1)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.info_outline_rounded, color: Color(0xFF475569), size: 20),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Submitting this report will officially notify CAWS shelter staff that ${widget.petName} has passed away and will permanently complete your monthly check-in obligations.',
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          color: const Color(0xFF334155),
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Date of Passing *',
+                style: GoogleFonts.poppins(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 6),
+              InkWell(
+                onTap: _pickPassingDate,
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey.shade300),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.calendar_today_outlined, size: 18, color: Color(0xFF475569)),
+                          const SizedBox(width: 10),
+                          Text(
+                            passDateStr,
+                            style: GoogleFonts.poppins(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: _passingDate != null ? AppTheme.textPrimary : Colors.grey,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Text(
+                        'Change',
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.primary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Primary Cause of Passing *',
+                style: GoogleFonts.poppins(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey.shade300),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    value: _deceasedCause,
+                    isExpanded: true,
+                    icon: const Icon(Icons.arrow_drop_down, color: Color(0xFF475569)),
+                    items: _deceasedCauses.map((cause) {
+                      return DropdownMenuItem<String>(
+                        value: cause,
+                        child: Text(
+                          cause,
+                          style: GoogleFonts.poppins(fontSize: 13, color: AppTheme.textPrimary),
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: (val) {
+                      if (val != null) setState(() => _deceasedCause = val);
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Attending Veterinarian or Clinic (Optional)',
+                style: GoogleFonts.poppins(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 6),
+              TextFormField(
+                controller: _clinicCtrl,
+                decoration: InputDecoration(
+                  hintText: 'e.g. City Vet Animal Clinic or Dr. Reyes',
+                  fillColor: const Color(0xFFF8FAFC),
+                  filled: true,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Color(0xFF475569), width: 1.5),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Reason Why Pet Died (Explanation) *',
+                      style: GoogleFonts.poppins(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.textPrimary,
+                      ),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFEE2E2),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: const Color(0xFFF87171), width: 0.8),
+                    ),
+                    child: Text(
+                      'REQUIRED',
+                      style: GoogleFonts.poppins(
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFFDC2626),
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Please explain in detail what happened to your pet (symptoms, timeline, accident, or veterinary findings) so CAWS can record it respectfully.',
+                style: GoogleFonts.poppins(
+                  fontSize: 11,
+                  color: AppTheme.textSecondary,
+                  height: 1.3,
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextFormField(
+                controller: _notesCtrl,
+                maxLines: 5,
+                onChanged: (val) {
+                  if (_notesError != null) {
+                    setState(() => _notesError = null);
+                  }
+                },
+                decoration: InputDecoration(
+                  hintText: 'Describe what happened in detail (e.g. When did symptoms start? What medical care or veterinary diagnosis was given? What led to their passing?)...',
+                  hintStyle: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade400),
+                  errorText: _notesError,
+                  errorMaxLines: 3,
+                  fillColor: const Color(0xFFF8FAFC),
+                  filled: true,
+                  contentPadding: const EdgeInsets.all(12),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: _notesError != null ? AppTheme.errorColor : Colors.grey.shade300,
+                      width: _notesError != null ? 1.5 : 1.0,
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: _notesError != null ? AppTheme.errorColor : const Color(0xFF475569),
+                      width: 1.5,
+                    ),
+                  ),
+                  errorBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: AppTheme.errorColor, width: 1.5),
+                  ),
+                  focusedErrorBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: AppTheme.errorColor, width: 2.0),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -583,6 +1062,8 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
   }
 
   Widget _buildBottomSubmitBar() {
+    final isDeceased = _healthStatus == 'deceased';
+
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
       decoration: BoxDecoration(
@@ -603,7 +1084,7 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
           child: ElevatedButton(
             onPressed: _isSubmitting ? null : _handleSubmit,
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.primary,
+              backgroundColor: isDeceased ? const Color(0xFF475569) : AppTheme.primary,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
               elevation: 0,
             ),
@@ -614,7 +1095,9 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
                     child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                   )
                 : Text(
-                    'Submit Monthly Health Report',
+                    isDeceased
+                        ? 'Submit Deceased Notification'
+                        : 'Submit Monthly Health Report',
                     style: GoogleFonts.poppins(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,

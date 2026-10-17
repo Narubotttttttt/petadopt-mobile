@@ -122,7 +122,7 @@ class ApiService {
   // Health Tracking & Vaccines
   static Future<Map<String, dynamic>> submitHealthUpdate({
     required int applicationId,
-    required File photo,
+    File? photo,
     required String healthStatus,
     double? weight,
     String? notes,

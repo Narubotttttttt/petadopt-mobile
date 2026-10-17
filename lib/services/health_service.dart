@@ -1,4 +1,4 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'api_config.dart';
@@ -8,7 +8,7 @@ import 'auth_service.dart';
 class HealthService {
   static Future<Map<String, dynamic>> submitHealthUpdate({
     required int applicationId,
-    required File photo,
+    File? photo,
     required String healthStatus,
     double? weight,
     String? notes,
@@ -29,9 +29,11 @@ class HealthService {
     if (notes != null && notes.trim().isNotEmpty) {
       request.fields['notes'] = notes.trim();
     }
-    request.files.add(
-      await http.MultipartFile.fromPath('photo', photo.path),
-    );
+    if (photo != null) {
+      request.files.add(
+        await http.MultipartFile.fromPath('photo', photo.path),
+      );
+    }
 
     final streamedResponse = await request.send().timeout(ApiConfig.uploadTimeout);
     final response = await http.Response.fromStream(streamedResponse);

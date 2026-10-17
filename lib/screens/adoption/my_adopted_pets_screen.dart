@@ -193,15 +193,21 @@ class _MyAdoptedPetsScreenState extends State<MyAdoptedPetsScreen> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFE8F8F1),
+                              color: (pet['pet_status'] == 'deceased' || pet['status'] == 'deceased' || pet['is_deceased'] == true)
+                                  ? const Color(0xFFF1F5F9)
+                                  : const Color(0xFFE8F8F1),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
-                              'Adopted',
+                              (pet['pet_status'] == 'deceased' || pet['status'] == 'deceased' || pet['is_deceased'] == true)
+                                  ? 'In Memory'
+                                  : 'Adopted',
                               style: GoogleFonts.poppins(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w700,
-                                color: AppTheme.successColor,
+                                color: (pet['pet_status'] == 'deceased' || pet['status'] == 'deceased' || pet['is_deceased'] == true)
+                                    ? const Color(0xFF475569)
+                                    : AppTheme.successColor,
                               ),
                             ),
                           ),

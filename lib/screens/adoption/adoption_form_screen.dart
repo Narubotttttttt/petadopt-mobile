@@ -681,9 +681,8 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
 
       await _savePhoneNumberLocally();
 
-      final isFromRec = _isFromRecommendation;
-      final appSource = isFromRec ? 'recommendation' : 'manual_browsing';
-      final compScore = isFromRec ? _compatibilityScore : null;
+      const appSource = 'recommendation';
+      final compScore = _compatibilityScore;
 
       final submitData = <String, dynamic>{
         'pet_id': petId,

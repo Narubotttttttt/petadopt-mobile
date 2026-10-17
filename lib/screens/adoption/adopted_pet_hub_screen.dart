@@ -1,4 +1,4 @@
-﻿import 'package:mobile_petadopt/screens/adoption/pet_medical_card_screen.dart';
+import 'package:mobile_petadopt/screens/adoption/pet_medical_card_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile_petadopt/screens/adoption/submit_health_checkin_screen.dart';
@@ -272,7 +272,7 @@ class _AdoptedPetHubScreenState extends State<AdoptedPetHubScreen> {
     }
   }
 
-  void _openSubmitScreen() {
+  void _openSubmitScreen({bool isDeceasedReport = false}) {
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -280,6 +280,7 @@ class _AdoptedPetHubScreenState extends State<AdoptedPetHubScreen> {
           applicationId: (widget.application['id'] as num?)?.toInt() ?? 0,
           petName: widget.application['petName']?.toString() ?? widget.application['adoptedPetName']?.toString() ?? 'Adopted Pet',
           petImage: widget.application['petImage']?.toString() ?? '',
+          isDeceasedReport: isDeceasedReport,
         ),
       ),
     ).then((result) {
@@ -298,31 +299,41 @@ class _AdoptedPetHubScreenState extends State<AdoptedPetHubScreen> {
     final dateApplied = widget.application['dateApplied'] as String? ?? '';
 
     final latestCheckin = _healthUpdates.isNotEmpty ? _healthUpdates.first : null;
+    final isDeceased = _healthUpdates.any((u) => (u['health_status'] as String?)?.toLowerCase() == 'deceased') ||
+        (widget.application['pet_status'] as String?)?.toLowerCase() == 'deceased' ||
+        (widget.application['status'] as String?)?.toLowerCase() == 'deceased';
+
+    final deceasedCheckin = _healthUpdates.cast<Map<String, dynamic>?>().firstWhere(
+      (u) => (u?['health_status'] as String?)?.toLowerCase() == 'deceased',
+      orElse: () => null,
+    );
 
     DateTime? nextDueDate;
     int? daysLeft;
     bool isOverdue = false;
     int overdueDays = 0;
 
-    if (latestCheckin != null && latestCheckin['check_in_date'] != null) {
-      try {
-        final lastDate = DateTime.parse(latestCheckin['check_in_date'].toString());
-        nextDueDate = lastDate.add(const Duration(days: 30));
-      } catch (_) {}
-    } else if (dateApplied.isNotEmpty) {
-      try {
-        final applied = DateTime.parse(dateApplied);
-        nextDueDate = applied.add(const Duration(days: 30));
-      } catch (_) {}
-    }
+    if (!isDeceased) {
+      if (latestCheckin != null && latestCheckin['check_in_date'] != null) {
+        try {
+          final lastDate = DateTime.parse(latestCheckin['check_in_date'].toString());
+          nextDueDate = lastDate.add(const Duration(days: 30));
+        } catch (_) {}
+      } else if (dateApplied.isNotEmpty) {
+        try {
+          final applied = DateTime.parse(dateApplied);
+          nextDueDate = applied.add(const Duration(days: 30));
+        } catch (_) {}
+      }
 
-    if (nextDueDate != null) {
-      final now = DateTime.now();
-      if (now.isAfter(nextDueDate)) {
-        isOverdue = true;
-        overdueDays = now.difference(nextDueDate).inDays;
-      } else {
-        daysLeft = nextDueDate.difference(now).inDays;
+      if (nextDueDate != null) {
+        final now = DateTime.now();
+        if (now.isAfter(nextDueDate)) {
+          isOverdue = true;
+          overdueDays = now.difference(nextDueDate).inDays;
+        } else {
+          daysLeft = nextDueDate.difference(now).inDays;
+        }
       }
     }
 
@@ -348,18 +359,23 @@ class _AdoptedPetHubScreenState extends State<AdoptedPetHubScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildPetHeroCard(petName, petBreed, petType, petImage, dateApplied),
+                    _buildPetHeroCard(petName, petBreed, petType, petImage, dateApplied, isDeceased: isDeceased),
                     const SizedBox(height: 16),
-                    _buildCheckinStatusCard(
-                      isOverdue: isOverdue,
-                      overdueDays: overdueDays,
-                      daysLeft: daysLeft,
-                      latestCheckin: latestCheckin,
-                    ),
+                    if (isDeceased)
+                      _buildMemorialCard(petName, deceasedCheckin ?? latestCheckin)
+                    else
+                      _buildCheckinStatusCard(
+                        isOverdue: isOverdue,
+                        overdueDays: overdueDays,
+                        daysLeft: daysLeft,
+                        latestCheckin: latestCheckin,
+                      ),
                     const SizedBox(height: 20),
                     _buildHealthJournalSection(),
-                    const SizedBox(height: 20),
-                    _buildVaccineSection(),
+                    if (!isDeceased) ...[
+                      const SizedBox(height: 20),
+                      _buildVaccineSection(),
+                    ],
                   ],
                 ),
               ),
@@ -372,8 +388,9 @@ class _AdoptedPetHubScreenState extends State<AdoptedPetHubScreen> {
     String breed,
     String type,
     String image,
-    String dateApplied,
-  ) {
+    String dateApplied, {
+    bool isDeceased = false,
+  }) {
     return Container(
       decoration: BoxDecoration(
         color: AppTheme.surface,
@@ -435,15 +452,15 @@ class _AdoptedPetHubScreenState extends State<AdoptedPetHubScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFE8F8F1),
+                        color: isDeceased ? const Color(0xFFF1F5F9) : const Color(0xFFE8F8F1),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
-                        'Adopted',
+                        isDeceased ? 'Passed Away' : 'Adopted',
                         style: GoogleFonts.poppins(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
-                          color: AppTheme.successColor,
+                          color: isDeceased ? const Color(0xFF475569) : AppTheme.successColor,
                         ),
                       ),
                     ),
@@ -643,7 +660,7 @@ class _AdoptedPetHubScreenState extends State<AdoptedPetHubScreen> {
           ),
           const SizedBox(height: 14),
           ElevatedButton(
-            onPressed: _openSubmitScreen,
+            onPressed: () => _openSubmitScreen(),
             style: ElevatedButton.styleFrom(
               minimumSize: const Size.fromHeight(48),
               padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 16),
@@ -661,6 +678,134 @@ class _AdoptedPetHubScreenState extends State<AdoptedPetHubScreen> {
               ),
             ),
           ),
+          const SizedBox(height: 10),
+          ElevatedButton.icon(
+            onPressed: () => _openSubmitScreen(isDeceasedReport: true),
+            icon: const Icon(Icons.favorite_border_rounded, size: 16, color: Colors.white),
+            label: Text(
+              'Report Pet Passing / Life Event',
+              style: GoogleFonts.poppins(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+                height: 1.2,
+              ),
+            ),
+            style: ElevatedButton.styleFrom(
+              minimumSize: const Size.fromHeight(46),
+              backgroundColor: const Color(0xFF475569),
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMemorialCard(String petName, Map<String, dynamic>? deceasedUpdate) {
+    final passingDate = deceasedUpdate?['check_in_date']?.toString() ?? '';
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFCBD5E1)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: const BoxDecoration(
+                  color: Color(0xFFF1F5F9),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.favorite_rounded,
+                  color: Color(0xFF64748B),
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'In Loving Memory of $petName',
+                      style: GoogleFonts.poppins(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.textPrimary,
+                      ),
+                    ),
+                    Text(
+                      'CAWS Records Concluded & Archived',
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        color: AppTheme.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  'In Memoriam',
+                  style: GoogleFonts.poppins(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF475569),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          const Divider(height: 1, color: Color(0xFFE2E8F0)),
+          const SizedBox(height: 12),
+          Text(
+            'You have officially informed CAWS that $petName has passed away. All monthly health check-in obligations have been respectfully fulfilled and permanently concluded. CAWS extends its gratitude for the loving home and warmth you provided.',
+            style: GoogleFonts.poppins(
+              fontSize: 12,
+              color: AppTheme.textSecondary,
+              height: 1.5,
+            ),
+          ),
+          if (passingDate.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                const Icon(Icons.event_note_rounded, size: 14, color: Color(0xFF64748B)),
+                const SizedBox(width: 6),
+                Text(
+                  'Notification Date: $passingDate',
+                  style: GoogleFonts.poppins(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF475569),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );
@@ -932,6 +1077,10 @@ class _AdoptedPetHubScreenState extends State<AdoptedPetHubScreen> {
       label = 'In Treatment';
       color = AppTheme.errorColor;
       bg = const Color(0xFFFEEEEE);
+    } else if (status == 'deceased') {
+      label = 'Passed Away';
+      color = const Color(0xFF475569);
+      bg = const Color(0xFFF1F5F9);
     }
 
     return Container(

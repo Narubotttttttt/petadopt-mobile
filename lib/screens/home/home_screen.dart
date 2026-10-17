@@ -108,8 +108,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               children: [
                 Text(
                   isBlacklisted
-                      ? 'Your account has been banned from submitting adoption applications. You can still browse pets in view-only mode.'
-                      : 'Your account is restricted from new adoption applications. You can still browse pets.',
+                      ? 'Your account has been banned from submitting adoption applications. You can still view pet compatibility matches in read-only mode.'
+                      : 'Your account is restricted from new adoption applications. You can still view pet matches.',
                   style: GoogleFonts.poppins(
                     fontSize: 13,
                     color: AppTheme.textSecondary,
@@ -548,7 +548,7 @@ class _HomeTabState extends State<_HomeTab> {
               children: [
                 Text(
                   isBlacklisted
-                      ? 'Your account has been banned from submitting adoption applications and taking match quizzes. You can browse pets in view-only mode.'
+                      ? 'Your account has been banned from submitting adoption applications and taking match quizzes. You can view pet matches in read-only mode.'
                       : 'Your account is restricted from taking recommendation quizzes at this time.',
                   style: GoogleFonts.poppins(
                     fontSize: 13,
@@ -1283,6 +1283,13 @@ class _HomeTabState extends State<_HomeTab> {
   @override
   Widget build(BuildContext context) {
     final displayedPets = _filteredPets;
+    final hasRecommendations = _recommendations.isNotEmpty;
+    final topPet = hasRecommendations ? _recommendations.first : null;
+    final companions = hasRecommendations && topPet != null
+        ? (_selectedCategory == 'all'
+            ? displayedPets.where((p) => (p['id'] ?? p['pet_id']) != (topPet['id'] ?? topPet['pet_id'])).toList()
+            : displayedPets)
+        : displayedPets;
 
     return RefreshIndicator(
       onRefresh: () async {
@@ -1299,11 +1306,15 @@ class _HomeTabState extends State<_HomeTab> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Quick Category Filters
-                  const SizedBox(height: 18),
+                  // 1. Centerpiece Recommendation Hero Card
+                  const SizedBox(height: 16),
+                  _buildRecommendationHero(context),
+
+                  // 2. Quick Category Filters
+                  const SizedBox(height: 20),
                   Row(
                     children: [
-                      _buildCategoryChip('all', 'All Pets', Icons.grid_view_rounded),
+                      _buildCategoryChip('all', 'All Matches', Icons.auto_awesome_rounded),
                       const SizedBox(width: 8),
                       _buildCategoryChip('dog', 'Dogs', Icons.pets_rounded),
                       const SizedBox(width: 8),
@@ -1311,141 +1322,13 @@ class _HomeTabState extends State<_HomeTab> {
                     ],
                   ),
 
-                  // Smart Pet Match Recommendation Banner
-                  Container(
-                    margin: const EdgeInsets.only(top: 18),
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF0A6B72), AppTheme.primary],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppTheme.primary.withValues(alpha: 0.25),
-                          blurRadius: 14,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 50,
-                          height: 50,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(16),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.14),
-                                blurRadius: 8,
-                                offset: const Offset(0, 3),
-                              ),
-                            ],
-                          ),
-                          child: const Center(
-                            child: PetRecommendationIcon(
-                              size: 34,
-                              color: Color(0xFF1E293B),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Smart Pet Recommendation',
-                                style: GoogleFonts.poppins(
-                                  color: Colors.white,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                'Take our 1-minute quiz for personalized pet matches',
-                                style: GoogleFonts.poppins(
-                                  color: Colors.white.withValues(alpha: 0.9),
-                                  fontSize: 11,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        ElevatedButton(
-                          onPressed: () async {
-                            final isBanned = await _checkBanNoticeForAction(actionDescription: 'take the pet match');
-                            if (isBanned || !context.mounted) return;
-                            await Navigator.pushNamed(context, '/match-quiz');
-                            _fetchRecommendations();
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: AppTheme.primaryDark,
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            elevation: 0,
-                          ),
-                          child: Text(
-                            'Match a Pet',
-                            style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w700),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  // Recommendations Carousel (only if adopter has completed the quiz and has recommendations)
-                  if (_recommendations.isNotEmpty) ...[
-                    const SizedBox(height: 24),
-                    _sectionHeader(
-                      context,
-                      'Recommended for You',
-                      'Personalized Match',
-                      isPowered: true,
-                      onTap: () async {
-                        final isBanned = await _checkBanNoticeForAction(actionDescription: 'access personalized recommendations');
-                        if (isBanned || !context.mounted) return;
-                        Navigator.pushNamed(context, '/match-quiz');
-                      },
-                    ),
-                    const SizedBox(height: 14),
-                    SizedBox(
-                      height: 235,
-                      child: ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: _recommendations.length,
-                        separatorBuilder: (context, index) => const SizedBox(width: 12),
-                        itemBuilder: (context, index) {
-                          final petData = _recommendations[index];
-
-                          return PetCard(
-                            pet: petData,
-                            isHorizontal: true,
-                            onTap: () => Navigator.pushNamed(
-                              context,
-                              '/pet-detail',
-                              arguments: petData,
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-
-                  // Machine Learning Compatible Pets Section
-                  const SizedBox(height: 28),
+                  // 3. More Compatible Companions Section
+                  const SizedBox(height: 22),
                   _sectionHeader(
                     context,
-                    'Compatible Companions',
+                    hasRecommendations ? 'More Compatible Companions' : 'Compatible Companions',
                     'View All',
-                    isPowered: true,
+                    isPowered: hasRecommendations,
                     onTap: widget.onSeeAllPressed,
                   ),
                   const SizedBox(height: 14),
@@ -1456,31 +1339,35 @@ class _HomeTabState extends State<_HomeTab> {
                             child: CircularProgressIndicator(color: AppTheme.primary),
                           ),
                         )
-                      : displayedPets.isEmpty
+                      : companions.isEmpty
                           ? Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 32),
+                              padding: const EdgeInsets.symmetric(vertical: 28),
                               child: Center(
                                 child: Column(
                                   children: [
                                     Icon(
                                       Icons.pets_rounded,
-                                      size: 48,
+                                      size: 44,
                                       color: AppTheme.primary.withValues(alpha: 0.3),
                                     ),
-                                    const SizedBox(height: 12),
+                                    const SizedBox(height: 10),
                                     Text(
-                                      'No matches found in this category',
+                                      hasRecommendations
+                                          ? 'No other matches in this category'
+                                          : 'No matches found',
                                       style: GoogleFonts.poppins(
-                                        fontSize: 15,
+                                        fontSize: 14,
                                         fontWeight: FontWeight.w600,
                                         color: AppTheme.textPrimary,
                                       ),
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
-                                      'Complete or update your quiz to view tailored matches.',
+                                      hasRecommendations
+                                          ? 'Your #1 top match is featured above.'
+                                          : 'Complete the quiz above to view tailored matches.',
                                       style: GoogleFonts.poppins(
-                                        fontSize: 12,
+                                        fontSize: 11.5,
                                         color: AppTheme.textSecondary,
                                       ),
                                     ),
@@ -1497,9 +1384,9 @@ class _HomeTabState extends State<_HomeTab> {
                                 mainAxisSpacing: 12,
                                 childAspectRatio: 0.72,
                               ),
-                              itemCount: displayedPets.length,
+                              itemCount: companions.length,
                               itemBuilder: (context, index) {
-                                final pet = displayedPets[index];
+                                final pet = companions[index];
                                 return PetCard(
                                   pet: pet,
                                   onTap: () => Navigator.pushNamed(
@@ -1513,6 +1400,506 @@ class _HomeTabState extends State<_HomeTab> {
                   const SizedBox(height: 32),
                 ],
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRecommendationHero(BuildContext context) {
+    if (_recommendations.isEmpty) {
+      return _buildQuizPromptHeroCard(context);
+    }
+    return _buildTopMatchHeroCard(context, _recommendations.first);
+  }
+
+  Widget _buildQuizPromptHeroCard(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF0A6B72), AppTheme.primary],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.primary.withValues(alpha: 0.28),
+            blurRadius: 18,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.auto_awesome, color: Colors.amberAccent, size: 14),
+                    const SizedBox(width: 5),
+                    Text(
+                      'AI PET MATCHMAKER',
+                      style: GoogleFonts.poppins(
+                        color: Colors.white,
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Find Your Ideal Companion',
+                      style: GoogleFonts.poppins(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        height: 1.25,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Our machine learning engine matches pets to your living space, activity level, and lifestyle.',
+                      style: GoogleFonts.poppins(
+                        color: Colors.white.withValues(alpha: 0.9),
+                        fontSize: 12,
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 14),
+              Container(
+                width: 58,
+                height: 58,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(18),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.12),
+                      blurRadius: 10,
+                    ),
+                  ],
+                ),
+                child: const Center(
+                  child: PetRecommendationIcon(
+                    size: 38,
+                    color: Color(0xFF0A6B72),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () async {
+                final isBanned = await _checkBanNoticeForAction(actionDescription: 'take the pet match');
+                if (isBanned || !context.mounted) return;
+                await Navigator.pushNamed(context, '/match-quiz');
+                _fetchRecommendations();
+              },
+              icon: const Icon(Icons.auto_awesome_rounded, size: 17),
+              label: Text(
+                'Start 1-Minute Match Quiz',
+                style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w700),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: AppTheme.primaryDark,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(vertical: 13),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTopMatchHeroCard(BuildContext context, Map<String, dynamic> pet) {
+    int matchScore = 95;
+    final rawScore = pet['match_percentage'] ?? pet['compatibility_score'];
+    if (rawScore is num) {
+      matchScore = rawScore.round();
+    } else if (rawScore is String) {
+      matchScore = double.tryParse(rawScore)?.round() ?? 95;
+    }
+    matchScore = matchScore.clamp(1, 100);
+
+    final name = pet['name']?.toString() ?? 'Pet';
+    final breed = pet['breed']?.toString() ?? 'Mixed Breed';
+    final age = pet['age']?.toString() ?? 'Adult';
+    final rawGender = (pet['gender'] ?? '').toString();
+    final gender = rawGender.isNotEmpty
+        ? '${rawGender[0].toUpperCase()}${rawGender.substring(1).toLowerCase()}'
+        : 'Unknown';
+
+    String? imageUrl;
+    final rawImg = pet['image']?.toString() ?? pet['photo_url']?.toString();
+    if (rawImg != null && rawImg.trim().isNotEmpty && rawImg != 'null') {
+      imageUrl = ApiService.normalizeImageUrl(rawImg);
+    } else {
+      final rawPath = pet['photo_path']?.toString();
+      if (rawPath != null && rawPath.trim().isNotEmpty && rawPath != 'null') {
+        imageUrl = ApiService.normalizeImageUrl(rawPath);
+      }
+    }
+
+    final reasons = pet['match_reasons'] as List<dynamic>? ?? [];
+    final temperaments = pet['temperaments'] as List<dynamic>? ?? [];
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFCCFBF1), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0F766E).withValues(alpha: 0.12),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header Bar
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              color: const Color(0xFFF0FDFA),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(5),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0F766E),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(Icons.auto_awesome, color: Colors.white, size: 14),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'TOP ML RECOMMENDATION',
+                        style: GoogleFonts.poppins(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          color: const Color(0xFF0F766E),
+                          letterSpacing: 0.6,
+                        ),
+                      ),
+                    ],
+                  ),
+                  GestureDetector(
+                    onTap: () async {
+                      final isBanned = await _checkBanNoticeForAction(actionDescription: 'retake match quiz');
+                      if (isBanned || !context.mounted) return;
+                      await Navigator.pushNamed(context, '/match-quiz');
+                      _fetchRecommendations();
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: const Color(0xFF99F6E4)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.tune_rounded, size: 12, color: Color(0xFF0F766E)),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Retake',
+                            style: GoogleFonts.poppins(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w600,
+                              color: const Color(0xFF0F766E),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Hero Pet Photo with Floating Badge & Details
+            GestureDetector(
+              onTap: () => Navigator.pushNamed(context, '/pet-detail', arguments: pet),
+              child: Stack(
+                children: [
+                  if (imageUrl != null && imageUrl.isNotEmpty)
+                    Image.network(
+                      imageUrl,
+                      height: 190,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, _, _) => _buildHeroPlaceholder(),
+                      loadingBuilder: (_, child, progress) {
+                        if (progress == null) return child;
+                        return Container(
+                          height: 190,
+                          color: const Color(0xFFF1F5F9),
+                          child: const Center(
+                            child: SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(color: AppTheme.primary, strokeWidth: 2),
+                            ),
+                          ),
+                        );
+                      },
+                    )
+                  else
+                    _buildHeroPlaceholder(),
+
+                  // Bottom gradient overlay
+                  Positioned(
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    child: Container(
+                      height: 70,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Colors.black.withValues(alpha: 0.72), Colors.transparent],
+                          begin: Alignment.bottomCenter,
+                          end: Alignment.topCenter,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // Match Percentage Badge
+                  Positioned(
+                    top: 12,
+                    right: 12,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF0F766E), Color(0xFF14B8A6)],
+                        ),
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.25),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.favorite_rounded, color: Colors.white, size: 13),
+                          const SizedBox(width: 5),
+                          Text(
+                            '$matchScore% Match',
+                            style: GoogleFonts.poppins(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  // Pet name, breed & meta
+                  Positioned(
+                    bottom: 12,
+                    left: 16,
+                    right: 16,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          name,
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w800,
+                            shadows: [
+                              Shadow(
+                                color: Colors.black.withValues(alpha: 0.7),
+                                blurRadius: 8,
+                              ),
+                            ],
+                          ),
+                        ),
+                        Text(
+                          '$breed • $age • $gender',
+                          style: GoogleFonts.poppins(
+                            color: Colors.white.withValues(alpha: 0.95),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            shadows: [
+                              Shadow(
+                                color: Colors.black.withValues(alpha: 0.7),
+                                blurRadius: 6,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Match Reasons Section & Action Button
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'WHY THIS COMPANION MATCHES YOU',
+                    style: GoogleFonts.poppins(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.grey.shade600,
+                      letterSpacing: 0.6,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: [
+                      if (reasons.isNotEmpty)
+                        ...reasons.take(3).map((r) => _buildMatchChip(r.toString(), true))
+                      else if (temperaments.isNotEmpty)
+                        ...temperaments.take(3).map((t) => _buildMatchChip(t.toString(), true))
+                      else ...[
+                        _buildMatchChip('Compatible Energy', true),
+                        _buildMatchChip('Lifestyle Match', true),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pushNamed(context, '/pet-detail', arguments: pet),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primary,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(vertical: 13),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'View Compatibility Profile',
+                            style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w700),
+                          ),
+                          const SizedBox(width: 6),
+                          const Icon(Icons.arrow_forward_rounded, size: 16),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeroPlaceholder() {
+    return Container(
+      height: 190,
+      width: double.infinity,
+      color: const Color(0xFFF1F5F9),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.pets_rounded, size: 48, color: Colors.grey.shade400),
+            const SizedBox(height: 6),
+            Text(
+              'Photo arriving soon',
+              style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade500),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMatchChip(String label, bool isPositive) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+      decoration: BoxDecoration(
+        color: isPositive ? const Color(0xFFECFDF5) : const Color(0xFFFFFBEB),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: isPositive ? const Color(0xFFA7F3D0) : const Color(0xFFFDE68A),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            isPositive ? Icons.check_circle_rounded : Icons.info_outline_rounded,
+            size: 12,
+            color: isPositive ? const Color(0xFF059669) : const Color(0xFFD97706),
+          ),
+          const SizedBox(width: 4),
+          Flexible(
+            child: Text(
+              label,
+              style: GoogleFonts.poppins(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: isPositive ? const Color(0xFF065F46) : const Color(0xFF92400E),
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],

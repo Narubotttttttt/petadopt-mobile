@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile_petadopt/screens/adoption/adopted_pet_hub_screen.dart';
 import 'package:mobile_petadopt/services/api_service.dart';
@@ -192,7 +192,7 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
             const SizedBox(height: 4),
             Text(
               isTotalEmpty
-                  ? 'Browse adoptable pets and submit your adoption request.'
+                  ? 'Discover your personalized pet matches and submit an adoption request.'
                   : 'You have no applications under $_selectedFilter status.',
               style: GoogleFonts.poppins(
                 fontSize: 12,
