@@ -41,7 +41,6 @@ class _LoginScreenState extends State<LoginScreen> {
           Navigator.pushReplacementNamed(
             context,
             '/home',
-            arguments: {'showExplorationModal': true},
           );
         }
       } catch (e) {

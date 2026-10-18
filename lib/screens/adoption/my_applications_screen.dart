@@ -532,9 +532,9 @@ class _ApplicationCard extends StatelessWidget {
                           child: Text(
                             isContractUnlocked
                                 ? (signedAt != null && signedAt.isNotEmpty
-                                    ? 'Handover Finalized · Contract Unlocked ($signedAt)'
-                                    : 'Handover Finalized · Contract Unlocked')
-                                : 'Pre-Signed · Pending Venue Verification',
+                                    ? 'Handover Finalized - Contract Unlocked ($signedAt)'
+                                    : 'Handover Finalized - Contract Unlocked')
+                                : 'Pre-Signed - Pending Venue Verification',
                             style: GoogleFonts.poppins(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
@@ -577,7 +577,7 @@ class _ApplicationCard extends StatelessWidget {
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
-                          'Note: This is only a pre-signing step. Please bring the original copies of your uploaded Valid ID and Barangay Certificate on your scheduled date. You can only download the adoption contract after CAWS verifies your identification.',
+                          'Note: This is only a pre-signing step. Please bring the original copies of your uploaded Valid ID and Barangay Certificate on your scheduled date. The Pet Health Hub and adoption contract will unlock after CAWS staff physically verifies your identification and completes the pet handover.',
                           style: GoogleFonts.poppins(
                             fontSize: 10.5,
                             color: const Color(0xFF92400E),
@@ -590,8 +590,33 @@ class _ApplicationCard extends StatelessWidget {
                 ),
               ],
               const SizedBox(height: 8),
-              // Show 'Name Your Pet' if pet has no custom name, otherwise show Health Hub
+              // When not finalized: Pet Health Hub is locked and cannot be clicked
               Builder(builder: (context) {
+                if (!isContractUnlocked) {
+                  return SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: null,
+                      icon: const Icon(Icons.lock_outline_rounded, size: 15, color: Color(0xFF94A3B8)),
+                      label: Text(
+                        'Pet Health Hub (Locked until Handover)',
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF94A3B8),
+                        ),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 9),
+                        side: const BorderSide(color: Color(0xFFE2E8F0)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        disabledForegroundColor: const Color(0xFF94A3B8),
+                      ),
+                    ),
+                  );
+                }
+
+                // Show 'Name Your Pet' if pet has no custom name, otherwise show Health Hub
                 final hasCustomName = adoptedName.isNotEmpty &&
                     adoptedName.toLowerCase() != 'adopted pet' &&
                     adoptedName.toLowerCase() != 'rescued pet';

@@ -32,6 +32,13 @@ class _AdoptedPetHubScreenState extends State<AdoptedPetHubScreen> {
   }
 
   Future<void> _loadHubData() async {
+    final isFinalized = widget.application['is_finalized'] == true ||
+        widget.application['isFinalized'] == true ||
+        widget.application['contract_unlocked'] == true;
+    if (!isFinalized) {
+      if (mounted) setState(() => _isLoading = false);
+      return;
+    }
     final appId = (widget.application['id'] as num?)?.toInt() ?? 0;
     try {
       final updates = await ApiService.getMyHealthUpdates(applicationId: appId);
@@ -335,6 +342,85 @@ class _AdoptedPetHubScreenState extends State<AdoptedPetHubScreen> {
           daysLeft = nextDueDate.difference(now).inDays;
         }
       }
+    }
+
+    final isFinalized = widget.application['is_finalized'] == true ||
+        widget.application['isFinalized'] == true ||
+        widget.application['contract_unlocked'] == true;
+
+    if (!isFinalized) {
+      return Scaffold(
+        backgroundColor: AppTheme.background,
+        appBar: AppBar(
+          title: Text(
+            petName,
+            style: GoogleFonts.poppins(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: AppTheme.textPrimary,
+            ),
+          ),
+        ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFFEF3C7),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.lock_clock_rounded,
+                    size: 56,
+                    color: Color(0xFFD97706),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'Health Hub Locked',
+                  style: GoogleFonts.poppins(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.textPrimary,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  'The Pet Health Hub unlocks once CAWS staff physically verifies your identification documents and completes the pet handover at the scheduled event.',
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    color: AppTheme.textSecondary,
+                    height: 1.5,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton.icon(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.arrow_back_rounded, size: 16, color: Colors.white),
+                  label: Text(
+                    'Back to Applications',
+                    style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primary,
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
     }
 
     return Scaffold(

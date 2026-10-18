@@ -1,5 +1,5 @@
 class ApiConfig {
-  static const String serverIp = '192.168.254.102';
+  static const String serverIp = '192.168.1.46';
   static const String serverPort = '8000';
 
   static const String host = 'http://$serverIp:$serverPort';

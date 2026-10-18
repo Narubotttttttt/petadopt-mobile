@@ -456,8 +456,6 @@ class _HomeTabState extends State<_HomeTab> {
   List<Map<String, dynamic>> _vaccineReminders = [];
   String _selectedCategory = 'all';
 
-  bool _hasCheckedExplorationModal = false;
-
   @override
   void initState() {
     super.initState();
@@ -465,34 +463,6 @@ class _HomeTabState extends State<_HomeTab> {
     _fetchRecommendations();
     _checkUnreadNotifications();
     NotificationService.setupFirebaseFCM();
-
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      await Future.delayed(const Duration(milliseconds: 350));
-      if (!mounted) return;
-      _checkExplorationModal();
-    });
-  }
-
-  void _checkExplorationModal() {
-    if (_hasCheckedExplorationModal || !mounted) return;
-    _hasCheckedExplorationModal = true;
-
-    final rawArgs = ModalRoute.of(context)?.settings.arguments;
-    if (rawArgs is Map && rawArgs['showExplorationModal'] == true) {
-      try {
-        rawArgs['showExplorationModal'] = false;
-      } catch (_) {}
-
-      if (_recommendations.isEmpty) {
-        _checkBanNoticeForAction(actionDescription: 'take the pet match').then((isBanned) {
-          if (!isBanned && mounted) {
-            Navigator.pushNamed(context, '/match-quiz').then((_) {
-              if (mounted) _fetchRecommendations();
-            });
-          }
-        });
-      }
-    }
   }
 
   Future<bool> _checkBanNoticeForAction({String actionDescription = 'take the pet recommendation quiz'}) async {
@@ -1186,6 +1156,32 @@ class _HomeTabState extends State<_HomeTab> {
                               );
                             }
 
+                            final isFinalized = item['is_finalized'] == true ||
+                                item['isFinalized'] == true ||
+                                item['contract_unlocked'] == true;
+
+                            if ((status == 'approved' || status == 'adopted') && isFinalized) {
+                              return _buildMinimalNotificationCard(
+                                icon: Icons.pets_rounded,
+                                iconColor: const Color(0xFF059669),
+                                iconBg: const Color(0xFFECFDF5),
+                                title: '$petName - Adopted',
+                                subtitle: 'Handover complete - Tap to view Health Hub',
+                                badgeText: 'Adopted',
+                                badgeColor: const Color(0xFF059669),
+                                badgeBg: const Color(0xFFD1FAE5),
+                                onTap: () {
+                                  Navigator.pop(modalContext);
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => AdoptedPetHubScreen(application: item),
+                                    ),
+                                  );
+                                },
+                              );
+                            }
+
                             if (status == 'approved') {
                               final eventDate = item['scheduledAt'] ?? 'Sunday Event';
                               return _buildMinimalNotificationCard(
@@ -1193,7 +1189,7 @@ class _HomeTabState extends State<_HomeTab> {
                                 iconColor: const Color(0xFF0D9488),
                                 iconBg: const Color(0xFFF0FDFA),
                                 title: '$petName - Pre-Approved',
-                                subtitle: 'Event: $eventDate · Bring ID & Brgy Cert',
+                                subtitle: 'Event: $eventDate - Bring ID & Brgy Cert',
                                 badgeText: 'Pre-Approved',
                                 badgeColor: const Color(0xFF0D9488),
                                 badgeBg: const Color(0xFFCCFBF1),
@@ -1202,7 +1198,7 @@ class _HomeTabState extends State<_HomeTab> {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (_) => AdoptedPetHubScreen(application: item),
+                                      builder: (_) => const MyApplicationsScreen(),
                                     ),
                                   );
                                 },

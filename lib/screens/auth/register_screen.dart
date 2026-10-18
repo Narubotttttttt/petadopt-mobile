@@ -348,7 +348,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
           context,
           '/home',
           (route) => false,
-          arguments: {'showExplorationModal': true},
         );
       }
     } catch (e) {
