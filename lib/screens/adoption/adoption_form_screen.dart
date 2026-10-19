@@ -9,6 +9,7 @@ import 'package:mobile_petadopt/screens/adoption/my_applications_screen.dart';
 import 'package:mobile_petadopt/services/api_service.dart';
 import 'package:mobile_petadopt/services/phone_auth_service.dart';
 import 'package:mobile_petadopt/theme/app_theme.dart';
+import 'package:mobile_petadopt/widgets/app_confirmation_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AdoptionFormScreen extends StatefulWidget {
@@ -712,163 +713,41 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
 
       if (mounted) {
         Navigator.pop(context);
-        showDialog(
-          context: context,
+        AppConfirmationDialog.show(
+          context,
           barrierDismissible: false,
-          builder: (_) => Dialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-            child: Padding(
-              padding: const EdgeInsets.all(28),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 72,
-                    height: 72,
-                    decoration: const BoxDecoration(
-                      color: AppTheme.primaryLight,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Center(
-                      child: Icon(Icons.pets_rounded, color: AppTheme.primary, size: 34),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Adoption Request Submitted',
-                    style: GoogleFonts.poppins(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: AppTheme.textPrimary,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    'Your adoption request for $_petDisplayName has been submitted! Please wait for approval as CAWS is verifying your documents and information.',
-                    style: GoogleFonts.poppins(
-                      fontSize: 13,
-                      color: AppTheme.textSecondary,
-                      height: 1.5,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 24),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () {
-                            Navigator.pop(context);
-                            Navigator.popUntil(context, ModalRoute.withName('/home'));
-                          },
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            side: const BorderSide(color: AppTheme.primary),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          child: Text(
-                            'Home',
-                            style: GoogleFonts.poppins(
-                              color: AppTheme.primary,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 13,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        flex: 2,
-                        child: ElevatedButton(
-                          onPressed: () {
-                            Navigator.pop(context);
-                            Navigator.popUntil(context, ModalRoute.withName('/home'));
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const MyApplicationsScreen(),
-                              ),
-                            );
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.primary,
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          child: Text(
-                            'My Applications',
-                            style: GoogleFonts.poppins(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 13,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
+          icon: Icons.pets_rounded,
+          iconColor: AppTheme.primary,
+          iconBackgroundColor: AppTheme.primaryLight,
+          title: 'Adoption Request Submitted',
+          message:
+              'Your adoption request for $_petDisplayName has been submitted! Please wait for approval as CAWS is verifying your documents and information.',
+          cancelText: 'Home',
+          confirmText: 'My Applications',
+          onCancel: () {
+            Navigator.popUntil(context, ModalRoute.withName('/home'));
+          },
+          onConfirm: () {
+            Navigator.popUntil(context, ModalRoute.withName('/home'));
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const MyApplicationsScreen()),
+            );
+          },
         );
       }
     } catch (e) {
       if (mounted) {
         Navigator.pop(context);
         final errorMsg = e.toString().replaceFirst('Exception: ', '');
-        showDialog(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-            contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
-            actionsPadding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
-            title: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFEAEA),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Icon(Icons.block_rounded, color: AppTheme.errorColor, size: 22),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'Application Restricted',
-                    style: GoogleFonts.poppins(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: AppTheme.textPrimary,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            content: Text(
-              errorMsg,
-              style: GoogleFonts.poppins(fontSize: 13, color: AppTheme.textSecondary, height: 1.5),
-            ),
-            actions: [
-              ElevatedButton(
-                onPressed: () => Navigator.pop(ctx),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primary,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                child: Text(
-                  'OK',
-                  style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600),
-                ),
-              ),
-            ],
-          ),
+        AppConfirmationDialog.show(
+          context,
+          icon: Icons.block_rounded,
+          iconColor: AppTheme.errorColor,
+          iconBackgroundColor: const Color(0xFFFFEAEA),
+          title: 'Application Restricted',
+          message: errorMsg,
+          confirmText: 'Understood',
         );
       }
     }

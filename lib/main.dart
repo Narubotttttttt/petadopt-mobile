@@ -1,3 +1,4 @@
+import 'package:mobile_petadopt/screens/settings/settings_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:mobile_petadopt/screens/adoption/adoption_form_screen.dart';
 import 'package:mobile_petadopt/screens/auth/login_screen.dart';
@@ -39,6 +40,7 @@ class PetAdoptApp extends StatelessWidget {
         '/profile': (context) => const ProfileScreen(),
         '/edit-address': (context) => const EditAddressScreen(),
         '/match-quiz': (context) => const MatchQuizScreen(),
+        '/settings': (context) => const SettingsScreen(),
       },
       onGenerateRoute: (settings) {
         if (settings.name == '/pet-detail') {

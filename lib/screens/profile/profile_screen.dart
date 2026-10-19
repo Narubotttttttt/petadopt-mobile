@@ -1,3 +1,4 @@
+import 'package:mobile_petadopt/screens/settings/settings_screen.dart';
 import 'package:flutter/gestures.dart';
 import 'dart:ui' as ui;
 import 'dart:convert';
@@ -10,6 +11,7 @@ import 'package:mobile_petadopt/screens/adoption/my_adopted_pets_screen.dart';
 import 'package:mobile_petadopt/screens/adoption/my_applications_screen.dart';
 import 'package:mobile_petadopt/services/api_service.dart';
 import 'package:mobile_petadopt/theme/app_theme.dart';
+import 'package:mobile_petadopt/widgets/app_confirmation_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -233,7 +235,12 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
         ),
         actions: [
           IconButton(
-            onPressed: () {},
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const SettingsScreen()),
+              );
+            },
             icon: const Icon(
               Icons.settings_outlined,
               color: AppTheme.textSecondary,
@@ -1330,6 +1337,11 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
                     _showDigitalSignatureModal(context);
                   } else if (item['label'] == 'Saved Pets') {
                     Navigator.pushNamed(context, '/favorites');
+                  } else if (item['label'] == 'Notifications' || item['label'] == 'Settings') {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                    );
                   }
                 },
                 borderRadius: BorderRadius.circular(16),
@@ -1420,46 +1432,20 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: GestureDetector(
         onTap: () {
-          showDialog(
-            context: context,
-            builder: (_) => AlertDialog(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-              title: Text(
-                'Logout',
-                style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
-              ),
-              content: Text(
-                'Are you sure you want to logout?',
-                style: GoogleFonts.poppins(color: AppTheme.textSecondary),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: Text(
-                    'Cancel',
-                    style: GoogleFonts.poppins(color: AppTheme.textSecondary),
-                  ),
-                ),
-                TextButton(
-                  onPressed: () async {
-                    await ApiService.clearSession();
-                    if (context.mounted) {
-                      Navigator.pop(context);
-                      Navigator.pushReplacementNamed(context, '/login');
-                    }
-                  },
-                  child: Text(
-                    'Logout',
-                    style: GoogleFonts.poppins(
-                      color: AppTheme.errorColor,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+          AppConfirmationDialog.show(
+            context,
+            icon: Icons.logout_rounded,
+            isDestructive: true,
+            title: 'Log Out',
+            message: 'Are you sure you want to log out of your account?',
+            cancelText: 'Cancel',
+            confirmText: 'Logout',
+            onConfirm: () async {
+              await ApiService.clearSession();
+              if (context.mounted) {
+                Navigator.pushReplacementNamed(context, '/login');
+              }
+            },
           );
         },
         child: Container(

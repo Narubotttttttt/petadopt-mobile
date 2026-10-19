@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile_petadopt/screens/adoption/submit_health_checkin_screen.dart';
 import 'package:mobile_petadopt/services/api_service.dart';
 import 'package:mobile_petadopt/theme/app_theme.dart';
+import 'package:mobile_petadopt/widgets/app_confirmation_dialog.dart';
 import 'package:mobile_petadopt/widgets/sign_contract_dialog.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -74,118 +75,54 @@ class _AdoptedPetHubScreenState extends State<AdoptedPetHubScreen> {
   }
 
   void _showSignatureRequiredDialog() {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFEF3C7),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(Icons.draw_rounded, color: Color(0xFFD97706), size: 22),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                'Signature Required',
-                style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 16),
-              ),
-            ),
-          ],
-        ),
-        content: Text(
+    AppConfirmationDialog.show(
+      context,
+      icon: Icons.draw_rounded,
+      iconColor: const Color(0xFFD97706),
+      iconBackgroundColor: const Color(0xFFFEF3C7),
+      title: 'Signature Required',
+      message:
           'Please provide a signature first before downloading the contract. Your digital signature must be attached to the official CAWS adoption agreement.',
-          style: GoogleFonts.poppins(fontSize: 13, color: AppTheme.textSecondary, height: 1.4),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text('Cancel', style: GoogleFonts.poppins(fontWeight: FontWeight.w600, color: Colors.grey)),
-          ),
-          ElevatedButton.icon(
-            onPressed: () {
-              Navigator.pop(ctx);
-              _openSignatureDialog();
-            },
-            icon: const Icon(Icons.edit_document, size: 16, color: Colors.white),
-            label: Text(
-              'Sign Contract Now',
-              style: GoogleFonts.poppins(fontWeight: FontWeight.w700, color: Colors.white),
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFD97706),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-          ),
-        ],
-      ),
+      cancelText: 'Cancel',
+      confirmText: 'Sign Contract Now',
+      confirmColor: const Color(0xFFD97706),
+      onConfirm: () => _openSignatureDialog(),
     );
   }
 
   void _showContractLockedDialog() {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFEF3C7),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(Icons.lock_clock_rounded, color: Color(0xFFD97706), size: 22),
+    AppConfirmationDialog.show(
+      context,
+      icon: Icons.lock_clock_rounded,
+      iconColor: const Color(0xFFD97706),
+      iconBackgroundColor: const Color(0xFFFEF3C7),
+      title: 'Contract Locked',
+      confirmText: 'Understood',
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Adoption agreement pre-signed!',
+            style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textPrimary),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFFBEB),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: const Color(0xFFFDE68A)),
             ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                'Contract Locked',
-                style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 16),
-              ),
+            child: Text(
+              'Note: This is only a pre-signing step. Please bring the original copies of your uploaded Valid ID and Barangay Certificate on your scheduled date. You can only download the adoption contract after CAWS verifies your identification.',
+              style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w500, color: const Color(0xFF92400E), height: 1.4),
             ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Adoption agreement pre-signed!',
-              style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textPrimary),
-            ),
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFFFBEB),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0xFFFDE68A)),
-              ),
-              child: Text(
-                'Note: This is only a pre-signing step. Please bring the original copies of your uploaded Valid ID and Barangay Certificate on your scheduled date. You can only download the adoption contract after CAWS verifies your identification.',
-                style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w500, color: const Color(0xFF92400E), height: 1.4),
-              ),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              'Please bring your original Valid ID and Barangay Certificate to the venue on your scheduled date to finalize your adoption.',
-              style: GoogleFonts.poppins(fontSize: 12, color: AppTheme.textSecondary, height: 1.4),
-            ),
-          ],
-        ),
-        actions: [
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.primary,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            child: Text('Understood', style: GoogleFonts.poppins(fontWeight: FontWeight.w600, color: Colors.white)),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'Please bring your original Valid ID and Barangay Certificate to the venue on your scheduled date to finalize your adoption.',
+            style: GoogleFonts.poppins(fontSize: 12, color: AppTheme.textSecondary, height: 1.4),
           ),
         ],
       ),

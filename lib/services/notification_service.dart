@@ -3,10 +3,14 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:mobile_petadopt/services/api_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
+  final enabled = await NotificationService.areNotificationsEnabled();
+  if (!enabled) return;
+
   await NotificationService.initialize();
   final notification = message.notification;
   if (notification != null) {
@@ -21,6 +25,28 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 class NotificationService {
   static final FlutterLocalNotificationsPlugin _plugin = FlutterLocalNotificationsPlugin();
   static GlobalKey<NavigatorState>? _navKey;
+
+  static Future<bool> areNotificationsEnabled() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getBool('settings_notifications') ?? true;
+    } catch (_) {
+      return true;
+    }
+  }
+
+  static Future<void> disableNotifications() async {
+    try {
+      final messaging = FirebaseMessaging.instance;
+      await messaging.deleteToken();
+    } catch (_) {}
+  }
+
+  static Future<void> enableNotifications() async {
+    try {
+      await setupFirebaseFCM();
+    } catch (_) {}
+  }
 
   static Future<void> initialize({GlobalKey<NavigatorState>? navigatorKey}) async {
     if (navigatorKey != null) _navKey = navigatorKey;
@@ -89,7 +115,10 @@ class NotificationService {
 
       // Keep token synced if it refreshes
       messaging.onTokenRefresh.listen((newToken) async {
-        await ApiService.saveFcmToken(newToken);
+        final enabled = await areNotificationsEnabled();
+        if (enabled) {
+          await ApiService.saveFcmToken(newToken);
+        }
       });
 
       // Handle when user taps notification while app was closed or in background
@@ -97,8 +126,11 @@ class NotificationService {
         _handleNotificationTap();
       });
 
-      // Handle real-time push when app is in foreground -> pop heads-up banner
-      FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      // Handle real-time push when app is in foreground -> pop heads-up banner only if enabled
+      FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
+        final enabled = await areNotificationsEnabled();
+        if (!enabled) return;
+
         final notification = message.notification;
         if (notification != null) {
           showDirectPushNotification(
@@ -116,6 +148,9 @@ class NotificationService {
     required String title,
     required String body,
   }) async {
+    final enabled = await areNotificationsEnabled();
+    if (!enabled) return;
+
     final bigTextStyleInformation = BigTextStyleInformation(
       body,
       htmlFormatBigText: false,
@@ -142,4 +177,3 @@ class NotificationService {
     await _plugin.show(id, title, body, details);
   }
 }
-

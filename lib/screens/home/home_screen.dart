@@ -1,14 +1,15 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile_petadopt/services/api_service.dart';
 import 'package:mobile_petadopt/services/notification_service.dart';
 import 'package:mobile_petadopt/theme/app_theme.dart';
-import 'package:mobile_petadopt/widgets/pet_recommendation_loader.dart';
-import 'package:mobile_petadopt/widgets/pet_card.dart';
+import 'package:mobile_petadopt/widgets/ai_recommendation_hero.dart';
 import 'package:mobile_petadopt/screens/pets/pet_list_screen.dart';
 import 'package:mobile_petadopt/screens/adoption/my_applications_screen.dart';
 import 'package:mobile_petadopt/screens/adoption/adopted_pet_hub_screen.dart';
+import 'package:mobile_petadopt/screens/adoption/submit_health_checkin_screen.dart';
 import 'package:mobile_petadopt/screens/adoption/pet_medical_card_screen.dart';
 import 'package:mobile_petadopt/screens/profile/profile_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -43,9 +44,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     if (state == AppLifecycleState.resumed) {
       _checkAccountBanStatus();
       _checkUnreadApplications();
+      _homeTabKey.currentState?.reload();
     }
   }
-
 
   Future<void> _checkAccountBanStatus() async {
     try {
@@ -73,31 +74,33 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           barrierDismissible: true,
           builder: (ctx) => AlertDialog(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-            contentPadding: const EdgeInsets.fromLTRB(24, 22, 24, 12),
+            contentPadding: const EdgeInsets.fromLTRB(24, 26, 24, 12),
             actionsPadding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
-            title: Row(
+            title: Column(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(8),
+                  width: 60,
+                  height: 60,
                   decoration: BoxDecoration(
                     color: isBlacklisted ? const Color(0xFFFFEAEA) : const Color(0xFFFFFBEB),
-                    borderRadius: BorderRadius.circular(12),
+                    shape: BoxShape.circle,
                   ),
-                  child: Icon(
-                    Icons.block_rounded,
-                    color: isBlacklisted ? AppTheme.errorColor : AppTheme.warningColor,
-                    size: 22,
+                  child: Center(
+                    child: Icon(
+                      Icons.block_rounded,
+                      color: isBlacklisted ? AppTheme.errorColor : AppTheme.warningColor,
+                      size: 30,
+                    ),
                   ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    isBlacklisted ? 'Account Banned' : 'Account Restricted',
-                    style: GoogleFonts.poppins(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: AppTheme.textPrimary,
-                    ),
+                const SizedBox(height: 14),
+                Text(
+                  isBlacklisted ? 'Account Banned' : 'Account Restricted',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.poppins(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.textPrimary,
                   ),
                 ),
               ],
@@ -106,17 +109,20 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  isBlacklisted
-                      ? 'Your account has been banned from submitting adoption applications. You can still view pet compatibility matches in read-only mode.'
-                      : 'Your account is restricted from new adoption applications. You can still view pet matches.',
-                  style: GoogleFonts.poppins(
-                    fontSize: 13,
-                    color: AppTheme.textSecondary,
-                    height: 1.4,
+                Center(
+                  child: Text(
+                    isBlacklisted
+                        ? 'Your account has been banned from submitting adoption applications. You can still view pet compatibility matches in read-only mode.'
+                        : 'Your account is restricted from new adoption applications. You can still view pet matches.',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      color: AppTheme.textSecondary,
+                      height: 1.4,
+                    ),
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 14),
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(12),
@@ -233,7 +239,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               Row(
                 children: [
                   Expanded(
-                    child: OutlinedButton(
+                    child: ElevatedButton(
                       onPressed: () async {
                         Navigator.pop(ctx);
                         await ApiService.clearSession();
@@ -241,39 +247,44 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                           Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil('/login', (route) => false);
                         }
                       },
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        side: const BorderSide(color: AppTheme.cardBorder),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFF1F5F9),
+                        foregroundColor: const Color(0xFF475569),
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                       ),
                       child: Text(
                         'Log Out',
+                        textAlign: TextAlign.center,
                         style: GoogleFonts.poppins(
-                          color: AppTheme.textSecondary,
+                          color: const Color(0xFF475569),
                           fontWeight: FontWeight.w600,
-                          fontSize: 13,
+                          fontSize: 14,
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 12),
                   Expanded(
-                    flex: 2,
                     child: ElevatedButton(
                       onPressed: () => Navigator.pop(ctx),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primary,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
                         elevation: 0,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                       ),
                       child: Text(
-                        'Continue to Home',
+                        'Continue',
+                        textAlign: TextAlign.center,
                         style: GoogleFonts.poppins(
                           color: Colors.white,
                           fontWeight: FontWeight.w700,
-                          fontSize: 13,
+                          fontSize: 14,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ),
@@ -335,9 +346,33 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     } catch (_) {}
   }
 
+  String _matchesLifestyle = 'none';
+  String _matchesSearch = '';
+  final GlobalKey<_HomeTabState> _homeTabKey = GlobalKey<_HomeTabState>();
+
   List<Widget> get _tabs => [
-    _HomeTab(onSeeAllPressed: () => setState(() => _selectedIndex = 1)),
-    const PetListScreen(),
+    _HomeTab(
+      key: _homeTabKey,
+      onSeeAllPressed: () => setState(() => _selectedIndex = 1),
+      onViewApplicationsPressed: () => setState(() => _selectedIndex = 2),
+      onViewProfilePressed: () => setState(() => _selectedIndex = 3),
+      onLifestyleFilter: (lifestyle) {
+        setState(() {
+          _matchesLifestyle = lifestyle;
+          _selectedIndex = 1;
+        });
+      },
+      onSearchSubmitted: (query) {
+        setState(() {
+          _matchesSearch = query;
+          _selectedIndex = 1;
+        });
+      },
+    ),
+    PetListScreen(
+      initialLifestyle: _matchesLifestyle,
+      initialSearch: _matchesSearch,
+    ),
     const MyApplicationsScreen(),
     const ProfileScreen(),
   ];
@@ -364,10 +399,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         bottomNavigationBar: BottomNavigationBar(
           currentIndex: _selectedIndex,
           onTap: (index) {
+            final wasNotHome = _selectedIndex != 0;
             setState(() {
               _selectedIndex = index;
             });
-            if (index == 2) {
+            if (index == 0 && wasNotHome) {
+              _homeTabKey.currentState?.reload();
+            } else if (index == 2) {
               _markApplicationsAsViewed();
             } else if (index == 3) {
               ApiService.getProfile();
@@ -442,7 +480,19 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
 class _HomeTab extends StatefulWidget {
   final VoidCallback? onSeeAllPressed;
-  const _HomeTab({this.onSeeAllPressed});
+  final VoidCallback? onViewApplicationsPressed;
+  final VoidCallback? onViewProfilePressed;
+  final ValueChanged<String>? onLifestyleFilter;
+  final ValueChanged<String>? onSearchSubmitted;
+
+  const _HomeTab({
+    super.key,
+    this.onSeeAllPressed,
+    this.onViewApplicationsPressed,
+    this.onViewProfilePressed,
+    this.onLifestyleFilter,
+    this.onSearchSubmitted,
+  });
 
   @override
   State<_HomeTab> createState() => _HomeTabState();
@@ -450,19 +500,252 @@ class _HomeTab extends StatefulWidget {
 
 class _HomeTabState extends State<_HomeTab> {
   String _userName = 'Adopter';
-  List<Map<String, dynamic>> _recommendations = [];
+  Map<String, dynamic>? _userProfile;
+  Map<String, dynamic>? _preferences;
+  List<Map<String, dynamic>> _applications = [];
+  List<Map<String, dynamic>> _vaccineReminders = [];
   bool _isLoading = true;
   bool _hasUnreadNotifications = false;
-  List<Map<String, dynamic>> _vaccineReminders = [];
-  String _selectedCategory = 'all';
+  String _activeFilter = 'all';
+
+  void reload() {
+    _loadDashboardData();
+  }
 
   @override
   void initState() {
     super.initState();
-    _loadUser();
-    _fetchRecommendations();
-    _checkUnreadNotifications();
+    _loadCachedUser();
+    _loadDashboardData();
     NotificationService.setupFirebaseFCM();
+  }
+
+  String _formatGreetingName(String name) {
+    final trimmed = name.trim();
+    if (trimmed.isEmpty || trimmed.toLowerCase() == 'adopter') return 'Adopter';
+    final parts = trimmed.split(RegExp(r'\s+'));
+    final first = parts.first;
+    if (first.isEmpty) return 'Adopter';
+    return '${first[0].toUpperCase()}${first.substring(1)}';
+  }
+
+  Future<void> _loadCachedUser() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+
+      // 1. Try ApiService.getUser()
+      final cached = await ApiService.getUser();
+      if (cached != null) {
+        final name = _extractNameFromMap(cached);
+        if (name != null && name.isNotEmpty && mounted) {
+          setState(() {
+            _userName = _formatGreetingName(name);
+            _userProfile = cached;
+          });
+          return;
+        }
+      }
+
+      // 2. Direct string JSON keys in SharedPreferences
+      for (final key in ['auth_user', 'user', 'user_profile', 'profile']) {
+        final str = prefs.getString(key);
+        if (str != null && str.isNotEmpty) {
+          try {
+            final decoded = jsonDecode(str);
+            if (decoded is Map<String, dynamic>) {
+              final name = _extractNameFromMap(decoded);
+              if (name != null && name.isNotEmpty && mounted) {
+                setState(() {
+                  _userName = _formatGreetingName(name);
+                  _userProfile = decoded;
+                });
+                return;
+              }
+            }
+          } catch (_) {}
+        }
+      }
+
+      // 3. Direct plaintext name keys in SharedPreferences
+      for (final key in ['user_name', 'name', 'adopter_name', 'full_name', 'first_name']) {
+        final val = prefs.getString(key)?.trim();
+        if (val != null && val.isNotEmpty && val.toLowerCase() != 'null' && val.toLowerCase() != 'adopter') {
+          if (mounted) {
+            setState(() => _userName = _formatGreetingName(val));
+            return;
+          }
+        }
+      }
+    } catch (_) {}
+  }
+
+  String? _extractNameFromMap(Map<String, dynamic>? data) {
+    if (data == null) return null;
+
+    // Check direct properties
+    for (final key in ['name', 'full_name', 'first_name', 'adopter_name', 'applicant_name']) {
+      final val = data[key]?.toString().trim();
+      if (val != null && val.isNotEmpty && val.toLowerCase() != 'null' && val.toLowerCase() != 'adopter') {
+        return val;
+      }
+    }
+
+    // Check nested objects: 'user', 'data', 'profile', 'adopter'
+    for (final parentKey in ['user', 'data', 'profile', 'adopter']) {
+      if (data[parentKey] is Map) {
+        final nested = data[parentKey] as Map;
+        for (final key in ['name', 'full_name', 'first_name', 'adopter_name', 'applicant_name']) {
+          final val = nested[key]?.toString().trim();
+          if (val != null && val.isNotEmpty && val.toLowerCase() != 'null' && val.toLowerCase() != 'adopter') {
+            return val;
+          }
+        }
+      }
+    }
+
+    // Check username
+    final username = data['username']?.toString().trim();
+    if (username != null && username.isNotEmpty && username.toLowerCase() != 'null' && username.toLowerCase() != 'adopter') {
+      return username;
+    }
+
+    // Check email prefix
+    final email = data['email']?.toString().trim();
+    if (email != null && email.contains('@')) {
+      final local = email.split('@').first.trim();
+      if (local.isNotEmpty && local.toLowerCase() != 'adopter') {
+        return '${local[0].toUpperCase()}${local.substring(1)}';
+      }
+    }
+
+    // If only 'name' exists even if it matches 'Adopter'
+    final rawName = data['name']?.toString().trim();
+    if (rawName != null && rawName.isNotEmpty && rawName.toLowerCase() != 'null') {
+      return rawName;
+    }
+
+    return null;
+  }
+
+  Future<void> _loadDashboardData() async {
+    // 1. Immediately ensure cached user is applied
+    await _loadCachedUser();
+
+    // 2. Fetch fresh profile independently
+    try {
+      final profile = await ApiService.getProfile();
+      if (profile != null) {
+        final name = _extractNameFromMap(profile);
+        if (mounted) {
+          setState(() {
+            _userProfile = profile;
+            if (name != null && name.isNotEmpty && name.toLowerCase() != 'adopter') {
+              _userName = _formatGreetingName(name);
+            }
+          });
+        }
+      }
+    } catch (_) {}
+
+    // 3. Fetch saved preferences independently
+    try {
+      final prefs = await ApiService.getSavedPreferences();
+      if (prefs != null && mounted) {
+        setState(() => _preferences = prefs);
+      }
+    } catch (_) {}
+
+    // 4. Fetch applications independently (and extract applicant name if still fallback!)
+    List<Map<String, dynamic>> apps = [];
+    try {
+      apps = await ApiService.getMyApplications();
+      if (mounted) {
+        setState(() {
+          _applications = apps;
+          if (_userName.toLowerCase() == 'adopter' && apps.isNotEmpty) {
+            for (final app in apps) {
+              final applicantName = app['adopter_name'] ??
+                  app['applicant_name'] ??
+                  app['adopterName'] ??
+                  app['applicantName'] ??
+                  app['user']?['name'] ??
+                  app['user_name'];
+              if (applicantName != null && applicantName.toString().trim().isNotEmpty) {
+                final extracted = applicantName.toString().trim();
+                if (extracted.toLowerCase() != 'adopter' && extracted.toLowerCase() != 'null') {
+                  _userName = _formatGreetingName(extracted);
+                  break;
+                }
+              }
+            }
+          }
+        });
+      }
+    } catch (_) {}
+
+    // 5. Fetch vaccine reminders independently
+    List<Map<String, dynamic>> reminders = [];
+    try {
+      reminders = await ApiService.getVaccineReminders();
+      if (mounted) {
+        setState(() => _vaccineReminders = reminders);
+      }
+    } catch (_) {}
+
+    if (mounted) {
+      setState(() => _isLoading = false);
+      _checkUnreadNotificationsFromData(apps, reminders);
+    }
+  }
+
+  Future<void> _checkUnreadNotificationsFromData(
+    List<Map<String, dynamic>> apps,
+    List<Map<String, dynamic>> reminders,
+  ) async {
+    try {
+      final user = await ApiService.getUser();
+      if (user == null) return;
+      final userId = user['id'];
+      final prefs = await SharedPreferences.getInstance();
+      final lastReadStr = prefs.getString('user_${userId}_last_read_notif_time');
+
+      final hasUpcomingReminders = reminders.any((r) {
+        final days = r['days_until_due'] as int? ?? 999;
+        return days <= 30;
+      });
+
+      if (hasUpcomingReminders) {
+        if (mounted) setState(() => _hasUnreadNotifications = true);
+        return;
+      }
+
+      if (apps.isEmpty) {
+        if (mounted) setState(() => _hasUnreadNotifications = false);
+        return;
+      }
+
+      if (lastReadStr == null) {
+        if (mounted) setState(() => _hasUnreadNotifications = true);
+        return;
+      }
+
+      final lastReadTime = DateTime.parse(lastReadStr);
+      bool hasNewUpdate = false;
+      for (final app in apps) {
+        final updatedAtStr = app['updated_at']?.toString() ?? app['created_at']?.toString();
+        if (updatedAtStr != null) {
+          final appTime = DateTime.tryParse(updatedAtStr);
+          if (appTime != null && appTime.isAfter(lastReadTime)) {
+            hasNewUpdate = true;
+            break;
+          }
+        }
+      }
+
+      if (mounted) {
+        setState(() => _hasUnreadNotifications = hasNewUpdate);
+      }
+    } catch (_) {}
   }
 
   Future<bool> _checkBanNoticeForAction({String actionDescription = 'take the pet recommendation quiz'}) async {
@@ -483,31 +766,33 @@ class _HomeTabState extends State<_HomeTab> {
           barrierDismissible: true,
           builder: (ctx) => AlertDialog(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-            contentPadding: const EdgeInsets.fromLTRB(24, 22, 24, 12),
+            contentPadding: const EdgeInsets.fromLTRB(24, 26, 24, 12),
             actionsPadding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
-            title: Row(
+            title: Column(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(8),
+                  width: 60,
+                  height: 60,
                   decoration: BoxDecoration(
                     color: isBlacklisted ? const Color(0xFFFFEAEA) : const Color(0xFFFFFBEB),
-                    borderRadius: BorderRadius.circular(12),
+                    shape: BoxShape.circle,
                   ),
-                  child: Icon(
-                    Icons.block_rounded,
-                    color: isBlacklisted ? AppTheme.errorColor : AppTheme.warningColor,
-                    size: 22,
+                  child: Center(
+                    child: Icon(
+                      Icons.block_rounded,
+                      color: isBlacklisted ? AppTheme.errorColor : AppTheme.warningColor,
+                      size: 30,
+                    ),
                   ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    isBlacklisted ? 'Account Banned' : 'Account Restricted',
-                    style: GoogleFonts.poppins(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: AppTheme.textPrimary,
-                    ),
+                const SizedBox(height: 14),
+                Text(
+                  isBlacklisted ? 'Account Banned' : 'Account Restricted',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.poppins(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.textPrimary,
                   ),
                 ),
               ],
@@ -516,17 +801,20 @@ class _HomeTabState extends State<_HomeTab> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  isBlacklisted
-                      ? 'Your account has been banned from submitting adoption applications and taking match quizzes. You can view pet matches in read-only mode.'
-                      : 'Your account is restricted from taking recommendation quizzes at this time.',
-                  style: GoogleFonts.poppins(
-                    fontSize: 13,
-                    color: AppTheme.textSecondary,
-                    height: 1.4,
+                Center(
+                  child: Text(
+                    isBlacklisted
+                        ? 'Your account has been banned from submitting adoption applications and taking match quizzes. You can view pet matches in read-only mode.'
+                        : 'Your account is restricted from taking recommendation quizzes at this time.',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      color: AppTheme.textSecondary,
+                      height: 1.4,
+                    ),
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 14),
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(12),
@@ -669,131 +957,290 @@ class _HomeTabState extends State<_HomeTab> {
     return false;
   }
 
-  Future<void> _fetchRecommendations() async {
-    try {
-      final recs = await ApiService.getRecommendations();
-      final availableRecs = recs.where((pet) {
-        final status = pet['status']?.toString().toLowerCase();
-        return status == null || status == 'available';
-      }).toList();
-
-      final mappedRecs = availableRecs.map((raw) {
-        final photoUrl = raw['photo_url'] ??
-            (raw['photo_path'] != null
-                ? ApiService.normalizeImageUrl(raw['photo_path'])
-                : 'https://images.unsplash.com/photo-1543466835-00a7907e9de1');
-
-        return {
-          ...raw,
-          'id': raw['pet_id'] ?? raw['id'],
-          'name': raw['name'] ?? 'Pet no. ${raw['pet_id'] ?? raw['id']}',
-          'breed': raw['breed'] ?? 'Mixed Breed',
-          'age': raw['age'] ?? 'Adult',
-          'gender': raw['gender'] ?? 'male',
-          'type': raw['type'] ?? 'dog',
-          'image': photoUrl,
-          'photo_url': photoUrl,
-          'match_percentage': raw['match_percentage'],
-          'compatibility_score': raw['match_percentage'],
-          'isRecommended': true,
-          'application_source': 'recommendation',
-          'temperaments': raw['temperaments'] ?? raw['temperament'] ?? [],
-          'match_reasons': raw['match_reasons'] ?? [],
-        };
-      }).toList();
-
-      if (mounted) {
-        setState(() {
-          _recommendations = mappedRecs;
-          _isLoading = false;
-        });
-      }
-    } catch (_) {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
-  }
-
-  Future<void> _checkUnreadNotifications() async {
-    try {
-      final user = await ApiService.getUser();
-      if (user == null) return;
-      final userId = user['id'];
-      final prefs = await SharedPreferences.getInstance();
-      final lastReadStr = prefs.getString('user_${userId}_last_read_notif_time');
-
-      final apps = await ApiService.getMyApplications();
-      final reminders = await ApiService.getVaccineReminders();
-
-      if (mounted) {
-        setState(() {
-          _vaccineReminders = reminders;
-        });
-      }
-
-      final hasUpcomingReminders = reminders.any((r) {
-        final days = r['days_until_due'] as int? ?? 999;
-        return days <= 30;
-      });
-
-      if (hasUpcomingReminders) {
-        if (mounted) setState(() => _hasUnreadNotifications = true);
-        return;
-      }
-
-      if (apps.isEmpty) {
-        if (mounted) setState(() => _hasUnreadNotifications = false);
-        return;
-      }
-
-      if (lastReadStr == null) {
-        if (mounted) setState(() => _hasUnreadNotifications = true);
-        return;
-      }
-
-      final lastReadTime = DateTime.parse(lastReadStr);
-      bool hasNewUpdate = false;
-      for (final app in apps) {
-        final updatedAtStr = app['updated_at']?.toString() ?? app['created_at']?.toString();
-        if (updatedAtStr != null) {
-          final appTime = DateTime.tryParse(updatedAtStr);
-          if (appTime != null && appTime.isAfter(lastReadTime)) {
-            hasNewUpdate = true;
-            break;
-          }
-        }
-      }
-
-      if (mounted) {
-        setState(() {
-          _hasUnreadNotifications = hasNewUpdate;
-        });
-      }
-    } catch (_) {}
-  }
-
-  Future<void> _loadUser() async {
-    final user = await ApiService.getUser();
-    if (mounted && user != null && user['name'] != null) {
-      final rawName = (user['name'] as String).trim();
-      final firstName = rawName.isNotEmpty ? rawName.split(RegExp(r'\s+')).first : 'Adopter';
-      setState(() {
-        _userName = firstName;
-      });
-      NotificationService.setupFirebaseFCM();
-    }
-  }
-
-
-  List<Map<String, dynamic>> get _filteredPets {
-    if (_selectedCategory == 'all') return _recommendations;
-    return _recommendations.where((pet) {
-      final type = (pet['type'] ?? '').toString().toLowerCase();
-      return type == _selectedCategory;
+  List<Map<String, dynamic>> get _adoptedPets {
+    return _applications.where((app) {
+      final status = (app['status'] as String? ?? '').toLowerCase();
+      final isFinalized = app['is_finalized'] == true ||
+          app['isFinalized'] == true ||
+          app['contract_unlocked'] == true;
+      return (status == 'approved' || status == 'adopted') && isFinalized;
     }).toList();
+  }
+
+  List<Map<String, dynamic>> get _activeApplications {
+    return _applications.where((app) {
+      final status = (app['status'] as String? ?? '').toLowerCase();
+      final isFinalized = app['is_finalized'] == true ||
+          app['isFinalized'] == true ||
+          app['contract_unlocked'] == true;
+      final isAdoptedByOther = app['isAdoptedByOther'] == true;
+      if (isAdoptedByOther || status == 'rejected') return false;
+      if ((status == 'approved' || status == 'adopted') && isFinalized) return false;
+      return status == 'pending' || status == 'under_review' || status == 'approved';
+    }).toList();
+  }
+
+  bool get _hasCompletedAssessment => _preferences != null && _preferences!.isNotEmpty;
+
+  // Direct Navigation Handlers for the 4 Dashboard Modules
+  void _openAiMatchmaker() {
+    widget.onSeeAllPressed?.call();
+  }
+
+  void _openMonthlyReports() {
+    if (_adoptedPets.isEmpty) {
+      _showNoAdoptedPetDialog(
+        title: 'Monthly Welfare Reports',
+        message: 'Monthly health check-in reports unlock once an adoption is finalized.\n\nCAWS shelter policies require adopters to submit monthly photos, health updates, and weight logs to ensure continuous animal welfare.',
+      );
+      return;
+    }
+
+    if (_adoptedPets.length == 1) {
+      final pet = _adoptedPets.first;
+      final petName = pet['adoptedPetName']?.toString() ?? pet['proposedName']?.toString() ?? pet['petName']?.toString() ?? 'Adopted Pet';
+      final petImage = pet['petImage']?.toString() ?? '';
+      final appId = (pet['id'] as num?)?.toInt() ?? 0;
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => SubmitHealthCheckinScreen(
+            applicationId: appId,
+            petName: petName,
+            petImage: petImage,
+          ),
+        ),
+      ).then((_) => _loadDashboardData());
+    } else {
+      _showPetSelectionSheet(
+        title: 'Select Companion for Monthly Report',
+        onPetSelected: (pet) {
+          final petName = pet['adoptedPetName']?.toString() ?? pet['proposedName']?.toString() ?? pet['petName']?.toString() ?? 'Adopted Pet';
+          final petImage = pet['petImage']?.toString() ?? '';
+          final appId = (pet['id'] as num?)?.toInt() ?? 0;
+
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => SubmitHealthCheckinScreen(
+                applicationId: appId,
+                petName: petName,
+                petImage: petImage,
+              ),
+            ),
+          ).then((_) => _loadDashboardData());
+        },
+      );
+    }
+  }
+
+  void _openPetHub() {
+    if (_adoptedPets.isEmpty) {
+      _showNoAdoptedPetDialog(
+        title: 'Pet Care Hub',
+        message: 'Your Pet Care Hub stores comprehensive medical records, routine care guidelines, and shelter contracts once you officially adopt a companion from CAWS.',
+      );
+      return;
+    }
+
+    if (_adoptedPets.length == 1) {
+      final pet = _adoptedPets.first;
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => AdoptedPetHubScreen(application: pet),
+        ),
+      ).then((_) => _loadDashboardData());
+    } else {
+      _showPetSelectionSheet(
+        title: 'Select Adopted Companion',
+        onPetSelected: (pet) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => AdoptedPetHubScreen(application: pet),
+            ),
+          ).then((_) => _loadDashboardData());
+        },
+      );
+    }
+  }
+
+  void _openApplications() {
+    if (widget.onViewApplicationsPressed != null) {
+      widget.onViewApplicationsPressed!();
+    } else {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const MyApplicationsScreen()),
+      );
+    }
+  }
+
+  void _showNoAdoptedPetDialog({required String title, required String message}) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppTheme.primary.withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.info_outline_rounded, color: AppTheme.primary, size: 22),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                title,
+                style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w700),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          message,
+          style: GoogleFonts.poppins(fontSize: 13, color: AppTheme.textSecondary, height: 1.45),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(
+              'Understood',
+              style: GoogleFonts.poppins(fontWeight: FontWeight.w600, color: AppTheme.textSecondary),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              widget.onSeeAllPressed?.call();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primary,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            child: Text(
+              'Find a Match',
+              style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w700),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showPetSelectionSheet({
+    required String title,
+    required void Function(Map<String, dynamic> pet) onPetSelected,
+  }) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 14),
+              ..._adoptedPets.map((pet) {
+                final name = pet['adoptedPetName']?.toString() ?? pet['proposedName']?.toString() ?? pet['petName']?.toString() ?? 'Pet';
+                final code = pet['shelterPetCode']?.toString() ?? 'Rescue';
+                return ListTile(
+                  leading: const CircleAvatar(
+                    backgroundColor: Color(0xFFE0F2FE),
+                    child: Icon(Icons.pets, color: AppTheme.primary),
+                  ),
+                  title: Text(name, style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+                  subtitle: Text(code, style: GoogleFonts.poppins(fontSize: 12)),
+                  trailing: const Icon(Icons.chevron_right_rounded),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    onPetSelected(pet);
+                  },
+                );
+              }),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _formatLivingEnvironment(String? env) {
+    if (env == null || env.isEmpty) return 'Not Configured';
+    switch (env.toLowerCase()) {
+      case 'apartment':
+        return 'Apartment / Condo';
+      case 'house_small_yard':
+      case 'house_yard':
+        return 'House w/ Yard';
+      case 'house_large_yard':
+        return 'House w/ Large Yard';
+      case 'farm_rural':
+        return 'Rural / Acreage';
+      default:
+        return env.replaceAll('_', ' ').split(' ').map((w) => w.isNotEmpty ? '${w[0].toUpperCase()}${w.substring(1)}' : '').join(' ');
+    }
+  }
+
+  String _formatHoursAlone(String? hours) {
+    if (hours == null || hours.isEmpty) return 'Not Configured';
+    switch (hours.toLowerCase()) {
+      case 'under_2':
+      case '<2':
+        return '< 2 hrs / day';
+      case '2_4':
+        return '2 - 4 hrs / day';
+      case '4_7':
+        return '4 - 7 hrs / day';
+      case '8_plus':
+      case '8+':
+        return '8+ hrs / day';
+      default:
+        return hours.replaceAll('_', ' ');
+    }
+  }
+
+  String _formatActivityLevel(String? act) {
+    if (act == null || act.isEmpty) return 'Not Configured';
+    switch (act.toLowerCase()) {
+      case 'low':
+        return 'Calm & Relaxed';
+      case 'moderate':
+        return 'Moderate Routine';
+      case 'active':
+        return 'High Activity';
+      case 'very_active':
+        return 'Athletic / Outdoor';
+      default:
+        return act.replaceAll('_', ' ').split(' ').map((w) => w.isNotEmpty ? '${w[0].toUpperCase()}${w.substring(1)}' : '').join(' ');
+    }
+  }
+
+  String _formatPetExperience(String? exp) {
+    if (exp == null || exp.isEmpty) return 'Not Configured';
+    switch (exp.toLowerCase()) {
+      case 'first_time':
+        return 'First-Time Adopter';
+      case 'some_experience':
+      case 'intermediate':
+        return 'Intermediate Owner';
+      case 'experienced':
+        return 'Experienced Parent';
+      default:
+        return exp.replaceAll('_', ' ').split(' ').map((w) => w.isNotEmpty ? '${w[0].toUpperCase()}${w.substring(1)}' : '').join(' ');
+    }
   }
 
   Widget _buildMinimalNotificationCard({
@@ -1037,7 +1484,6 @@ class _HomeTabState extends State<_HomeTab> {
                     return ListView(
                       padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
                       children: [
-                        // Health Reminders Section
                         if (_vaccineReminders.isNotEmpty) ...[
                           Padding(
                             padding: const EdgeInsets.only(bottom: 6, left: 2),
@@ -1122,7 +1568,6 @@ class _HomeTabState extends State<_HomeTab> {
                           }),
                         ],
 
-                        // Application Status Updates Section
                         if (apps.isNotEmpty) ...[
                           if (_vaccineReminders.isNotEmpty) const SizedBox(height: 10),
                           Padding(
@@ -1241,7 +1686,6 @@ class _HomeTabState extends State<_HomeTab> {
                               );
                             }
 
-                            // Pending / default
                             return _buildMinimalNotificationCard(
                               icon: Icons.hourglass_top_rounded,
                               iconColor: const Color(0xFFD97706),
@@ -1275,836 +1719,927 @@ class _HomeTabState extends State<_HomeTab> {
     );
   }
 
-
   @override
   Widget build(BuildContext context) {
-    final displayedPets = _filteredPets;
-    final hasRecommendations = _recommendations.isNotEmpty;
-    final topPet = hasRecommendations ? _recommendations.first : null;
-    final companions = hasRecommendations && topPet != null
-        ? (_selectedCategory == 'all'
-            ? displayedPets.where((p) => (p['id'] ?? p['pet_id']) != (topPet['id'] ?? topPet['pet_id'])).toList()
-            : displayedPets)
-        : displayedPets;
+    return Stack(
+      children: [
+        RefreshIndicator(
+          onRefresh: _loadDashboardData,
+          color: AppTheme.primary,
+          child: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: [
+              _buildModernHeader(context),
+              SliverToBoxAdapter(
+                child: _isLoading
+                    ? const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 80),
+                        child: Center(
+                          child: CircularProgressIndicator(color: AppTheme.primary),
+                        ),
+                      )
+                    : Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 16),
 
-    return RefreshIndicator(
-      onRefresh: () async {
-        await _fetchRecommendations();
-      },
-      color: AppTheme.primary,
-      child: CustomScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        slivers: [
-          _buildSliverHeader(context),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
+                            // 1. Quick Category Pills Bar (like in reference screenshot)
+                            _buildPillSelector(),
+                            const SizedBox(height: 18),
+
+                            // 2. Urgent Health / Report Alert Banner (if due)
+                            if (_vaccineReminders.isNotEmpty) ...[
+                              _buildUrgentAlertBanner(context),
+                              const SizedBox(height: 18),
+                            ],
+
+                            // 3. The 2x2 Pastel Dashboard Cards Grid (Matches Reference Image)
+                            _buildDashboardGrid(context),
+                            const SizedBox(height: 24),
+
+                            // 4. Detailed Sections based on Active Filter
+                            if (_activeFilter == 'all' || _activeFilter == 'pets') ...[
+                              if (_adoptedPets.isNotEmpty) ...[
+                                _buildAdoptedPetSummary(context),
+                                const SizedBox(height: 20),
+                              ],
+                            ],
+
+                            if (_activeFilter == 'all' || _activeFilter == 'profile') ...[
+                              _buildCapabilityProfilePreview(context),
+                              const SizedBox(height: 20),
+                            ],
+
+                            if (_activeFilter == 'all' || _activeFilter == 'apps') ...[
+                              if (_activeApplications.isNotEmpty) ...[
+                                _buildApplicationsPreview(context),
+                                const SizedBox(height: 20),
+                              ],
+                            ],
+
+                            // 5. Anti-Bias Adoption Philosophy & Welfare Commitment
+                            _buildAntiBiasCard(),
+                            const SizedBox(height: 20),
+
+                            // 6. Adopter Details & Standing
+                            _buildAdopterDetailsCard(context),
+
+                            const SizedBox(height: 90), // Spacing for floating Meta AI button
+                          ],
+                        ),
+                      ),
+              ),
+            ],
+          ),
+        ),
+
+        // Floating Meta AI Matchmaker Button with Animated Eyes
+        Positioned(
+          bottom: 18,
+          right: 16,
+          child: _buildFloatingAiButton(),
+        ),
+      ],
+    );
+  }
+
+  // Header inspired by modern dashboard design
+  Widget _buildModernHeader(BuildContext context) {
+    return SliverToBoxAdapter(
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 1. Centerpiece Recommendation Hero Card
-                  const SizedBox(height: 16),
-                  _buildRecommendationHero(context),
-
-                  // 2. Quick Category Filters
-                  const SizedBox(height: 20),
+                  Text(
+                    'Hi, $_userName 👋',
+                    style: GoogleFonts.poppins(
+                      fontSize: 26,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF1E293B),
+                      letterSpacing: -0.4,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
                   Row(
                     children: [
-                      _buildCategoryChip('all', 'All Matches', Icons.auto_awesome_rounded),
-                      const SizedBox(width: 8),
-                      _buildCategoryChip('dog', 'Dogs', Icons.pets_rounded),
-                      const SizedBox(width: 8),
-                      _buildCategoryChip('cat', 'Cats', Icons.cruelty_free_rounded),
+                      Container(
+                        width: 7,
+                        height: 7,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFF10B981),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        'CAWS Adopter Dashboard • Welfare First',
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          color: const Color(0xFF64748B),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
                     ],
                   ),
-
-                  // 3. More Compatible Companions Section
-                  const SizedBox(height: 22),
-                  _sectionHeader(
-                    context,
-                    hasRecommendations ? 'More Compatible Companions' : 'Compatible Companions',
-                    'View All',
-                    isPowered: hasRecommendations,
-                    onTap: widget.onSeeAllPressed,
-                  ),
-                  const SizedBox(height: 14),
-                  _isLoading
-                      ? const Center(
-                          child: Padding(
-                            padding: EdgeInsets.all(32),
-                            child: CircularProgressIndicator(color: AppTheme.primary),
-                          ),
-                        )
-                      : companions.isEmpty
-                          ? Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 28),
-                              child: Center(
-                                child: Column(
-                                  children: [
-                                    Icon(
-                                      Icons.pets_rounded,
-                                      size: 44,
-                                      color: AppTheme.primary.withValues(alpha: 0.3),
-                                    ),
-                                    const SizedBox(height: 10),
-                                    Text(
-                                      hasRecommendations
-                                          ? 'No other matches in this category'
-                                          : 'No matches found',
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w600,
-                                        color: AppTheme.textPrimary,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      hasRecommendations
-                                          ? 'Your #1 top match is featured above.'
-                                          : 'Complete the quiz above to view tailored matches.',
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 11.5,
-                                        color: AppTheme.textSecondary,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            )
-                          : GridView.builder(
-                              physics: const NeverScrollableScrollPhysics(),
-                              shrinkWrap: true,
-                              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 2,
-                                crossAxisSpacing: 12,
-                                mainAxisSpacing: 12,
-                                childAspectRatio: 0.72,
-                              ),
-                              itemCount: companions.length,
-                              itemBuilder: (context, index) {
-                                final pet = companions[index];
-                                return PetCard(
-                                  pet: pet,
-                                  onTap: () => Navigator.pushNamed(
-                                    context,
-                                    '/pet-detail',
-                                    arguments: pet,
-                                  ),
-                                );
-                              },
-                            ),
-                  const SizedBox(height: 32),
                 ],
               ),
+              GestureDetector(
+                onTap: _showNotificationsBottomSheet,
+                child: Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.04),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Stack(
+                    children: [
+                      const Center(
+                        child: Icon(
+                          Icons.notifications_none_rounded,
+                          color: Color(0xFF334155),
+                          size: 22,
+                        ),
+                      ),
+                      if (_hasUnreadNotifications)
+                        Positioned(
+                          top: 10,
+                          right: 10,
+                          child: Container(
+                            width: 8,
+                            height: 8,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFFFF4D4F),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Horizontal Quick Pill Selector (Like in reference screenshot)
+  Widget _buildPillSelector() {
+    final pills = [
+      {'key': 'all', 'label': 'All Modules', 'icon': Icons.grid_view_rounded},
+      {'key': 'pets', 'label': 'My Pets (${_adoptedPets.length})', 'icon': Icons.pets_rounded},
+      {'key': 'apps', 'label': 'Applications (${_activeApplications.length})', 'icon': Icons.assignment_outlined},
+      {'key': 'profile', 'label': 'ML Profile', 'icon': Icons.psychology_rounded},
+    ];
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      physics: const BouncingScrollPhysics(),
+      child: Row(
+        children: pills.map((p) {
+          final isSelected = _activeFilter == p['key'];
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: GestureDetector(
+              onTap: () => setState(() => _activeFilter = p['key'] as String),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                decoration: BoxDecoration(
+                  color: isSelected ? const Color(0xFF0F172A) : Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: isSelected ? const Color(0xFF0F172A) : const Color(0xFFE2E8F0),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: isSelected
+                          ? Colors.black.withValues(alpha: 0.12)
+                          : Colors.black.withValues(alpha: 0.02),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      p['icon'] as IconData,
+                      size: 14,
+                      color: isSelected ? Colors.white : const Color(0xFF64748B),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      p['label'] as String,
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                        color: isSelected ? Colors.white : const Color(0xFF475569),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  // The 2x2 Dashboard Cards Grid (Matches Reference Image Structure & Colors)
+  Widget _buildDashboardGrid(BuildContext context) {
+    return Column(
+      children: [
+        Row(
+          children: [
+            // 1. Top-Left: AI Matchmaker (Soft Lavender / Lilac)
+            Expanded(
+              child: _buildPastelCard(
+                title: 'AI Matchmaker',
+                subtitle: 'Capability & ML Pairing',
+                statusPill: _hasCompletedAssessment ? 'ML Calibrated' : 'Quiz Pending',
+                symbol: '△',
+                icon: Icons.auto_awesome,
+                gradientColors: const [Color(0xFFEDE9FE), Color(0xFFF3E8FF)],
+                borderColor: const Color(0xFFDDD6FE),
+                accentColor: const Color(0xFF7C3AED),
+                onTap: _openAiMatchmaker,
+              ),
+            ),
+            const SizedBox(width: 14),
+
+            // 2. Top-Right: Monthly Report (Soft Pastel Rose / Berry, No Harsh Red)
+            Expanded(
+              child: _buildPastelCard(
+                title: 'Monthly Report',
+                subtitle: 'Photo & Weight Logs',
+                statusPill: _adoptedPets.isNotEmpty ? 'Check-in' : 'Care Logs',
+                symbol: '○',
+                icon: Icons.assignment_turned_in_rounded,
+                gradientColors: const [Color(0xFFFDF2F8), Color(0xFFFCE7F3)],
+                borderColor: const Color(0xFFFBCFE8),
+                accentColor: const Color(0xFFBE185D),
+                onTap: _openMonthlyReports,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 14),
+        Row(
+          children: [
+            // 3. Bottom-Left: Pet Care Hub (Soft Sky / Mint)
+            Expanded(
+              child: _buildPastelCard(
+                title: 'Pet Care Hub',
+                subtitle: 'Health & Vaccine Records',
+                statusPill: _adoptedPets.isNotEmpty ? '${_adoptedPets.length} Companion' : 'Adoption Hub',
+                symbol: '⬡',
+                icon: Icons.favorite_rounded,
+                gradientColors: const [Color(0xFFE0F2FE), Color(0xFFF0FDFA)],
+                borderColor: const Color(0xFFBAE6FD),
+                accentColor: const Color(0xFF0284C7),
+                onTap: _openPetHub,
+              ),
+            ),
+            const SizedBox(width: 14),
+
+            // 4. Bottom-Right: Applications & Contract (Soft Warm Amber / Peach)
+            Expanded(
+              child: _buildPastelCard(
+                title: 'Applications',
+                subtitle: 'Status & Legal Contract',
+                statusPill: _activeApplications.isNotEmpty ? '${_activeApplications.length} In Review' : 'View Queue',
+                symbol: '☆',
+                icon: Icons.description_rounded,
+                gradientColors: const [Color(0xFFFEF3C7), Color(0xFFFFFBEB)],
+                borderColor: const Color(0xFFFDE68A),
+                accentColor: const Color(0xFFD97706),
+                onTap: _openApplications,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  // Modular Pastel Dashboard Card (Reflecting Reference Screenshot Style)
+  Widget _buildPastelCard({
+    required String title,
+    required String subtitle,
+    required String statusPill,
+    required String symbol,
+    required IconData icon,
+    required List<Color> gradientColors,
+    required Color borderColor,
+    required Color accentColor,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 154,
+        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 12),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: gradientColors,
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: borderColor, width: 1.2),
+          boxShadow: [
+            BoxShadow(
+              color: accentColor.withValues(alpha: 0.08),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            // Top: Title and Subtitle
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: GoogleFonts.poppins(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF0F172A),
+                    letterSpacing: -0.2,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: GoogleFonts.poppins(
+                    fontSize: 10,
+                    color: const Color(0xFF475569),
+                    fontWeight: FontWeight.w500,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+
+            // Bottom: Status Pill on left, and Cute Geometric Pill on right
+            Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3.5),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.92),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: borderColor),
+                    ),
+                    child: Text(
+                      statusPill,
+                      style: GoogleFonts.poppins(
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.w700,
+                        color: accentColor,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 6),
+
+                // Corner Symbol Pill (△, ○, ⬡, ☆) inside a subtle container like the reference
+                Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.92),
+                    borderRadius: BorderRadius.circular(9),
+                    border: Border.all(color: borderColor),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.03),
+                        blurRadius: 4,
+                        offset: const Offset(0, 1),
+                      ),
+                    ],
+                  ),
+                  child: Center(
+                    child: Text(
+                      symbol,
+                      style: GoogleFonts.poppins(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: accentColor,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Urgent Alert Banner
+  Widget _buildUrgentAlertBanner(BuildContext context) {
+    final topReminder = _vaccineReminders.first;
+    final petName = topReminder['pet_name'] as String? ?? 'Your adopted companion';
+    final category = topReminder['category'] as String? ?? 'Vaccine / Check-in';
+    final days = topReminder['days_until_due'] as int? ?? 999;
+    final petId = topReminder['pet_id'] as int?;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFBEB),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFFDE68A)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: const BoxDecoration(
+              color: Color(0xFFFEF3C7),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.vaccines_rounded, color: Color(0xFFD97706), size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '$petName • $category Due in $days d',
+                  style: GoogleFonts.poppins(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF92400E),
+                  ),
+                ),
+                Text(
+                  'Keep veterinary schedule active to fulfill adoption agreement.',
+                  style: GoogleFonts.poppins(fontSize: 10.5, color: const Color(0xFF78350F)),
+                ),
+              ],
             ),
           ),
+          if (petId != null)
+            TextButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => PetMedicalCardScreen(petId: petId, petName: petName),
+                  ),
+                );
+              },
+              child: Text(
+                'Passport →',
+                style: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w700, color: const Color(0xFFD97706)),
+              ),
+            ),
         ],
       ),
     );
   }
 
-  Widget _buildRecommendationHero(BuildContext context) {
-    if (_recommendations.isEmpty) {
-      return _buildQuizPromptHeroCard(context);
-    }
-    return _buildTopMatchHeroCard(context, _recommendations.first);
-  }
+  // Summary of Adopted Pet
+  Widget _buildAdoptedPetSummary(BuildContext context) {
+    final pet = _adoptedPets.first;
+    final name = pet['adoptedPetName']?.toString() ?? pet['proposedName']?.toString() ?? pet['petName']?.toString() ?? 'Adopted Companion';
+    final code = pet['shelterPetCode']?.toString() ?? 'CAWS Rescue';
+    final petImage = pet['petImage'] as String?;
 
-  Widget _buildQuizPromptHeroCard(BuildContext context) {
     return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF0A6B72), AppTheme.primary],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(24),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.primary.withValues(alpha: 0.28),
-            blurRadius: 18,
-            offset: const Offset(0, 6),
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
-      padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.auto_awesome, color: Colors.amberAccent, size: 14),
-                    const SizedBox(width: 5),
-                    Text(
-                      'AI PET MATCHMAKER',
-                      style: GoogleFonts.poppins(
-                        color: Colors.white,
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.8,
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: petImage != null && petImage.isNotEmpty
+                    ? Image.network(
+                        ApiService.normalizeImageUrl(petImage),
+                        width: 48,
+                        height: 48,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, _, _) => Container(
+                          width: 48,
+                          height: 48,
+                          color: const Color(0xFFF1F5F9),
+                          child: const Icon(Icons.pets, color: AppTheme.primary, size: 24),
+                        ),
+                      )
+                    : Container(
+                        width: 48,
+                        height: 48,
+                        color: const Color(0xFFF1F5F9),
+                        child: const Icon(Icons.pets, color: AppTheme.primary, size: 24),
                       ),
-                    ),
-                  ],
-                ),
               ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Find Your Ideal Companion',
-                      style: GoogleFonts.poppins(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
-                        height: 1.25,
-                      ),
+                      name,
+                      style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w700, color: const Color(0xFF0F172A)),
                     ),
-                    const SizedBox(height: 6),
                     Text(
-                      'Our machine learning engine matches pets to your living space, activity level, and lifestyle.',
-                      style: GoogleFonts.poppins(
-                        color: Colors.white.withValues(alpha: 0.9),
-                        fontSize: 12,
-                        height: 1.4,
-                      ),
+                      '$code • Officially Handed Over',
+                      style: GoogleFonts.poppins(fontSize: 11, color: const Color(0xFF059669), fontWeight: FontWeight.w600),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: 14),
-              Container(
-                width: 58,
-                height: 58,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(18),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.12),
-                      blurRadius: 10,
-                    ),
-                  ],
+              ElevatedButton(
+                onPressed: _openMonthlyReports,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFBE185D),
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
-                child: const Center(
-                  child: PetRecommendationIcon(
-                    size: 38,
-                    color: Color(0xFF0A6B72),
-                  ),
-                ),
+                child: Text('Submit Report', style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w700)),
               ),
             ],
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: () async {
-                final isBanned = await _checkBanNoticeForAction(actionDescription: 'take the pet match');
-                if (isBanned || !context.mounted) return;
-                await Navigator.pushNamed(context, '/match-quiz');
-                _fetchRecommendations();
-              },
-              icon: const Icon(Icons.auto_awesome_rounded, size: 17),
-              label: Text(
-                'Start 1-Minute Match Quiz',
-                style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w700),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: AppTheme.primaryDark,
-                elevation: 0,
-                padding: const EdgeInsets.symmetric(vertical: 13),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-              ),
-            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildTopMatchHeroCard(BuildContext context, Map<String, dynamic> pet) {
-    int matchScore = 95;
-    final rawScore = pet['match_percentage'] ?? pet['compatibility_score'];
-    if (rawScore is num) {
-      matchScore = rawScore.round();
-    } else if (rawScore is String) {
-      matchScore = double.tryParse(rawScore)?.round() ?? 95;
-    }
-    matchScore = matchScore.clamp(1, 100);
-
-    final name = pet['name']?.toString() ?? 'Pet';
-    final breed = pet['breed']?.toString() ?? 'Mixed Breed';
-    final age = pet['age']?.toString() ?? 'Adult';
-    final rawGender = (pet['gender'] ?? '').toString();
-    final gender = rawGender.isNotEmpty
-        ? '${rawGender[0].toUpperCase()}${rawGender.substring(1).toLowerCase()}'
-        : 'Unknown';
-
-    String? imageUrl;
-    final rawImg = pet['image']?.toString() ?? pet['photo_url']?.toString();
-    if (rawImg != null && rawImg.trim().isNotEmpty && rawImg != 'null') {
-      imageUrl = ApiService.normalizeImageUrl(rawImg);
-    } else {
-      final rawPath = pet['photo_path']?.toString();
-      if (rawPath != null && rawPath.trim().isNotEmpty && rawPath != 'null') {
-        imageUrl = ApiService.normalizeImageUrl(rawPath);
-      }
-    }
-
-    final reasons = pet['match_reasons'] as List<dynamic>? ?? [];
-    final temperaments = pet['temperaments'] as List<dynamic>? ?? [];
+  // Capability Metrics Preview
+  Widget _buildCapabilityProfilePreview(BuildContext context) {
+    final livingEnv = _formatLivingEnvironment(_preferences?['living_environment']?.toString());
+    final hoursAlone = _formatHoursAlone(_preferences?['hours_alone']?.toString());
+    final activity = _formatActivityLevel(_preferences?['activity_level']?.toString());
+    final experience = _formatPetExperience(_preferences?['pet_experience']?.toString());
 
     return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFCCFBF1), width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF0F766E).withValues(alpha: 0.12),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header Bar
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              color: const Color(0xFFF0FDFA),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(5),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF0F766E),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Icon(Icons.auto_awesome, color: Colors.white, size: 14),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'TOP ML RECOMMENDATION',
-                        style: GoogleFonts.poppins(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
-                          color: const Color(0xFF0F766E),
-                          letterSpacing: 0.6,
-                        ),
-                      ),
-                    ],
-                  ),
-                  GestureDetector(
-                    onTap: () async {
-                      final isBanned = await _checkBanNoticeForAction(actionDescription: 'retake match quiz');
-                      if (isBanned || !context.mounted) return;
-                      await Navigator.pushNamed(context, '/match-quiz');
-                      _fetchRecommendations();
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: const Color(0xFF99F6E4)),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.tune_rounded, size: 12, color: Color(0xFF0F766E)),
-                          const SizedBox(width: 4),
-                          Text(
-                            'Retake',
-                            style: GoogleFonts.poppins(
-                              fontSize: 10.5,
-                              fontWeight: FontWeight.w600,
-                              color: const Color(0xFF0F766E),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // Hero Pet Photo with Floating Badge & Details
-            GestureDetector(
-              onTap: () => Navigator.pushNamed(context, '/pet-detail', arguments: pet),
-              child: Stack(
-                children: [
-                  if (imageUrl != null && imageUrl.isNotEmpty)
-                    Image.network(
-                      imageUrl,
-                      height: 190,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => _buildHeroPlaceholder(),
-                      loadingBuilder: (_, child, progress) {
-                        if (progress == null) return child;
-                        return Container(
-                          height: 190,
-                          color: const Color(0xFFF1F5F9),
-                          child: const Center(
-                            child: SizedBox(
-                              width: 24,
-                              height: 24,
-                              child: CircularProgressIndicator(color: AppTheme.primary, strokeWidth: 2),
-                            ),
-                          ),
-                        );
-                      },
-                    )
-                  else
-                    _buildHeroPlaceholder(),
-
-                  // Bottom gradient overlay
-                  Positioned(
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    child: Container(
-                      height: 70,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [Colors.black.withValues(alpha: 0.72), Colors.transparent],
-                          begin: Alignment.bottomCenter,
-                          end: Alignment.topCenter,
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  // Match Percentage Badge
-                  Positioned(
-                    top: 12,
-                    right: 12,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF0F766E), Color(0xFF14B8A6)],
-                        ),
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.25),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.favorite_rounded, color: Colors.white, size: 13),
-                          const SizedBox(width: 5),
-                          Text(
-                            '$matchScore% Match',
-                            style: GoogleFonts.poppins(
-                              color: Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  // Pet name, breed & meta
-                  Positioned(
-                    bottom: 12,
-                    left: 16,
-                    right: 16,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          name,
-                          style: GoogleFonts.poppins(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.w800,
-                            shadows: [
-                              Shadow(
-                                color: Colors.black.withValues(alpha: 0.7),
-                                blurRadius: 8,
-                              ),
-                            ],
-                          ),
-                        ),
-                        Text(
-                          '$breed • $age • $gender',
-                          style: GoogleFonts.poppins(
-                            color: Colors.white.withValues(alpha: 0.95),
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            shadows: [
-                              Shadow(
-                                color: Colors.black.withValues(alpha: 0.7),
-                                blurRadius: 6,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // Match Reasons Section & Action Button
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'WHY THIS COMPANION MATCHES YOU',
-                    style: GoogleFonts.poppins(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.grey.shade600,
-                      letterSpacing: 0.6,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 6,
-                    runSpacing: 6,
-                    children: [
-                      if (reasons.isNotEmpty)
-                        ...reasons.take(3).map((r) => _buildMatchChip(r.toString(), true))
-                      else if (temperaments.isNotEmpty)
-                        ...temperaments.take(3).map((t) => _buildMatchChip(t.toString(), true))
-                      else ...[
-                        _buildMatchChip('Compatible Energy', true),
-                        _buildMatchChip('Lifestyle Match', true),
-                      ],
-                    ],
-                  ),
-                  const SizedBox(height: 14),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () => Navigator.pushNamed(context, '/pet-detail', arguments: pet),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primary,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        padding: const EdgeInsets.symmetric(vertical: 13),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            'View Compatibility Profile',
-                            style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w700),
-                          ),
-                          const SizedBox(width: 6),
-                          const Icon(Icons.arrow_forward_rounded, size: 16),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeroPlaceholder() {
-    return Container(
-      height: 190,
-      width: double.infinity,
-      color: const Color(0xFFF1F5F9),
-      child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.pets_rounded, size: 48, color: Colors.grey.shade400),
-            const SizedBox(height: 6),
-            Text(
-              'Photo arriving soon',
-              style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade500),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMatchChip(String label, bool isPositive) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-      decoration: BoxDecoration(
-        color: isPositive ? const Color(0xFFECFDF5) : const Color(0xFFFFFBEB),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: isPositive ? const Color(0xFFA7F3D0) : const Color(0xFFFDE68A),
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            isPositive ? Icons.check_circle_rounded : Icons.info_outline_rounded,
-            size: 12,
-            color: isPositive ? const Color(0xFF059669) : const Color(0xFFD97706),
-          ),
-          const SizedBox(width: 4),
-          Flexible(
-            child: Text(
-              label,
-              style: GoogleFonts.poppins(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: isPositive ? const Color(0xFF065F46) : const Color(0xFF92400E),
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCategoryChip(String categoryKey, String label, IconData icon) {
-    final isSelected = _selectedCategory == categoryKey;
-    return Expanded(
-      child: GestureDetector(
-        onTap: () => setState(() => _selectedCategory = categoryKey),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          decoration: BoxDecoration(
-            color: isSelected ? AppTheme.primary : Colors.white,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: isSelected ? AppTheme.primary : Colors.grey.shade200,
-            ),
-            boxShadow: isSelected
-                ? [
-                    BoxShadow(
-                      color: AppTheme.primary.withValues(alpha: 0.25),
-                      blurRadius: 8,
-                      offset: const Offset(0, 3),
-                    ),
-                  ]
-                : [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.03),
-                      blurRadius: 6,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Icon(
-                icon,
-                size: 15,
-                color: isSelected ? Colors.white : AppTheme.textSecondary,
-              ),
-              const SizedBox(width: 6),
               Text(
-                label,
-                style: GoogleFonts.poppins(
-                  fontSize: 12,
-                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                  color: isSelected ? Colors.white : AppTheme.textPrimary,
+                'Adopter Capability Profile',
+                style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700, color: const Color(0xFF0F172A)),
+              ),
+              GestureDetector(
+                onTap: () async {
+                  final isBanned = await _checkBanNoticeForAction(actionDescription: 'update capability quiz');
+                  if (isBanned || !context.mounted) return;
+                  await Navigator.pushNamed(context, '/match-quiz');
+                  _loadDashboardData();
+                },
+                child: Text(
+                  'Retake Quiz',
+                  style: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w600, color: AppTheme.primary),
                 ),
               ),
             ],
           ),
-        ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(child: _buildMiniMetric('Space', livingEnv, Icons.apartment_rounded)),
+              const SizedBox(width: 8),
+              Expanded(child: _buildMiniMetric('Availability', hoursAlone, Icons.schedule_rounded)),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(child: _buildMiniMetric('Routine', activity, Icons.directions_run_rounded)),
+              const SizedBox(width: 8),
+              Expanded(child: _buildMiniMetric('Experience', experience, Icons.military_tech_rounded)),
+            ],
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildSliverHeader(BuildContext context) {
-    return SliverToBoxAdapter(
-      child: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFF0A6B72), AppTheme.primary],
+  Widget _buildMiniMetric(String label, String value, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFF1F5F9)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 12, color: const Color(0xFF64748B)),
+              const SizedBox(width: 4),
+              Text(
+                label,
+                style: GoogleFonts.poppins(fontSize: 10, color: const Color(0xFF64748B), fontWeight: FontWeight.w500),
+              ),
+            ],
           ),
-          borderRadius: BorderRadius.only(
-            bottomLeft: Radius.circular(32),
-            bottomRight: Radius.circular(32),
+          const SizedBox(height: 2),
+          Text(
+            value,
+            style: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w700, color: const Color(0xFF0F172A)),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Applications Preview
+  Widget _buildApplicationsPreview(BuildContext context) {
+    final app = _activeApplications.first;
+    final shelterCode = app['shelterPetCode']?.toString() ?? 'Assigned Companion';
+    final status = (app['status'] as String? ?? 'pending').toLowerCase();
+    final isPreApproved = status == 'approved';
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                shelterCode,
+                style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700, color: const Color(0xFF0F172A)),
+              ),
+              Text(
+                isPreApproved ? 'Pre-Approved for Event Handover' : 'Under Shelter Review',
+                style: GoogleFonts.poppins(
+                  fontSize: 11,
+                  color: isPreApproved ? const Color(0xFF0D9488) : const Color(0xFF2563EB),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          OutlinedButton(
+            onPressed: _openApplications,
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: Text('View Status', style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w600)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Anti-Bias Philosophy Card
+  Widget _buildAntiBiasCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF0FDF4),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFBBF7D0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.shield_outlined, color: Color(0xFF16A34A), size: 18),
+              const SizedBox(width: 8),
+              Text(
+                'Zero Breed Bias • Compatibility First',
+                style: GoogleFonts.poppins(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF166534),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'CAWS removes open breed browsing to eliminate adoption prejudice. Our Machine Learning engine objectively evaluates your care capacity and lifestyle to ensure lasting animal retention.',
+            style: GoogleFonts.poppins(
+              fontSize: 11,
+              color: const Color(0xFF14532D),
+              height: 1.4,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Adopter Details & Standing
+  Widget _buildAdopterDetailsCard(BuildContext context) {
+    final email = _userProfile?['email']?.toString() ?? 'adopter@caws.org';
+    final phone = _userProfile?['phone']?.toString() ?? '0936 556 6200';
+    final address = _userProfile?['address']?.toString() ?? 'Cagayan de Oro City';
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Adopter Information',
+                style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w700, color: const Color(0xFF0F172A)),
+              ),
+              GestureDetector(
+                onTap: () {
+                  if (widget.onViewProfilePressed != null) {
+                    widget.onViewProfilePressed!();
+                  } else {
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen()));
+                  }
+                },
+                child: Text('Edit Profile', style: GoogleFonts.poppins(fontSize: 11.5, color: AppTheme.primary, fontWeight: FontWeight.w600)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          _infoLine(Icons.email_outlined, email),
+          const SizedBox(height: 4),
+          _infoLine(Icons.phone_outlined, phone),
+          const SizedBox(height: 4),
+          _infoLine(Icons.location_on_outlined, address),
+        ],
+      ),
+    );
+  }
+
+  Widget _infoLine(IconData icon, String val) {
+    return Row(
+      children: [
+        Icon(icon, size: 13, color: const Color(0xFF64748B)),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            val,
+            style: GoogleFonts.poppins(fontSize: 11.5, color: const Color(0xFF475569)),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ),
-        child: SafeArea(
-          bottom: false,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-            child: Column(
+      ],
+    );
+  }
+
+  // Floating Meta AI Button
+  Widget _buildFloatingAiButton() {
+    return GestureDetector(
+      onTap: _openAiMatchmaker,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(6, 5, 14, 5),
+        decoration: BoxDecoration(
+          color: const Color(0xFF0F172A),
+          borderRadius: BorderRadius.circular(30),
+          border: Border.all(
+            color: const Color(0xFF38BDF8).withValues(alpha: 0.55),
+            width: 1.2,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF0284C7).withValues(alpha: 0.38),
+              blurRadius: 16,
+              offset: const Offset(0, 4),
+            ),
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.25),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(
+              width: 38,
+              height: 38,
+              child: Center(
+                child: LuminousAiOrb(size: 32),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Column(
+              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Welcome, ${_userName.trim().split(RegExp(r'\s+')).first}',
-                          style: GoogleFonts.poppins(
-                            fontSize: 21,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                            letterSpacing: -0.2,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'Find your perfect companion',
-                          style: GoogleFonts.poppins(
-                            fontSize: 12.5,
-                            color: Colors.white.withValues(alpha: 0.85),
-                            fontWeight: FontWeight.w400,
-                          ),
-                        ),
-                      ],
+                    Text(
+                      'AI Matchmaker',
+                      style: GoogleFonts.poppins(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
                     ),
-                    GestureDetector(
-                      onTap: () => _showNotificationsBottomSheet(),
-                      child: Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.18),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Stack(
-                          children: [
-                            const Center(
-                              child: Icon(
-                                Icons.notifications_none_rounded,
-                                color: Colors.white,
-                                size: 22,
-                              ),
-                            ),
-                            if (_hasUnreadNotifications)
-                              Positioned(
-                                top: 10,
-                                right: 10,
-                                child: Container(
-                                  width: 9,
-                                  height: 9,
-                                  decoration: const BoxDecoration(
-                                    color: Color(0xFFFF4D4F),
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
+                    const SizedBox(width: 4),
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF00F0FF),
+                        shape: BoxShape.circle,
                       ),
                     ),
                   ],
                 ),
+                Text(
+                  'Tap to find match',
+                  style: GoogleFonts.poppins(
+                    fontSize: 9.5,
+                    fontWeight: FontWeight.w500,
+                    color: const Color(0xFF94A3B8),
+                  ),
+                ),
               ],
             ),
-          ),
+          ],
         ),
       ),
-    );
-  }
-
-  Widget _sectionHeader(
-    BuildContext context,
-    String title,
-    String actionLabel, {
-    bool isPowered = false,
-    VoidCallback? onTap,
-  }) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          title,
-          style: GoogleFonts.poppins(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-            color: AppTheme.textPrimary,
-            letterSpacing: -0.2,
-          ),
-        ),
-        if (isPowered)
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-            decoration: BoxDecoration(
-              color: AppTheme.primary.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: AppTheme.primary.withValues(alpha: 0.2),
-              ),
-            ),
-            child: Text(
-              actionLabel,
-              style: GoogleFonts.poppins(
-                fontSize: 10.5,
-                color: AppTheme.primary,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          )
-        else
-          TextButton(
-            onPressed: onTap,
-            style: TextButton.styleFrom(
-              padding: EdgeInsets.zero,
-              minimumSize: Size.zero,
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            ),
-            child: Text(
-              actionLabel,
-              style: GoogleFonts.poppins(
-                fontSize: 12.5,
-                color: AppTheme.primary,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-      ],
     );
   }
 }

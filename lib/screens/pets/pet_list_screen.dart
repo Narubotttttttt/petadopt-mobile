@@ -2,10 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile_petadopt/services/api_service.dart';
 import 'package:mobile_petadopt/theme/app_theme.dart';
+import 'package:mobile_petadopt/widgets/ai_recommendation_hero.dart';
 import 'package:mobile_petadopt/widgets/pet_card.dart';
 
 class PetListScreen extends StatefulWidget {
-  const PetListScreen({super.key});
+  final String? initialSearch;
+  final String? initialLifestyle;
+
+  const PetListScreen({
+    super.key,
+    this.initialSearch,
+    this.initialLifestyle,
+  });
 
   @override
   State<PetListScreen> createState() => _PetListScreenState();
@@ -13,24 +21,85 @@ class PetListScreen extends StatefulWidget {
 
 class _PetListScreenState extends State<PetListScreen> {
   final _searchController = TextEditingController();
-  String _selectedFilter = 'All';
+  String _activeLifestyleFilter = 'none';
   String _searchQuery = '';
   List<Map<String, dynamic>> _recommendations = [];
   bool _isLoading = true;
   bool _hasTakenQuiz = false;
-
-  final List<String> _filters = ['All', 'Dogs', 'Cats'];
+  String _userName = 'Adopter';
+  String? _userAvatar;
 
   @override
   void initState() {
     super.initState();
+    if (widget.initialLifestyle != null && widget.initialLifestyle!.isNotEmpty) {
+      _activeLifestyleFilter = widget.initialLifestyle!;
+    }
+    if (widget.initialSearch != null && widget.initialSearch!.isNotEmpty) {
+      _searchQuery = widget.initialSearch!;
+      _searchController.text = widget.initialSearch!;
+    }
+    _loadUser();
     _fetchRecommendations();
+  }
+
+  @override
+  void didUpdateWidget(PetListScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    bool shouldUpdate = false;
+    if (widget.initialLifestyle != null && widget.initialLifestyle != oldWidget.initialLifestyle) {
+      _activeLifestyleFilter = widget.initialLifestyle!;
+      shouldUpdate = true;
+    }
+    if (widget.initialSearch != null && widget.initialSearch != oldWidget.initialSearch) {
+      _searchQuery = widget.initialSearch!;
+      _searchController.text = widget.initialSearch!;
+      shouldUpdate = true;
+    }
+    if (shouldUpdate && mounted) {
+      setState(() {});
+    }
   }
 
   @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadUser() async {
+    try {
+      final user = await ApiService.getUser();
+      if (mounted && user != null && user['name'] != null) {
+        final rawName = (user['name'] as String).trim();
+        final firstName = rawName.isNotEmpty ? rawName.split(RegExp(r'\s+')).first : 'Adopter';
+        setState(() {
+          _userName = firstName;
+        });
+      }
+      final profile = await ApiService.getProfile();
+      if (mounted && profile != null && profile['avatar'] != null) {
+        final rawAvatar = profile['avatar'].toString().trim();
+        if (rawAvatar.isNotEmpty && rawAvatar != 'null') {
+          setState(() {
+            _userAvatar = ApiService.normalizeImageUrl(rawAvatar);
+          });
+        }
+      }
+    } catch (_) {}
+  }
+
+  String _getGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) return 'Good morning';
+    if (hour < 17) return 'Good afternoon';
+    return 'Good evening';
+  }
+
+  String _getDateSubtitle() {
+    final now = DateTime.now();
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return 'Today • ${now.day} ${months[now.month - 1]}';
   }
 
   Future<void> _fetchRecommendations() async {
@@ -85,31 +154,92 @@ class _PetListScreenState extends State<PetListScreen> {
 
   List<Map<String, dynamic>> get _filteredPets {
     return _recommendations.where((pet) {
-      // Species filter
-      if (_selectedFilter == 'Dogs') {
-        final t = (pet['type'] ?? '').toString().toLowerCase();
-        if (t != 'dog') return false;
-      } else if (_selectedFilter == 'Cats') {
-        final t = (pet['type'] ?? '').toString().toLowerCase();
-        if (t != 'cat') return false;
+      // 1. Lifestyle filter
+      if (_activeLifestyleFilter != 'none' && _activeLifestyleFilter.isNotEmpty) {
+        final name = (pet['name'] ?? '').toString().toLowerCase();
+        final breed = (pet['breed'] ?? '').toString().toLowerCase();
+        final desc = (pet['description'] ?? '').toString().toLowerCase();
+        final type = (pet['type'] ?? '').toString().toLowerCase();
+        final temperaments = (pet['temperaments'] is List
+                ? (pet['temperaments'] as List).join(' ')
+                : (pet['temperaments'] ?? '').toString())
+            .toLowerCase();
+        final matchReasons = (pet['match_reasons'] is List
+                ? (pet['match_reasons'] as List).join(' ')
+                : (pet['match_reasons'] ?? '').toString())
+            .toLowerCase();
+        final allText = '$name $breed $desc $type $temperaments $matchReasons';
+
+        if (_activeLifestyleFilter == 'apartment') {
+          final isApartmentFriendly = type == 'cat' ||
+              allText.contains('apartment') ||
+              allText.contains('calm') ||
+              allText.contains('quiet') ||
+              allText.contains('gentle') ||
+              allText.contains('indoor') ||
+              allText.contains('small') ||
+              allText.contains('low energy') ||
+              allText.contains('relaxed');
+          if (!isApartmentFriendly) return false;
+        } else if (_activeLifestyleFilter == 'active') {
+          final isActive = allText.contains('active') ||
+              allText.contains('playful') ||
+              allText.contains('energetic') ||
+              allText.contains('curious') ||
+              allText.contains('outdoor') ||
+              allText.contains('lively') ||
+              allText.contains('high energy') ||
+              allText.contains('running');
+          if (!isActive) return false;
+        } else if (_activeLifestyleFilter == 'family') {
+          final isFamily = allText.contains('family') ||
+              allText.contains('gentle') ||
+              allText.contains('friendly') ||
+              allText.contains('kid') ||
+              allText.contains('children') ||
+              allText.contains('affectionate') ||
+              allText.contains('social') ||
+              allText.contains('loving') ||
+              allText.contains('sweet');
+          if (!isFamily) return false;
+        }
       }
 
-      // Keyword search
+      // 3. Keyword / Prompt search
       if (_searchQuery.trim().isNotEmpty) {
         final q = _searchQuery.toLowerCase().trim();
         final name = (pet['name'] ?? '').toString().toLowerCase();
         final breed = (pet['breed'] ?? '').toString().toLowerCase();
         final color = (pet['color'] ?? '').toString().toLowerCase();
         final type = (pet['type'] ?? '').toString().toLowerCase();
+        final desc = (pet['description'] ?? '').toString().toLowerCase();
         final idStr = (pet['id'] ?? '').toString();
+        final temperaments = (pet['temperaments'] is List
+                ? (pet['temperaments'] as List).join(' ')
+                : (pet['temperaments'] ?? '').toString())
+            .toLowerCase();
+        final matchReasons = (pet['match_reasons'] is List
+                ? (pet['match_reasons'] as List).join(' ')
+                : (pet['match_reasons'] ?? '').toString())
+            .toLowerCase();
 
         final matchesName = name.contains(q);
         final matchesBreed = breed.contains(q);
         final matchesColor = color.contains(q);
         final matchesType = type.contains(q);
+        final matchesDesc = desc.contains(q);
+        final matchesTemp = temperaments.contains(q);
+        final matchesReason = matchReasons.contains(q);
         final matchesId = idStr == q || q == 'pet no. $idStr' || q == 'pet $idStr';
 
-        if (!matchesName && !matchesBreed && !matchesColor && !matchesType && !matchesId) {
+        if (!matchesName &&
+            !matchesBreed &&
+            !matchesColor &&
+            !matchesType &&
+            !matchesDesc &&
+            !matchesTemp &&
+            !matchesReason &&
+            !matchesId) {
           return false;
         }
       }
@@ -118,11 +248,7 @@ class _PetListScreenState extends State<PetListScreen> {
     }).toList();
   }
 
-  void _onFilterSelected(String filter) {
-    setState(() {
-      _selectedFilter = filter;
-    });
-  }
+
 
   Future<void> _openQuiz() async {
     final result = await Navigator.pushNamed(context, '/match-quiz');
@@ -139,43 +265,86 @@ class _PetListScreenState extends State<PetListScreen> {
       backgroundColor: AppTheme.background,
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        titleSpacing: 16,
+        title: Row(
           children: [
-            Text(
-              'Personalized Matches',
-              style: GoogleFonts.poppins(
-                fontSize: 19,
-                fontWeight: FontWeight.w700,
-                color: AppTheme.textPrimary,
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: const Color(0xFFBAE6FD), width: 1.5),
+                color: const Color(0xFFE0F2FE),
+              ),
+              child: ClipOval(
+                child: _userAvatar != null && _userAvatar!.isNotEmpty
+                    ? Image.network(
+                        _userAvatar!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => const Icon(
+                          Icons.person_rounded,
+                          color: AppTheme.primary,
+                          size: 20,
+                        ),
+                      )
+                    : const Icon(
+                        Icons.person_rounded,
+                        color: AppTheme.primary,
+                        size: 20,
+                      ),
               ),
             ),
-            Text(
-              'Ranked by AI Compatibility',
-              style: GoogleFonts.poppins(
-                fontSize: 11,
-                fontWeight: FontWeight.w500,
-                color: AppTheme.primary,
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    '${_getGreeting()}, $_userName',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.textPrimary,
+                    ),
+                  ),
+                  Text(
+                    _getDateSubtitle(),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.poppins(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      color: AppTheme.textSecondary,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
         ),
         actions: [
           Padding(
-            padding: const EdgeInsets.only(right: 12),
+            padding: const EdgeInsets.only(right: 14),
             child: ActionChip(
-              avatar: const Icon(Icons.tune_rounded, size: 16, color: AppTheme.primaryDark),
+              visualDensity: VisualDensity.compact,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              avatar: const Icon(Icons.tune_rounded, size: 14, color: AppTheme.primaryDark),
               label: Text(
-                'Refine',
+                'Match Quiz',
                 style: GoogleFonts.poppins(
-                  fontSize: 12,
+                  fontSize: 11.5,
                   fontWeight: FontWeight.w600,
                   color: AppTheme.primaryDark,
                 ),
               ),
               backgroundColor: AppTheme.primaryLight,
               side: BorderSide.none,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               onPressed: _openQuiz,
             ),
           ),
@@ -184,122 +353,108 @@ class _PetListScreenState extends State<PetListScreen> {
       body: RefreshIndicator(
         onRefresh: _fetchRecommendations,
         color: AppTheme.primary,
-        child: Column(
-          children: [
-            // Search Input
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 10),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: AppTheme.surface,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: AppTheme.cardBorder),
-                ),
-                child: TextField(
-                  controller: _searchController,
-                  onChanged: (val) {
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            // AI Recommendation Hero Section
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 6, 16, 14),
+                child: AiRecommendationHero(
+                  searchController: _searchController,
+                  activeLifestyleFilter: _activeLifestyleFilter,
+                  onSearchChanged: (val) {
+                    setState(() => _searchQuery = val);
+                  },
+                  onSearchSubmitted: (val) {
+                    setState(() => _searchQuery = val);
+                  },
+                  onQuizPressed: _openQuiz,
+                  onFilterSelected: (filter) {
                     setState(() {
-                      _searchQuery = val;
+                      _activeLifestyleFilter = filter;
                     });
                   },
-                  style: GoogleFonts.poppins(fontSize: 13, color: AppTheme.textPrimary),
-                  decoration: InputDecoration(
-                    hintText: 'Search within your matches...',
-                    hintStyle: GoogleFonts.poppins(fontSize: 13, color: AppTheme.textSecondary),
-                    prefixIcon: const Icon(Icons.search_rounded, color: AppTheme.textSecondary, size: 20),
-                    suffixIcon: _searchQuery.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.clear_rounded, size: 18),
-                            onPressed: () {
-                              _searchController.clear();
-                              setState(() => _searchQuery = '');
-                            },
-                          )
-                        : null,
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                  ),
                 ),
               ),
             ),
 
-            // Species Filter Chips
-            SizedBox(
-              height: 36,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                itemCount: _filters.length,
-                separatorBuilder: (_, _) => const SizedBox(width: 8),
-                itemBuilder: (context, index) {
-                  final filter = _filters[index];
-                  final isSelected = _selectedFilter == filter;
-                  return GestureDetector(
-                    onTap: () => _onFilterSelected(filter),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 180),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isSelected ? AppTheme.primary : AppTheme.surface,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: isSelected
-                              ? AppTheme.primary
-                              : AppTheme.cardBorder,
+            // Compatible Companions Header & Count
+            if (!_isLoading && displayedPets.isNotEmpty)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        _activeLifestyleFilter != 'none'
+                            ? '${_activeLifestyleFilter[0].toUpperCase()}${_activeLifestyleFilter.substring(1)} Matches'
+                            : 'Compatible Companions',
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: AppTheme.textPrimary,
                         ),
                       ),
-                      child: Text(
-                        filter,
+                      Text(
+                        '${displayedPets.length} ${displayedPets.length == 1 ? "match" : "matches"}',
                         style: GoogleFonts.poppins(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: isSelected ? Colors.white : AppTheme.textSecondary,
+                          color: AppTheme.textSecondary,
                         ),
                       ),
-                    ),
-                  );
-                },
+                    ],
+                  ),
+                ),
               ),
-            ),
-            const SizedBox(height: 10),
 
             // Content Area
-            Expanded(
-              child: _isLoading
-                  ? const Center(
-                      child: CircularProgressIndicator(color: AppTheme.primary),
-                    )
-                  : (!_hasTakenQuiz && _recommendations.isEmpty)
-                      ? _buildQuizPromptState()
-                      : displayedPets.isEmpty
-                          ? _buildNoResultsState()
-                          : GridView.builder(
-                              padding: const EdgeInsets.fromLTRB(16, 4, 16, 20),
-                              physics: const AlwaysScrollableScrollPhysics(),
-                              gridDelegate:
-                                  const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 2,
-                                crossAxisSpacing: 12,
-                                mainAxisSpacing: 12,
-                                childAspectRatio: 0.72,
-                              ),
-                              itemCount: displayedPets.length,
-                              itemBuilder: (context, index) {
-                                final pet = displayedPets[index];
-                                return PetCard(
-                                  pet: pet,
-                                  onTap: () => Navigator.pushNamed(
-                                    context,
-                                    '/pet-detail',
-                                    arguments: pet,
-                                  ),
-                                );
-                              },
-                            ),
-            ),
+            if (_isLoading)
+              const SliverFillRemaining(
+                hasScrollBody: false,
+                child: Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(40),
+                    child: CircularProgressIndicator(color: AppTheme.primary),
+                  ),
+                ),
+              )
+            else if (!_hasTakenQuiz && _recommendations.isEmpty)
+              SliverToBoxAdapter(
+                child: _buildQuizPromptState(),
+              )
+            else if (displayedPets.isEmpty)
+              SliverToBoxAdapter(
+                child: _buildNoResultsState(),
+              )
+            else
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                sliver: SliverGrid(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                    childAspectRatio: 0.72,
+                  ),
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      final pet = displayedPets[index];
+                      return PetCard(
+                        pet: pet,
+                        onTap: () => Navigator.pushNamed(
+                          context,
+                          '/pet-detail',
+                          arguments: pet,
+                        ),
+                      );
+                    },
+                    childCount: displayedPets.length,
+                  ),
+                ),
+              ),
           ],
         ),
       ),
@@ -307,32 +462,31 @@ class _PetListScreenState extends State<PetListScreen> {
   }
 
   Widget _buildQuizPromptState() {
-    return SingleChildScrollView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 32),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              width: 76,
-              height: 76,
+              width: 70,
+              height: 70,
               decoration: BoxDecoration(
                 color: AppTheme.primary.withValues(alpha: 0.12),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
                 Icons.auto_awesome_rounded,
-                size: 38,
+                size: 34,
                 color: AppTheme.primary,
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 18),
             Text(
               'Discover Your Compatible Pets',
               textAlign: TextAlign.center,
               style: GoogleFonts.poppins(
-                fontSize: 17,
+                fontSize: 16,
                 fontWeight: FontWeight.w700,
                 color: AppTheme.textPrimary,
               ),
@@ -342,28 +496,28 @@ class _PetListScreenState extends State<PetListScreen> {
               'Our Machine Learning engine matches pets based on your living space, schedule, household, and personality.',
               textAlign: TextAlign.center,
               style: GoogleFonts.poppins(
-                fontSize: 12.5,
+                fontSize: 12,
                 color: AppTheme.textSecondary,
                 height: 1.45,
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: _openQuiz,
-                icon: const Icon(Icons.quiz_outlined, size: 18),
+                icon: const Icon(Icons.quiz_outlined, size: 17),
                 label: Text(
                   'Take Compatibility Assessment',
                   style: GoogleFonts.poppins(
-                    fontSize: 13,
+                    fontSize: 12.5,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primary,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  padding: const EdgeInsets.symmetric(vertical: 13),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                   elevation: 0,
                 ),
@@ -376,46 +530,66 @@ class _PetListScreenState extends State<PetListScreen> {
   }
 
   Widget _buildNoResultsState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.tune_rounded, size: 48, color: AppTheme.textSecondary),
-          const SizedBox(height: 14),
-          Text(
-            'No matching pets found',
-            style: GoogleFonts.poppins(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: AppTheme.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Try switching categories or refining your assessment preferences.',
-            textAlign: TextAlign.center,
-            style: GoogleFonts.poppins(
-              fontSize: 12,
-              color: AppTheme.textSecondary,
-            ),
-          ),
-          const SizedBox(height: 16),
-          OutlinedButton(
-            onPressed: _openQuiz,
-            style: OutlinedButton.styleFrom(
-              side: const BorderSide(color: AppTheme.primary),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            child: Text(
-              'Update Preferences',
-              style: GoogleFonts.poppins(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: AppTheme.primary,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 36),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 58,
+              height: 58,
+              decoration: const BoxDecoration(
+                color: Color(0xFFF1F5F9),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.search_off_rounded,
+                size: 28,
+                color: Color(0xFF64748B),
               ),
             ),
-          ),
-        ],
+            const SizedBox(height: 14),
+            Text(
+              'No Matching Companions',
+              style: GoogleFonts.poppins(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                color: AppTheme.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Try adjusting your search terms or clearing your lifestyle filters.',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.poppins(
+                fontSize: 12,
+                color: AppTheme.textSecondary,
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 18),
+            OutlinedButton.icon(
+              onPressed: () {
+                _searchController.clear();
+                setState(() {
+                  _searchQuery = '';
+                  _activeLifestyleFilter = 'none';
+                });
+              },
+              icon: const Icon(Icons.refresh_rounded, size: 15),
+              label: Text(
+                'Reset Filters',
+                style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600),
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppTheme.primary,
+                side: const BorderSide(color: AppTheme.primary),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -116,29 +116,31 @@ class ExplorationModeDialog extends StatelessWidget {
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                         contentPadding: const EdgeInsets.fromLTRB(24, 22, 24, 12),
                         actionsPadding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
-                        title: Row(
+                        title: Column(
                           children: [
                             Container(
-                              padding: const EdgeInsets.all(8),
+                              width: 60,
+                              height: 60,
                               decoration: BoxDecoration(
                                 color: isBlacklisted ? const Color(0xFFFFEAEA) : const Color(0xFFFFFBEB),
-                                borderRadius: BorderRadius.circular(12),
+                                shape: BoxShape.circle,
                               ),
-                              child: Icon(
-                                Icons.block_rounded,
-                                color: isBlacklisted ? AppTheme.errorColor : AppTheme.warningColor,
-                                size: 22,
+                              child: Center(
+                                child: Icon(
+                                  Icons.block_rounded,
+                                  color: isBlacklisted ? AppTheme.errorColor : AppTheme.warningColor,
+                                  size: 30,
+                                ),
                               ),
                             ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                isBlacklisted ? 'Account Banned' : 'Account Restricted',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppTheme.textPrimary,
-                                ),
+                            const SizedBox(height: 14),
+                            Text(
+                              isBlacklisted ? 'Account Banned' : 'Account Restricted',
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.poppins(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                                color: AppTheme.textPrimary,
                               ),
                             ),
                           ],
@@ -147,17 +149,20 @@ class ExplorationModeDialog extends StatelessWidget {
                           mainAxisSize: MainAxisSize.min,
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              isBlacklisted
-                                  ? 'Your account has been banned from submitting adoption applications.'
-                                  : 'Your account is currently restricted from taking recommendation quizzes.',
-                              style: GoogleFonts.poppins(
-                                fontSize: 13,
-                                color: AppTheme.textSecondary,
-                                height: 1.4,
+                            Center(
+                              child: Text(
+                                isBlacklisted
+                                    ? 'Your account has been banned from submitting adoption applications.'
+                                    : 'Your account is currently restricted from taking recommendation quizzes.',
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.poppins(
+                                  fontSize: 13,
+                                  color: AppTheme.textSecondary,
+                                  height: 1.4,
+                                ),
                               ),
                             ),
-                            const SizedBox(height: 12),
+                            const SizedBox(height: 14),
                             Container(
                               width: double.infinity,
                               padding: const EdgeInsets.all(12),

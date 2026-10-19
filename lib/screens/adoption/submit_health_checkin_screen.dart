@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mobile_petadopt/services/api_service.dart';
 import 'package:mobile_petadopt/theme/app_theme.dart';
+import 'package:mobile_petadopt/widgets/app_confirmation_dialog.dart';
 
 class SubmitHealthCheckinScreen extends StatefulWidget {
   final int applicationId;
@@ -148,84 +149,17 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
 
       setState(() => _notesError = null);
 
-      final confirmed = await showDialog<bool>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF1F5F9),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(Icons.favorite_border_rounded, color: Color(0xFF475569), size: 22),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  'Confirm Life Event Report',
-                  style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 16),
-                ),
-              ),
-            ],
-          ),
-          content: Text(
+      final confirmed = await AppConfirmationDialog.show(
+        context,
+        icon: Icons.favorite_border_rounded,
+        iconColor: const Color(0xFF475569),
+        iconBackgroundColor: const Color(0xFFF1F5F9),
+        title: 'Confirm Life Event Report',
+        message:
             'Are you sure you want to officially report that ${widget.petName} has passed away? This will update CAWS organization records and close recurring monthly check-ins for this pet.',
-            style: GoogleFonts.poppins(fontSize: 13, color: AppTheme.textSecondary, height: 1.4),
-          ),
-          actionsPadding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
-          actions: [
-            Row(
-              children: [
-                Expanded(
-                  flex: 2,
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.pop(ctx, false),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      side: BorderSide(color: Colors.grey.shade300),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    child: Text(
-                      'Cancel',
-                      style: GoogleFonts.poppins(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 13,
-                        color: Colors.grey.shade700,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  flex: 3,
-                  child: ElevatedButton(
-                    onPressed: () => Navigator.pop(ctx, true),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF475569),
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Text(
-                        'Confirm & Submit',
-                        style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 13,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
+        cancelText: 'Cancel',
+        confirmText: 'Confirm & Submit',
+        confirmColor: const Color(0xFF475569),
       );
 
       if (confirmed != true) return;

@@ -795,24 +795,26 @@ class _ApplicationCard extends StatelessWidget {
                     Row(
                       children: [
                         Expanded(
-                          child: OutlinedButton(
+                          child: ElevatedButton(
                             onPressed: isSaving ? null : () => Navigator.pop(dialogContext),
-                            style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                              side: const BorderSide(color: Color(0xFFE2E8F0)),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFF1F5F9),
+                              foregroundColor: const Color(0xFF475569),
+                              elevation: 0,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                             ),
                             child: Text(
                               'Cancel',
                               style: GoogleFonts.poppins(
-                                fontSize: 13,
+                                fontSize: 14,
                                 fontWeight: FontWeight.w600,
-                                color: const Color(0xFF64748B),
+                                color: const Color(0xFF475569),
                               ),
                             ),
                           ),
                         ),
-                        const SizedBox(width: 10),
+                        const SizedBox(width: 12),
                         Expanded(
                           child: ElevatedButton(
                             onPressed: isSaving
@@ -865,8 +867,8 @@ class _ApplicationCard extends StatelessWidget {
                                   },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppTheme.primary,
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                               elevation: 0,
                             ),
                             child: isSaving
@@ -878,8 +880,8 @@ class _ApplicationCard extends StatelessWidget {
                                 : Text(
                                     'Save Name',
                                     style: GoogleFonts.poppins(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w700,
                                       color: Colors.white,
                                     ),
                                   ),
@@ -999,13 +1001,25 @@ class _ApplicationCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 14),
-              ElevatedButton(
-                onPressed: () => Navigator.pop(ctx),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primary,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primary,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                  child: Text(
+                    'Close',
+                    style: GoogleFonts.poppins(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                    ),
+                  ),
                 ),
-                child: const Text('Close', style: TextStyle(color: Colors.white)),
               ),
             ],
           ),

@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile_petadopt/screens/adoption/my_applications_screen.dart';
 import 'package:mobile_petadopt/services/api_service.dart';
 import 'package:mobile_petadopt/theme/app_theme.dart';
+import 'package:mobile_petadopt/widgets/app_confirmation_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class PetDetailScreen extends StatefulWidget {
@@ -103,83 +104,22 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
   Future<void> _handleApplyForAdoption() async {
     if (_hasApplied) {
       if (!mounted) return;
-      showDialog(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(22),
-          ),
-          contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
-          actionsPadding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
-          title: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: AppTheme.primaryLight,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(Icons.info_outline_rounded, color: AppTheme.primary, size: 22),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  'Application Submitted',
-                  style: GoogleFonts.poppins(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: AppTheme.textPrimary,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          content: Text(
+      AppConfirmationDialog.show(
+        context,
+        icon: Icons.info_outline_rounded,
+        iconColor: AppTheme.primary,
+        iconBackgroundColor: AppTheme.primaryLight,
+        title: 'Application Submitted',
+        message:
             'You have already submitted an adoption request for $_name. It is currently under review by CAWS.',
-            style: GoogleFonts.poppins(
-              fontSize: 13,
-              color: AppTheme.textSecondary,
-              height: 1.5,
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: Text(
-                'Close',
-                style: GoogleFonts.poppins(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.textSecondary,
-                ),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(ctx);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const MyApplicationsScreen()),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primary,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: Text(
-                'View Applications',
-                style: GoogleFonts.poppins(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
-        ),
+        cancelText: 'Close',
+        confirmText: 'View Applications',
+        onConfirm: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const MyApplicationsScreen()),
+          );
+        },
       );
       return;
     }
@@ -198,31 +138,33 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
         context: context,
         builder: (ctx) => AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          contentPadding: const EdgeInsets.fromLTRB(24, 22, 24, 12),
+          contentPadding: const EdgeInsets.fromLTRB(24, 26, 24, 12),
           actionsPadding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
-          title: Row(
+          title: Column(
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
+                width: 60,
+                height: 60,
                 decoration: BoxDecoration(
                   color: isBlacklisted ? const Color(0xFFFFEAEA) : const Color(0xFFFFFBEB),
-                  borderRadius: BorderRadius.circular(12),
+                  shape: BoxShape.circle,
                 ),
-                child: Icon(
-                  Icons.block_rounded,
-                  color: isBlacklisted ? AppTheme.errorColor : AppTheme.warningColor,
-                  size: 22,
+                child: Center(
+                  child: Icon(
+                    Icons.block_rounded,
+                    color: isBlacklisted ? AppTheme.errorColor : AppTheme.warningColor,
+                    size: 30,
+                  ),
                 ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  isBlacklisted ? 'Account Banned' : 'Account Restricted',
-                  style: GoogleFonts.poppins(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: AppTheme.textPrimary,
-                  ),
+              const SizedBox(height: 14),
+              Text(
+                isBlacklisted ? 'Account Banned' : 'Account Restricted',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.poppins(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.textPrimary,
                 ),
               ),
             ],
@@ -231,17 +173,20 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                isBlacklisted
-                    ? 'Your account has been banned from submitting adoption applications.'
-                    : 'Your account is currently restricted from submitting new adoption applications.',
-                style: GoogleFonts.poppins(
-                  fontSize: 13,
-                  color: AppTheme.textSecondary,
-                  height: 1.4,
+              Center(
+                child: Text(
+                  isBlacklisted
+                      ? 'Your account has been banned from submitting adoption applications.'
+                      : 'Your account is currently restricted from submitting new adoption applications.',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    color: AppTheme.textSecondary,
+                    height: 1.4,
+                  ),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 14),
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(12),
@@ -394,176 +339,42 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
 
     if (savedAddress == null || savedAddress.trim().isEmpty) {
       if (!mounted) return;
-      showDialog(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(22),
-          ),
-          contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
-          actionsPadding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
-          title: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: AppTheme.primaryLight,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(Icons.location_off_rounded, color: AppTheme.primary, size: 22),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  'Address Required',
-                  style: GoogleFonts.poppins(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: AppTheme.textPrimary,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          content: Text(
-            'Please set your location in your profile first before applying for adoption.',
-            style: GoogleFonts.poppins(
-              fontSize: 13,
-              color: AppTheme.textSecondary,
-              height: 1.5,
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              ),
-              child: Text(
-                'Cancel',
-                style: GoogleFonts.poppins(
-                  color: AppTheme.textSecondary,
-                  fontWeight: FontWeight.w500,
-                  fontSize: 13,
-                ),
-              ),
-            ),
-            ElevatedButton.icon(
-              onPressed: () async {
-                Navigator.pop(ctx);
-                await Navigator.pushNamed(context, '/profile');
-                if (mounted) {
-                  _handleApplyForAdoption();
-                }
-              },
-              icon: const Icon(Icons.person_outline_rounded, size: 16, color: Colors.white),
-              label: Text(
-                'Go to Profile',
-                style: GoogleFonts.poppins(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 13,
-                ),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primary,
-                elevation: 0,
-                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
-          ],
-        ),
+      AppConfirmationDialog.show(
+        context,
+        icon: Icons.location_off_rounded,
+        iconColor: AppTheme.primary,
+        iconBackgroundColor: AppTheme.primaryLight,
+        title: 'Address Required',
+        message: 'Please set your location in your profile first before applying for adoption.',
+        cancelText: 'Cancel',
+        confirmText: 'Go to Profile',
+        onConfirm: () async {
+          await Navigator.pushNamed(context, '/profile');
+          if (mounted) {
+            _handleApplyForAdoption();
+          }
+        },
       );
       return;
     }
 
     if (savedPhone == null || savedPhone.trim().isEmpty) {
       if (!mounted) return;
-      showDialog(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(22),
-          ),
-          contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
-          actionsPadding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
-          title: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: AppTheme.primaryLight,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(Icons.phone_iphone_rounded, color: AppTheme.primary, size: 22),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  'Mobile Number Required',
-                  style: GoogleFonts.poppins(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: AppTheme.textPrimary,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          content: Text(
-            'Please fill in your mobile number in your profile first before applying for adoption.',
-            style: GoogleFonts.poppins(
-              fontSize: 13,
-              color: AppTheme.textSecondary,
-              height: 1.5,
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              ),
-              child: Text(
-                'Cancel',
-                style: GoogleFonts.poppins(
-                  color: AppTheme.textSecondary,
-                  fontWeight: FontWeight.w500,
-                  fontSize: 13,
-                ),
-              ),
-            ),
-            ElevatedButton.icon(
-              onPressed: () async {
-                Navigator.pop(ctx);
-                await Navigator.pushNamed(context, '/profile');
-                if (mounted) {
-                  _handleApplyForAdoption();
-                }
-              },
-              icon: const Icon(Icons.person_outline_rounded, size: 16, color: Colors.white),
-              label: Text(
-                'Go to Profile',
-                style: GoogleFonts.poppins(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 13,
-                ),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primary,
-                elevation: 0,
-                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
-          ],
-        ),
+      AppConfirmationDialog.show(
+        context,
+        icon: Icons.phone_iphone_rounded,
+        iconColor: AppTheme.primary,
+        iconBackgroundColor: AppTheme.primaryLight,
+        title: 'Mobile Number Required',
+        message: 'Please fill in your mobile number in your profile first before applying for adoption.',
+        cancelText: 'Cancel',
+        confirmText: 'Go to Profile',
+        onConfirm: () async {
+          await Navigator.pushNamed(context, '/profile');
+          if (mounted) {
+            _handleApplyForAdoption();
+          }
+        },
       );
       return;
     }
