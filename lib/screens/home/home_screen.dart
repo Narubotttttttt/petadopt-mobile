@@ -348,30 +348,40 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   String _matchesLifestyle = 'none';
   String _matchesSearch = '';
+  int _petListEntranceTrigger = 0;
   final GlobalKey<_HomeTabState> _homeTabKey = GlobalKey<_HomeTabState>();
 
   List<Widget> get _tabs => [
     _HomeTab(
       key: _homeTabKey,
-      onSeeAllPressed: () => setState(() => _selectedIndex = 1),
+      onSeeAllPressed: () {
+        setState(() {
+          _petListEntranceTrigger++;
+          _selectedIndex = 1;
+        });
+      },
       onViewApplicationsPressed: () => setState(() => _selectedIndex = 2),
       onViewProfilePressed: () => setState(() => _selectedIndex = 3),
       onLifestyleFilter: (lifestyle) {
         setState(() {
           _matchesLifestyle = lifestyle;
+          _petListEntranceTrigger++;
           _selectedIndex = 1;
         });
       },
       onSearchSubmitted: (query) {
         setState(() {
           _matchesSearch = query;
+          _petListEntranceTrigger++;
           _selectedIndex = 1;
         });
       },
     ),
     PetListScreen(
+      key: ValueKey('pet_list_$_petListEntranceTrigger'),
       initialLifestyle: _matchesLifestyle,
       initialSearch: _matchesSearch,
+      entranceTrigger: _petListEntranceTrigger,
     ),
     const MyApplicationsScreen(),
     const ProfileScreen(),
@@ -418,6 +428,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             onTap: (index) {
               final wasNotHome = _selectedIndex != 0;
               setState(() {
+                if (index == 1 && _selectedIndex != 1) {
+                  _petListEntranceTrigger++;
+                }
                 _selectedIndex = index;
               });
               if (index == 0 && wasNotHome) {
@@ -1006,7 +1019,31 @@ class _HomeTabState extends State<_HomeTab> {
 
   // Direct Navigation Handlers for the 4 Dashboard Modules
   void _openAiMatchmaker() {
-    widget.onSeeAllPressed?.call();
+    HapticFeedback.mediumImpact();
+    Navigator.push(
+      context,
+      PageRouteBuilder(
+        transitionDuration: const Duration(milliseconds: 400),
+        reverseTransitionDuration: const Duration(milliseconds: 300),
+        pageBuilder: (context, animation, secondaryAnimation) => PetListScreen(
+          key: ValueKey('pet_list_${DateTime.now().millisecondsSinceEpoch}'),
+          entranceTrigger: DateTime.now().millisecondsSinceEpoch,
+        ),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          final curved = CurvedAnimation(parent: animation, curve: Curves.easeOutCubic);
+          return FadeTransition(
+            opacity: curved,
+            child: SlideTransition(
+              position: Tween<Offset>(
+                begin: const Offset(0.04, 0.0),
+                end: Offset.zero,
+              ).animate(curved),
+              child: child,
+            ),
+          );
+        },
+      ),
+    ).then((_) => _loadDashboardData());
   }
 
   void _openMonthlyReports() {

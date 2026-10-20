@@ -8,11 +8,13 @@ import 'package:mobile_petadopt/widgets/pet_card.dart';
 class PetListScreen extends StatefulWidget {
   final String? initialSearch;
   final String? initialLifestyle;
+  final int entranceTrigger;
 
   const PetListScreen({
     super.key,
     this.initialSearch,
     this.initialLifestyle,
+    this.entranceTrigger = 0,
   });
 
   @override
@@ -267,7 +269,13 @@ class _PetListScreenState extends State<PetListScreen> {
         automaticallyImplyLeading: false,
         backgroundColor: Colors.transparent,
         elevation: 0,
-        titleSpacing: 16,
+        titleSpacing: Navigator.canPop(context) ? 4 : 16,
+        leading: Navigator.canPop(context)
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppTheme.textPrimary, size: 20),
+                onPressed: () => Navigator.pop(context),
+              )
+            : null,
         title: Row(
           children: [
             Container(
@@ -356,11 +364,13 @@ class _PetListScreenState extends State<PetListScreen> {
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
-            // AI Recommendation Hero Section
+            // AI Recommendation Hero Section with Staggered Reveal Animation
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 6, 16, 14),
                 child: AiRecommendationHero(
+                  key: ValueKey('ai_hero_${widget.entranceTrigger}'),
+                  entranceTrigger: widget.entranceTrigger,
                   searchController: _searchController,
                   activeLifestyleFilter: _activeLifestyleFilter,
                   onSearchChanged: (val) {
