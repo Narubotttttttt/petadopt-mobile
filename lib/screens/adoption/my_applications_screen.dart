@@ -599,7 +599,7 @@ class _ApplicationCard extends StatelessWidget {
                       onPressed: null,
                       icon: const Icon(Icons.lock_outline_rounded, size: 15, color: Color(0xFF94A3B8)),
                       label: Text(
-                        'Pet Health Hub (Locked until Handover)',
+                        'Pet Health Card (Locked until Handover)',
                         style: GoogleFonts.poppins(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
@@ -656,9 +656,9 @@ class _ApplicationCard extends StatelessWidget {
                         ),
                       ).then((_) => onRefresh());
                     },
-                    icon: const Icon(Icons.pets_rounded, size: 15, color: AppTheme.primary),
+                    icon: const Icon(Icons.medical_services_outlined, size: 15, color: AppTheme.primary),
                     label: Text(
-                      'View Adopted Pet Health Hub',
+                      'View Pet Health Card History',
                       style: GoogleFonts.poppins(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:mobile_petadopt/theme/app_theme.dart';
 
 class LuminousAiOrb extends StatefulWidget {
   final double size;
@@ -13,6 +14,7 @@ class _LuminousAiOrbState extends State<LuminousAiOrb>
     with TickerProviderStateMixin {
   late AnimationController _floatController;
   late Animation<double> _floatAnimation;
+  late Animation<double> _glowAnimation;
   late AnimationController _eyeController;
   bool _isHappy = false;
 
@@ -25,6 +27,10 @@ class _LuminousAiOrbState extends State<LuminousAiOrb>
     )..repeat(reverse: true);
 
     _floatAnimation = Tween<double>(begin: -4.0, end: 4.0).animate(
+      CurvedAnimation(parent: _floatController, curve: Curves.easeInOut),
+    );
+
+    _glowAnimation = Tween<double>(begin: 0.88, end: 1.15).animate(
       CurvedAnimation(parent: _floatController, curve: Curves.easeInOut),
     );
 
@@ -67,6 +73,7 @@ class _LuminousAiOrbState extends State<LuminousAiOrb>
         animation: Listenable.merge([_floatAnimation, _eyeController]),
         builder: (context, child) {
           final t = _eyeController.value;
+          final glowFactor = _isHappy ? 1.35 : _glowAnimation.value;
 
           // 1. Natural Blinking logic
           double eyeScaleY = 1.0;
@@ -121,68 +128,109 @@ class _LuminousAiOrbState extends State<LuminousAiOrb>
           return Transform.translate(
             offset: Offset(0, _floatAnimation.value),
             child: SizedBox(
-              width: s + 28,
-              height: s + 24,
+              width: s * 1.35,
+              height: s * 1.25,
               child: Stack(
                 alignment: Alignment.center,
                 children: [
-                  // Soft bottom floor shadow
+                  // Soft bottom floor reflection & contact shadow in vibrant online green
                   Positioned(
-                    bottom: 2,
+                    bottom: 0,
                     child: Container(
-                      width: s * 0.76,
-                      height: 12,
+                      width: s * 0.78,
+                      height: s * 0.14,
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.all(Radius.elliptical(s * 0.76, 12)),
+                        borderRadius: BorderRadius.all(
+                          Radius.elliptical(s * 0.78, s * 0.14),
+                        ),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFF0284C7).withValues(alpha: 0.38),
-                            blurRadius: 18,
-                            spreadRadius: 3,
+                            color: const Color(0xFF22C55E).withValues(
+                              alpha: (0.45 * glowFactor).clamp(0.0, 1.0),
+                            ),
+                            blurRadius: s * 0.25,
+                            spreadRadius: s * 0.04,
+                          ),
+                          BoxShadow(
+                            color: const Color(0xFF15803D).withValues(alpha: 0.22),
+                            blurRadius: s * 0.12,
+                            offset: const Offset(0, 1.5),
                           ),
                         ],
                       ),
                     ),
                   ),
 
-                  // Soft glowing aura surrounding the circle model
+                  // Multi-tier luminous breathing glowing aura (radiates like an active online beacon)
                   Container(
-                    width: s + 8,
-                    height: s + 8,
+                    width: s * 1.12,
+                    height: s * 1.12,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       boxShadow: [
+                        // Core bright neon halo
                         BoxShadow(
-                          color: const Color(0xFF38BDF8).withValues(alpha: 0.42),
-                          blurRadius: 22,
-                          spreadRadius: 4,
+                          color: const Color(0xFF22C55E).withValues(
+                            alpha: (0.62 * glowFactor).clamp(0.0, 1.0),
+                          ),
+                          blurRadius: s * 0.25,
+                          spreadRadius: s * 0.05,
+                        ),
+                        // Mid-range radiant aura
+                        BoxShadow(
+                          color: const Color(0xFF4ADE80).withValues(
+                            alpha: (0.42 * glowFactor).clamp(0.0, 1.0),
+                          ),
+                          blurRadius: s * 0.42,
+                          spreadRadius: s * 0.10,
+                        ),
+                        // Soft wide ambient neon glow
+                        BoxShadow(
+                          color: const Color(0xFF86EFAC).withValues(
+                            alpha: (0.28 * glowFactor).clamp(0.0, 1.0),
+                          ),
+                          blurRadius: s * 0.58,
+                          spreadRadius: s * 0.16,
                         ),
                       ],
                     ),
                   ),
 
-                  // Main circle sphere body with 3D gradient
+                  // Main circle sphere body with social media "online active green" 3D spherical gradient
                   Container(
                     width: s,
                     height: s,
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      gradient: RadialGradient(
-                        center: Alignment(-0.35, -0.35),
-                        radius: 0.95,
-                        colors: [
-                          Color(0xFFBAE6FD),
-                          Color(0xFF60A5FA),
-                          Color(0xFF0284C7),
-                          Color(0xFF0369A1),
-                          Color(0xFF0B192E),
-                        ],
-                        stops: [0.0, 0.30, 0.60, 0.82, 1.0],
+                      border: Border.all(
+                        color: const Color(0xFF86EFAC).withValues(alpha: 0.65),
+                        width: s > 40 ? 1.5 : 1.0,
                       ),
+                      gradient: const RadialGradient(
+                        center: Alignment(-0.35, -0.35),
+                        radius: 0.94,
+                        colors: [
+                          Color(0xFFDCFCE7), // Soft luminous lime-white light origin
+                          Color(0xFF86EFAC), // Bright luminous lime
+                          Color(0xFF4ADE80), // Vibrant neon green
+                          Color(0xFF22C55E), // Iconic social media "online" active green
+                          Color(0xFF16A34A), // Rich active green depth
+                          Color(0xFF15803D), // Deep saturated active emerald base
+                        ],
+                        stops: [0.0, 0.20, 0.44, 0.70, 0.88, 1.0],
+                      ),
+                      boxShadow: [
+                        // Inner edge glow
+                        BoxShadow(
+                          color: const Color(0xFF22C55E).withValues(alpha: 0.50),
+                          blurRadius: s * 0.12,
+                          spreadRadius: -1,
+                        ),
+                      ],
                     ),
                   ),
 
-                  // Animated Glowing Cyan Robot Eyes (directly on the circular sphere)
+                  // Animated Crisp White Eyes (distinct high-contrast against online green body)
                   Transform.translate(
                     offset: Offset(eyeOffsetX, eyeOffsetY),
                     child: Row(
@@ -210,31 +258,38 @@ class _LuminousAiOrbState extends State<LuminousAiOrb>
                   // Primary specular glass sphere highlight
                   Positioned(
                     top: s * 0.10,
-                    left: s * 0.20,
+                    left: s * 0.18,
                     child: IgnorePointer(
                       child: Container(
-                        width: s * 0.28,
-                        height: s * 0.16,
+                        width: s * 0.32,
+                        height: s * 0.18,
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.6),
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Colors.white.withValues(alpha: 0.70),
+                              Colors.white.withValues(alpha: 0.20),
+                            ],
+                          ),
                           borderRadius: BorderRadius.all(
-                            Radius.elliptical(s * 0.28, s * 0.16),
+                            Radius.elliptical(s * 0.32, s * 0.18),
                           ),
                         ),
                       ),
                     ),
                   ),
 
-                  // Secondary specular highlight dot
+                  // Secondary pinpoint specular highlight dot
                   Positioned(
                     top: s * 0.08,
-                    left: s * 0.48,
+                    left: s * 0.52,
                     child: IgnorePointer(
                       child: Container(
-                        width: s * 0.07,
-                        height: s * 0.07,
+                        width: s * 0.08,
+                        height: s * 0.08,
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.45),
+                          color: Colors.white.withValues(alpha: 0.50),
                           shape: BoxShape.circle,
                         ),
                       ),
@@ -264,7 +319,7 @@ class _LuminousAiOrbState extends State<LuminousAiOrb>
           child: CustomPaint(
             size: Size(width, height * 0.62),
             painter: _HappyEyePainter(
-              color: const Color(0xFF00F0FF),
+              color: Colors.white,
               strokeWidth: width * 0.22,
             ),
           ),
@@ -279,32 +334,13 @@ class _LuminousAiOrbState extends State<LuminousAiOrb>
         width: width,
         height: height,
         decoration: BoxDecoration(
-          color: const Color(0xFF00F0FF),
+          color: Colors.white,
           borderRadius: BorderRadius.circular(radius),
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF67E8F9), // Luminous bright cyan top
-              Color(0xFF00F0FF), // Electric cyan core
-              Color(0xFF00D2EF), // Deep neon cyan base
-            ],
-          ),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF075985).withValues(alpha: 0.35),
+              color: Colors.white.withValues(alpha: 0.85),
               blurRadius: 4,
-              offset: const Offset(0, 1.5),
-            ),
-            BoxShadow(
-              color: const Color(0xFF00F0FF).withValues(alpha: 0.95),
-              blurRadius: 10,
-              spreadRadius: 1.5,
-            ),
-            BoxShadow(
-              color: const Color(0xFF38BDF8).withValues(alpha: 0.45),
-              blurRadius: 18,
-              spreadRadius: 3,
+              spreadRadius: 0.5,
             ),
           ],
         ),
@@ -327,11 +363,11 @@ class _HappyEyePainter extends CustomPainter {
       ..strokeCap = StrokeCap.round;
 
     final glowPaint = Paint()
-      ..color = color.withValues(alpha: 0.5)
+      ..color = color.withValues(alpha: 0.6)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth * 2.2
+      ..strokeWidth = strokeWidth * 1.8
       ..strokeCap = StrokeCap.round
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.5);
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.5);
 
     final path = Path()
       ..moveTo(1.5, size.height * 0.85)
@@ -375,17 +411,17 @@ class AiRecommendationHero extends StatelessWidget {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            Color(0xFFBAE6FD),
-            Color(0xFFE0F2FE),
+            Color(0xFFD1FAE5),
+            Color(0xFFECFDF5),
             Color(0xFFF8FAFC),
           ],
           stops: [0.0, 0.45, 1.0],
         ),
         borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: const Color(0xFFBAE6FD).withValues(alpha: 0.6)),
+        border: Border.all(color: const Color(0xFFA7F3D0).withValues(alpha: 0.7)),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF0284C7).withValues(alpha: 0.08),
+            color: const Color(0xFF059669).withValues(alpha: 0.08),
             blurRadius: 20,
             offset: const Offset(0, 6),
           ),
@@ -398,22 +434,22 @@ class AiRecommendationHero extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.7),
+              color: Colors.white.withValues(alpha: 0.85),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: const Color(0xFFBAE6FD)),
+              border: Border.all(color: const Color(0xFFA7F3D0)),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.auto_awesome_rounded, color: Color(0xFF0284C7), size: 13),
+                const Icon(Icons.auto_awesome_rounded, color: AppTheme.primary, size: 13),
                 const SizedBox(width: 5),
                 Text(
-                  'AI PET MATCHMAKER',
+                  'PET FINDER',
                   style: GoogleFonts.poppins(
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.6,
-                    color: const Color(0xFF0369A1),
+                    color: const Color(0xFF065F46),
                   ),
                 ),
               ],
@@ -490,7 +526,7 @@ class AiRecommendationHero extends StatelessWidget {
                     decoration: const BoxDecoration(
                       shape: BoxShape.circle,
                       gradient: LinearGradient(
-                        colors: [Color(0xFF0284C7), Color(0xFF0369A1)],
+                        colors: [Color(0xFF199CA4), Color(0xFF0E7A80)],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
@@ -586,16 +622,16 @@ class AiRecommendationHero extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFF0F9FF) : Colors.white,
+          color: isSelected ? const Color(0xFFECFDF5) : Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected ? const Color(0xFF0284C7) : const Color(0xFFCBD5E1),
+            color: isSelected ? AppTheme.primary : const Color(0xFFCBD5E1),
             width: isSelected ? 1.5 : 0.8,
           ),
           boxShadow: [
             BoxShadow(
               color: isSelected
-                  ? const Color(0xFF0284C7).withValues(alpha: 0.1)
+                  ? const Color(0xFF199CA4).withValues(alpha: 0.12)
                   : Colors.black.withValues(alpha: 0.02),
               blurRadius: 8,
               offset: const Offset(0, 2),
@@ -618,7 +654,7 @@ class AiRecommendationHero extends StatelessWidget {
                   child: Icon(icon, color: iconColor, size: 17),
                 ),
                 if (isSelected)
-                  const Icon(Icons.check_circle_rounded, color: Color(0xFF0284C7), size: 16),
+                  const Icon(Icons.check_circle_rounded, color: AppTheme.primary, size: 16),
               ],
             ),
             const SizedBox(height: 10),

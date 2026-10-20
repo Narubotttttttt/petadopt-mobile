@@ -360,49 +360,16 @@ class _AdoptedPetHubScreenState extends State<AdoptedPetHubScreen> {
       );
     }
 
-    return Scaffold(
-      backgroundColor: AppTheme.background,
-      appBar: AppBar(
-        title: Text(
-          petName,
-          style: GoogleFonts.poppins(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: AppTheme.textPrimary,
-          ),
-        ),
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppTheme.primary))
-          : RefreshIndicator(
-              onRefresh: _loadHubData,
-              color: AppTheme.primary,
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildPetHeroCard(petName, petBreed, petType, petImage, dateApplied, isDeceased: isDeceased),
-                    const SizedBox(height: 16),
-                    if (isDeceased)
-                      _buildMemorialCard(petName, deceasedCheckin ?? latestCheckin)
-                    else
-                      _buildCheckinStatusCard(
-                        isOverdue: isOverdue,
-                        overdueDays: overdueDays,
-                        daysLeft: daysLeft,
-                        latestCheckin: latestCheckin,
-                      ),
-                    const SizedBox(height: 20),
-                    _buildHealthJournalSection(),
-                    if (!isDeceased) ...[
-                      const SizedBox(height: 20),
-                      _buildVaccineSection(),
-                    ],
-                  ],
-                ),
-              ),
-            ),
+    final petId = (widget.application['pet_id'] ??
+        widget.application['petId'] ??
+        widget.application['pet']?['id'] ??
+        widget.application['shelterPetId']) as int? ?? 0;
+
+    return PetMedicalCardScreen(
+      petId: petId,
+      applicationId: (widget.application['id'] as num?)?.toInt(),
+      petName: petName,
+      petImage: petImage,
     );
   }
 
