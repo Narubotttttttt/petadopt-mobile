@@ -373,6 +373,7 @@ class _PetListScreenState extends State<PetListScreen> {
                   entranceTrigger: widget.entranceTrigger,
                   searchController: _searchController,
                   activeLifestyleFilter: _activeLifestyleFilter,
+                  isCompact: _hasTakenQuiz || displayedPets.isNotEmpty,
                   onSearchChanged: (val) {
                     setState(() => _searchQuery = val);
                   },
@@ -432,8 +433,8 @@ class _PetListScreenState extends State<PetListScreen> {
                 ),
               )
             else if (!_hasTakenQuiz && _recommendations.isEmpty)
-              SliverToBoxAdapter(
-                child: _buildQuizPromptState(),
+              const SliverToBoxAdapter(
+                child: SizedBox(height: 32),
               )
             else if (displayedPets.isEmpty)
               SliverToBoxAdapter(
@@ -465,74 +466,6 @@ class _PetListScreenState extends State<PetListScreen> {
                   ),
                 ),
               ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildQuizPromptState() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 70,
-              height: 70,
-              decoration: BoxDecoration(
-                color: AppTheme.primary.withValues(alpha: 0.12),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.auto_awesome_rounded,
-                size: 34,
-                color: AppTheme.primary,
-              ),
-            ),
-            const SizedBox(height: 18),
-            Text(
-              'Discover Your Compatible Pets',
-              textAlign: TextAlign.center,
-              style: GoogleFonts.poppins(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: AppTheme.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Our Machine Learning engine matches pets based on your living space, schedule, household, and personality.',
-              textAlign: TextAlign.center,
-              style: GoogleFonts.poppins(
-                fontSize: 12,
-                color: AppTheme.textSecondary,
-                height: 1.45,
-              ),
-            ),
-            const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: _openQuiz,
-                icon: const Icon(Icons.quiz_outlined, size: 17),
-                label: Text(
-                  'Take Compatibility Assessment',
-                  style: GoogleFonts.poppins(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 13),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                  elevation: 0,
-                ),
-              ),
-            ),
           ],
         ),
       ),

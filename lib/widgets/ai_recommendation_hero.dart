@@ -20,6 +20,9 @@ class _LuminousAiOrbState extends State<LuminousAiOrb>
   late AnimationController _eyeController;
   late AnimationController _tapTurnController;
   late Animation<double> _tapTurnAnimation;
+  // Gentle left→right sway that plays once after every turn landing
+  late AnimationController _wiggleController;
+  late Animation<double> _wiggleAnimation;
   bool _isHappy = false;
 
   @override
@@ -51,13 +54,45 @@ class _LuminousAiOrbState extends State<LuminousAiOrb>
       parent: _tapTurnController,
       curve: Curves.easeInOutCubic,
     );
+
+    // Wiggle: one full left→right→centre sway over 1400ms
+    _wiggleController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1400),
+    );
+    // Maps 0→1 to a sine arch so the sway is -1 → 0 → +1 → 0
+    _wiggleAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _wiggleController, curve: Curves.easeInOut),
+    );
+
+    // Auto-trigger wiggle when the entrance turn animation completes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (widget.turnAnimation != null) {
+        widget.turnAnimation!.addStatusListener(_onTurnStatusChanged);
+      }
+    });
+  }
+
+  void _onTurnStatusChanged(AnimationStatus status) {
+    if (status == AnimationStatus.completed) {
+      _triggerWiggle();
+    }
+  }
+
+  void _triggerWiggle() {
+    if (!mounted) return;
+    _wiggleController.forward(from: 0.0);
   }
 
   @override
   void dispose() {
+    if (widget.turnAnimation != null) {
+      widget.turnAnimation!.removeStatusListener(_onTurnStatusChanged);
+    }
     _floatController.dispose();
     _eyeController.dispose();
     _tapTurnController.dispose();
+    _wiggleController.dispose();
     super.dispose();
   }
 
@@ -65,7 +100,9 @@ class _LuminousAiOrbState extends State<LuminousAiOrb>
     if (_tapTurnController.isAnimating) return;
     _tapTurnController.forward(from: 0.0);
     setState(() => _isHappy = true);
-    Future.delayed(const Duration(milliseconds: 1400), () {
+    // After tap turn finishes, trigger the post-landing wiggle
+    Future.delayed(const Duration(milliseconds: 970), () {
+      _triggerWiggle();
       if (mounted) setState(() => _isHappy = false);
     });
   }
@@ -82,7 +119,7 @@ class _LuminousAiOrbState extends State<LuminousAiOrb>
     final maxShiftX = s * 0.045;
     final maxShiftY = s * 0.024;
 
-    final listenables = <Listenable>[_floatAnimation, _eyeController, _tapTurnAnimation];
+    final listenables = <Listenable>[_floatAnimation, _eyeController, _tapTurnAnimation, _wiggleAnimation];
     if (widget.turnAnimation != null) {
       listenables.add(widget.turnAnimation!);
     }
@@ -217,13 +254,22 @@ class _LuminousAiOrbState extends State<LuminousAiOrb>
               ? (0.20 + 0.35 * cosAngle).clamp(0.08, 0.55)
               : 0.50;
 
+          // Wiggle: sine arch gives -1→0→+1→0 for a left→right→centre sway
+          final double wiggleX = _wiggleController.isAnimating
+              ? math.sin(_wiggleAnimation.value * math.pi * 2) * s * 0.12
+              : 0.0;
+          // Gentle lean into the sway direction
+          final double wiggleLean = _wiggleController.isAnimating
+              ? math.sin(_wiggleAnimation.value * math.pi * 2) * 0.08
+              : 0.0;
+
           return Transform.translate(
-            offset: Offset(0, _floatAnimation.value + hopY),
+            offset: Offset(wiggleX, _floatAnimation.value + hopY),
             child: Transform(
               alignment: Alignment.center,
               transform: Matrix4.identity()
                 ..setEntry(3, 2, 0.0012)
-                ..rotateZ(sinAngle * 0.09)
+                ..rotateZ(sinAngle * 0.09 + wiggleLean)
                 ..rotateX(sinAngle * 0.06),
               child: SizedBox(
                 width: s * 1.35,
@@ -231,7 +277,7 @@ class _LuminousAiOrbState extends State<LuminousAiOrb>
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
-                    // Soft bottom floor reflection & contact shadow in vibrant online green
+                    // Soft bottom floor reflection & contact shadow in brand teal
                     Positioned(
                       bottom: 0,
                       child: Container(
@@ -243,14 +289,14 @@ class _LuminousAiOrbState extends State<LuminousAiOrb>
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFF22C55E).withValues(
+                              color: const Color(0xFF199CA4).withValues(
                                 alpha: (0.45 * glowFactor).clamp(0.0, 1.0),
                               ),
                               blurRadius: s * 0.25,
                               spreadRadius: s * 0.04,
                             ),
                             BoxShadow(
-                              color: const Color(0xFF15803D).withValues(alpha: 0.22),
+                              color: const Color(0xFF0E7A80).withValues(alpha: 0.25),
                               blurRadius: s * 0.12,
                               offset: const Offset(0, 1.5),
                             ),
@@ -259,68 +305,68 @@ class _LuminousAiOrbState extends State<LuminousAiOrb>
                       ),
                     ),
 
-                    // Multi-tier luminous breathing glowing aura (radiates like an active online beacon)
+                    // Multi-tier luminous breathing glowing aura (radiates like an active teal beacon)
                     Container(
                       width: s * 1.12,
                       height: s * 1.12,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         boxShadow: [
-                          // Core bright neon halo
+                          // Core bright cyan-teal halo
                           BoxShadow(
-                            color: const Color(0xFF22C55E).withValues(
-                              alpha: (0.62 * glowFactor).clamp(0.0, 1.0),
+                            color: const Color(0xFF2DD4BF).withValues(
+                              alpha: (0.58 * glowFactor).clamp(0.0, 1.0),
                             ),
                             blurRadius: s * 0.25,
-                            spreadRadius: s * 0.05,
+                            spreadRadius: s * 0.04,
                           ),
-                          // Mid-range radiant aura
+                          // Mid-range radiant teal aura
                           BoxShadow(
-                            color: const Color(0xFF4ADE80).withValues(
-                              alpha: (0.42 * glowFactor).clamp(0.0, 1.0),
+                            color: const Color(0xFF199CA4).withValues(
+                              alpha: (0.40 * glowFactor).clamp(0.0, 1.0),
                             ),
                             blurRadius: s * 0.42,
-                            spreadRadius: s * 0.10,
+                            spreadRadius: s * 0.08,
                           ),
-                          // Soft wide ambient neon glow
+                          // Soft wide ambient cyan-teal glow
                           BoxShadow(
-                            color: const Color(0xFF86EFAC).withValues(
-                              alpha: (0.28 * glowFactor).clamp(0.0, 1.0),
+                            color: const Color(0xFF99F6E4).withValues(
+                              alpha: (0.25 * glowFactor).clamp(0.0, 1.0),
                             ),
                             blurRadius: s * 0.58,
-                            spreadRadius: s * 0.16,
+                            spreadRadius: s * 0.14,
                           ),
                         ],
                       ),
                     ),
 
-                    // Main circle sphere body with social media "online active green" 3D spherical gradient
+                    // Main circle sphere body with premium 3D teal & white spherical gradient
                     Container(
                       width: s,
                       height: s,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: const Color(0xFF86EFAC).withValues(alpha: 0.65),
+                          color: const Color(0xFFCCFBF1).withValues(alpha: 0.85),
                           width: s > 40 ? 1.5 : 1.0,
                         ),
                         gradient: RadialGradient(
                           center: Alignment(lightCenterX, lightCenterY),
                           radius: 0.94,
                           colors: const [
-                            Color(0xFFDCFCE7), // Soft luminous lime-white light origin
-                            Color(0xFF86EFAC), // Bright luminous lime
-                            Color(0xFF4ADE80), // Vibrant neon green
-                            Color(0xFF22C55E), // Iconic social media "online" active green
-                            Color(0xFF16A34A), // Rich active green depth
-                            Color(0xFF15803D), // Deep saturated active emerald base
+                            Color(0xFFFFFFFF), // Pure white specular origin
+                            Color(0xFFE0F7FA), // Soft luminous ice-white teal
+                            Color(0xFF5EEAD4), // Radiant bright cyan-teal
+                            Color(0xFF199CA4), // App brand primary teal
+                            Color(0xFF0E7A80), // Deep brand primary dark teal
+                            Color(0xFF0F5A5E), // Deepest shaded rich teal base
                           ],
-                          stops: const [0.0, 0.20, 0.44, 0.70, 0.88, 1.0],
+                          stops: const [0.0, 0.18, 0.42, 0.68, 0.88, 1.0],
                         ),
                         boxShadow: [
-                          // Inner edge glow
+                          // Inner edge teal glow
                           BoxShadow(
-                            color: const Color(0xFF22C55E).withValues(alpha: 0.50),
+                            color: const Color(0xFF199CA4).withValues(alpha: 0.50),
                             blurRadius: s * 0.12,
                             spreadRadius: -1,
                           ),
@@ -531,10 +577,8 @@ class _AiRecommendationHeroState extends State<AiRecommendationHero>
   late Animation<double> _orbTurn;
   late Animation<double> _searchFade;
   late Animation<Offset> _searchSlide;
-  late Animation<double> _cardsFade;
-  late Animation<Offset> _cardsSlide;
 
-  static const String _fullHeadline = 'How Can I Help You Today?';
+  static const String _fullHeadline = "Let's Find Your Perfect Match";
 
   @override
   void initState() {
@@ -559,7 +603,7 @@ class _AiRecommendationHeroState extends State<AiRecommendationHero>
 
     _typewriterAnimation = StepTween(
       begin: 0,
-      end: _fullHeadline.length,
+      end: _fullHeadline.characters.length,
     ).animate(CurvedAnimation(
       parent: _animController,
       curve: const Interval(0.05, 0.36, curve: Curves.linear),
@@ -601,19 +645,6 @@ class _AiRecommendationHeroState extends State<AiRecommendationHero>
       curve: const Interval(0.62, 0.85, curve: Curves.easeOutCubic),
     ));
 
-    // 5. 2x2 Lifestyle cards cascade into place (1950ms - 2500ms)
-    _cardsFade = CurvedAnimation(
-      parent: _animController,
-      curve: const Interval(0.78, 1.0, curve: Curves.easeOutCubic),
-    );
-    _cardsSlide = Tween<Offset>(
-      begin: const Offset(0, 0.30),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _animController,
-      curve: const Interval(0.78, 1.0, curve: Curves.easeOutCubic),
-    ));
-
     _animController.forward();
   }
 
@@ -640,17 +671,17 @@ class _AiRecommendationHeroState extends State<AiRecommendationHero>
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            Color(0xFFD1FAE5),
-            Color(0xFFECFDF5),
-            Color(0xFFF8FAFC),
+            Color(0xFFE0F7FA), // Soft luminous ice-teal
+            Color(0xFFF0FDFA), // Ultra soft white-teal
+            Color(0xFFFFFFFF), // Crisp pure white
           ],
           stops: [0.0, 0.45, 1.0],
         ),
         borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: const Color(0xFFA7F3D0).withValues(alpha: 0.7)),
+        border: Border.all(color: const Color(0xFFB2EBF2).withValues(alpha: 0.85)),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF059669).withValues(alpha: 0.08),
+            color: const Color(0xFF0E7A80).withValues(alpha: 0.08),
             blurRadius: 20,
             offset: const Offset(0, 6),
           ),
@@ -669,9 +700,9 @@ class _AiRecommendationHeroState extends State<AiRecommendationHero>
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.85),
+                      color: Colors.white.withValues(alpha: 0.90),
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: const Color(0xFFA7F3D0)),
+                      border: Border.all(color: const Color(0xFFB2EBF2)),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -684,7 +715,7 @@ class _AiRecommendationHeroState extends State<AiRecommendationHero>
                             fontSize: 10,
                             fontWeight: FontWeight.w700,
                             letterSpacing: 0.6,
-                            color: const Color(0xFF065F46),
+                            color: AppTheme.primaryDark,
                           ),
                         ),
                       ],
@@ -695,8 +726,8 @@ class _AiRecommendationHeroState extends State<AiRecommendationHero>
                     animation: _typewriterAnimation,
                     builder: (context, _) {
                       final count = _typewriterAnimation.value;
-                      final text = _fullHeadline.substring(0, count);
-                      final isTyping = count < _fullHeadline.length;
+                      final text = _fullHeadline.characters.take(count).toString();
+                      final isTyping = count < _fullHeadline.characters.length;
                       return RichText(
                         textAlign: TextAlign.center,
                         text: TextSpan(
@@ -714,7 +745,7 @@ class _AiRecommendationHeroState extends State<AiRecommendationHero>
                                 style: GoogleFonts.poppins(
                                   fontSize: 20,
                                   fontWeight: FontWeight.w600,
-                                  color: const Color(0xFF22C55E),
+                                  color: AppTheme.primary,
                                 ),
                               ),
                           ],
@@ -744,148 +775,156 @@ class _AiRecommendationHeroState extends State<AiRecommendationHero>
           ),
           const SizedBox(height: 18),
 
-          // 3. Prompt & Search Bar (Phase 3)
+          if (!widget.isCompact) ...[
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.85),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: const Color(0xFFB2EBF2).withValues(alpha: 0.85)),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF0E7A80).withValues(alpha: 0.04),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  _buildBenefitRow(
+                    icon: Icons.home_outlined,
+                    title: 'Living Space & Routine',
+                    subtitle: 'Matched to your apartment or yard and daily schedule',
+                  ),
+                  const Divider(height: 18, color: Color(0xFFE2E8F0)),
+                  _buildBenefitRow(
+                    icon: Icons.psychology_outlined,
+                    title: 'Personality & Energy',
+                    subtitle: 'Pair with playful, calm, or family-friendly companions',
+                  ),
+                  const Divider(height: 18, color: Color(0xFFE2E8F0)),
+                  _buildBenefitRow(
+                    icon: Icons.verified_outlined,
+                    title: 'Compatibility Scoring',
+                    subtitle: 'Calculates match percentages for your best companion',
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 18),
+          ],
+
+          // 3. Interactive Quiz Action Bar (Phase 3)
           FadeTransition(
             opacity: _searchFade,
             child: SlideTransition(
               position: _searchSlide,
-              child: Container(
-                height: 52,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(26),
-                  border: Border.all(color: const Color(0xFFCBD5E1), width: 0.9),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.04),
-                      blurRadius: 10,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-                ),
-                padding: const EdgeInsets.symmetric(horizontal: 14),
-                child: Row(
-                  children: [
-                    const Icon(Icons.add_rounded, color: Color(0xFF64748B), size: 20),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: TextField(
-                        controller: widget.searchController,
-                        onChanged: widget.onSearchChanged,
-                        onSubmitted: widget.onSearchSubmitted,
-                        style: GoogleFonts.poppins(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                          color: const Color(0xFF0F172A),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: widget.onQuizPressed,
+                  borderRadius: BorderRadius.circular(28),
+                  child: Ink(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(28),
+                      border: Border.all(color: const Color(0xFFCBD5E1), width: 1.0),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF0E7A80).withValues(alpha: 0.08),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
                         ),
-                        decoration: InputDecoration(
-                          hintText: 'What kind of pet are you looking for?',
-                          hintStyle: GoogleFonts.poppins(
-                            fontSize: 12.5,
-                            color: const Color(0xFF94A3B8),
-                            fontWeight: FontWeight.w400,
+                      ],
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 36,
+                          height: 36,
+                          decoration: const BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: AppTheme.primaryLight,
                           ),
-                          border: InputBorder.none,
-                          isDense: true,
-                        ),
-                      ),
-                    ),
-                    GestureDetector(
-                      onTap: () {
-                        if (widget.onSearchSubmitted != null && widget.searchController != null) {
-                          widget.onSearchSubmitted!(widget.searchController!.text);
-                        }
-                      },
-                      child: Container(
-                        width: 36,
-                        height: 36,
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: LinearGradient(
-                            colors: [Color(0xFF199CA4), Color(0xFF0E7A80)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
+                          child: const Center(
+                            child: Icon(
+                              Icons.quiz_outlined,
+                              color: AppTheme.primaryDark,
+                              size: 19,
+                            ),
                           ),
                         ),
-                        child: const Center(
-                          child: Icon(
-                            Icons.auto_awesome_rounded,
-                            color: Colors.white,
-                            size: 16,
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              FittedBox(
+                                fit: BoxFit.scaleDown,
+                                alignment: Alignment.centerLeft,
+                                child: Text(
+                                  'Answer the Match Quiz',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: const Color(0xFF0F172A),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              FittedBox(
+                                fit: BoxFit.scaleDown,
+                                alignment: Alignment.centerLeft,
+                                child: Text(
+                                  'I will find the perfect pet for you',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w600,
+                                    color: const Color(0xFF1E293B),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(20),
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF199CA4), Color(0xFF0E7A80)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'Start',
+                                style: GoogleFonts.poppins(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              const Icon(
+                                Icons.arrow_forward_rounded,
+                                color: Colors.white,
+                                size: 14,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 18),
-
-          // 4. 2x2 Quick Lifestyle Helper Cards (Phase 4)
-          FadeTransition(
-            opacity: _cardsFade,
-            child: SlideTransition(
-              position: _cardsSlide,
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildHelperCard(
-                          icon: Icons.psychology_rounded,
-                          iconColor: const Color(0xFF7C3AED),
-                          iconBg: const Color(0xFFF5F3FF),
-                          title: 'Take Match Quiz',
-                          subtitle: '1-Min AI Match',
-                          isSelected: false,
-                          onTap: widget.onQuizPressed,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: _buildHelperCard(
-                          icon: Icons.apartment_rounded,
-                          iconColor: const Color(0xFF0D9488),
-                          iconBg: const Color(0xFFF0FDFA),
-                          title: 'Apartment Friendly',
-                          subtitle: 'Calm & Quiet',
-                          isSelected: widget.activeLifestyleFilter == 'apartment',
-                          onTap: () => widget.onFilterSelected(widget.activeLifestyleFilter == 'apartment' ? 'none' : 'apartment'),
-                        ),
-                      ),
-                    ],
                   ),
-                  const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildHelperCard(
-                          icon: Icons.directions_run_rounded,
-                          iconColor: const Color(0xFFEA580C),
-                          iconBg: const Color(0xFFFFF7ED),
-                          title: 'Active & Playful',
-                          subtitle: 'High Energy',
-                          isSelected: widget.activeLifestyleFilter == 'active',
-                          onTap: () => widget.onFilterSelected(widget.activeLifestyleFilter == 'active' ? 'none' : 'active'),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: _buildHelperCard(
-                          icon: Icons.family_restroom_rounded,
-                          iconColor: const Color(0xFFE11D48),
-                          iconBg: const Color(0xFFFFF1F2),
-                          title: 'Gentle & Family',
-                          subtitle: 'Kids & Pets',
-                          isSelected: widget.activeLifestyleFilter == 'family',
-                          onTap: () => widget.onFilterSelected(widget.activeLifestyleFilter == 'family' ? 'none' : 'family'),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+                ),
               ),
             ),
           ),
@@ -894,83 +933,49 @@ class _AiRecommendationHeroState extends State<AiRecommendationHero>
     );
   }
 
-  Widget _buildHelperCard({
+  Widget _buildBenefitRow({
     required IconData icon,
-    required Color iconColor,
-    required Color iconBg,
     required String title,
     required String subtitle,
-    required bool isSelected,
-    required VoidCallback onTap,
   }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-        decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFECFDF5) : Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isSelected ? AppTheme.primary : const Color(0xFFCBD5E1),
-            width: isSelected ? 1.5 : 0.8,
+    return Row(
+      children: [
+        Container(
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            color: AppTheme.primaryLight,
+            borderRadius: BorderRadius.circular(10),
           ),
-          boxShadow: [
-            BoxShadow(
-              color: isSelected
-                  ? const Color(0xFF199CA4).withValues(alpha: 0.12)
-                  : Colors.black.withValues(alpha: 0.02),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          child: Icon(icon, color: AppTheme.primaryDark, size: 17),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    color: iconBg,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Icon(icon, color: iconColor, size: 17),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: GoogleFonts.poppins(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF0F172A),
                 ),
-                if (isSelected)
-                  const Icon(Icons.check_circle_rounded, color: AppTheme.primary, size: 16),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Text(
-              title,
-              style: GoogleFonts.poppins(
-                fontSize: 12.5,
-                fontWeight: FontWeight.w700,
-                color: const Color(0xFF0F172A),
-                height: 1.25,
               ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 2),
-            Text(
-              subtitle,
-              style: GoogleFonts.poppins(
-                fontSize: 10.5,
-                fontWeight: FontWeight.w500,
-                color: const Color(0xFF64748B),
+              Text(
+                subtitle,
+                style: GoogleFonts.poppins(
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w400,
+                  color: const Color(0xFF64748B),
+                ),
               ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
+      ],
     );
   }
+
 }
+

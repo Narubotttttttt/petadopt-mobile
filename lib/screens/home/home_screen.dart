@@ -360,6 +360,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           _selectedIndex = 1;
         });
       },
+      onPetFinderPressed: () {
+        setState(() {
+          _matchesLifestyle = 'none';
+          _matchesSearch = '';
+          _petListEntranceTrigger++;
+          _selectedIndex = 1;
+        });
+      },
       onViewApplicationsPressed: () => setState(() => _selectedIndex = 2),
       onViewProfilePressed: () => setState(() => _selectedIndex = 3),
       onLifestyleFilter: (lifestyle) {
@@ -515,6 +523,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
 class _HomeTab extends StatefulWidget {
   final VoidCallback? onSeeAllPressed;
+  final VoidCallback? onPetFinderPressed;
   final VoidCallback? onViewApplicationsPressed;
   final VoidCallback? onViewProfilePressed;
   final ValueChanged<String>? onLifestyleFilter;
@@ -523,6 +532,7 @@ class _HomeTab extends StatefulWidget {
   const _HomeTab({
     super.key,
     this.onSeeAllPressed,
+    this.onPetFinderPressed,
     this.onViewApplicationsPressed,
     this.onViewProfilePressed,
     this.onLifestyleFilter,
@@ -1020,30 +1030,21 @@ class _HomeTabState extends State<_HomeTab> {
   // Direct Navigation Handlers for the 4 Dashboard Modules
   void _openAiMatchmaker() {
     HapticFeedback.mediumImpact();
-    Navigator.push(
-      context,
-      PageRouteBuilder(
-        transitionDuration: const Duration(milliseconds: 400),
-        reverseTransitionDuration: const Duration(milliseconds: 300),
-        pageBuilder: (context, animation, secondaryAnimation) => PetListScreen(
-          key: ValueKey('pet_list_${DateTime.now().millisecondsSinceEpoch}'),
-          entranceTrigger: DateTime.now().millisecondsSinceEpoch,
+    if (widget.onPetFinderPressed != null) {
+      widget.onPetFinderPressed!();
+    } else if (widget.onSeeAllPressed != null) {
+      widget.onSeeAllPressed!();
+    } else {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => PetListScreen(
+            key: ValueKey('pet_list_${DateTime.now().millisecondsSinceEpoch}'),
+            entranceTrigger: DateTime.now().millisecondsSinceEpoch,
+          ),
         ),
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          final curved = CurvedAnimation(parent: animation, curve: Curves.easeOutCubic);
-          return FadeTransition(
-            opacity: curved,
-            child: SlideTransition(
-              position: Tween<Offset>(
-                begin: const Offset(0.04, 0.0),
-                end: Offset.zero,
-              ).animate(curved),
-              child: child,
-            ),
-          );
-        },
-      ),
-    ).then((_) => _loadDashboardData());
+      );
+    }
   }
 
   void _openMonthlyReports() {
