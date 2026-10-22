@@ -67,16 +67,35 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
         automaticallyImplyLeading: false,
+        leading: Navigator.canPop(context)
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF0F172A)),
+                onPressed: () => Navigator.pop(context),
+              )
+            : null,
         backgroundColor: Colors.white,
         elevation: 0,
         scrolledUnderElevation: 0,
-        title: Text(
-          'My Applications',
-          style: GoogleFonts.poppins(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: const Color(0xFF0F172A),
-          ),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'My Applications',
+              style: GoogleFonts.poppins(
+                fontSize: 17,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF0F172A),
+              ),
+            ),
+            Text(
+              'Adoption Application Tracker',
+              style: GoogleFonts.poppins(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: AppTheme.primary,
+              ),
+            ),
+          ],
         ),
         actions: [
           IconButton(
@@ -410,6 +429,17 @@ class _ApplicationCard extends StatelessWidget {
                   ),
                 ),
               ],
+            ),
+
+            // Adoption Application Tracker Stepper & Milestone Banner
+            _buildTrackerSection(
+              status: status,
+              isAdoptedByOther: isAdoptedByOther,
+              isScheduled: isScheduled,
+              scheduledAt: scheduledAt,
+              isSigned: isSigned,
+              isContractUnlocked: isContractUnlocked,
+              rejectionReason: rejectionReason,
             ),
 
             // Scheduled Pickup Info (if approved and scheduled)
@@ -965,6 +995,232 @@ class _ApplicationCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildTrackerSection({
+    required String status,
+    required bool isAdoptedByOther,
+    required bool isScheduled,
+    required String? scheduledAt,
+    required bool isSigned,
+    required bool isContractUnlocked,
+    required String? rejectionReason,
+  }) {
+    int currentStep = 0; // 0: Submitted, 1: Review, 2: Interview, 3: Finalize
+    String statusMessage = 'Application submitted and queued for shelter evaluation.';
+    Color statusColor = const Color(0xFFD97706);
+    Color statusBg = const Color(0xFFFEF3C7);
+    bool isDeclined = false;
+
+    if (isAdoptedByOther || status == 'rejected') {
+      isDeclined = true;
+      statusColor = const Color(0xFFDC2626);
+      statusBg = const Color(0xFFFEE2E2);
+      currentStep = 1;
+      statusMessage = rejectionReason != null && rejectionReason.isNotEmpty
+          ? 'Application not approved: $rejectionReason'
+          : 'Application was not approved by the shelter coordinators.';
+    } else if (status == 'adopted' || (status == 'approved' && isContractUnlocked)) {
+      statusColor = AppTheme.primary;
+      statusBg = AppTheme.primaryLight;
+      currentStep = 3;
+      statusMessage = 'Adoption finalized! Companion is officially in your care.';
+    } else if (status == 'approved') {
+      if (isSigned) {
+        statusColor = const Color(0xFF10B981);
+        statusBg = const Color(0xFFD1FAE5);
+        currentStep = 3;
+        statusMessage = 'Agreement signed. Awaiting final shelter handover.';
+      } else if (isScheduled) {
+        statusColor = const Color(0xFF7C3AED);
+        statusBg = const Color(0xFFEDE9FE);
+        currentStep = 2;
+        statusMessage = 'Pickup/Interview scheduled for $scheduledAt. Please pre-sign below.';
+      } else {
+        statusColor = const Color(0xFF10B981);
+        statusBg = const Color(0xFFD1FAE5);
+        currentStep = 2;
+        statusMessage = 'Pre-Approved! Please review and sign the adoption agreement below.';
+      }
+    } else if (status == 'under_review') {
+      statusColor = const Color(0xFF0284C7);
+      statusBg = const Color(0xFFE0F2FE);
+      currentStep = 1;
+      statusMessage = 'Staff is actively reviewing your adoption questionnaire.';
+    } else {
+      statusColor = const Color(0xFFD97706);
+      statusBg = const Color(0xFFFEF3C7);
+      currentStep = 0;
+      statusMessage = 'Application submitted and queued for shelter evaluation.';
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(top: 14, bottom: 4),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE2E8F0), width: 0.9),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'ADOPTION PROGRESS',
+                style: GoogleFonts.poppins(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF64748B),
+                  letterSpacing: 0.6,
+                ),
+              ),
+              Text(
+                isDeclined
+                    ? 'Declined'
+                    : currentStep == 3
+                        ? 'Finalized'
+                        : 'Step ${currentStep + 1} of 4',
+                style: GoogleFonts.poppins(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  color: statusColor,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _buildTrackerStepper(currentStep, isDeclined: isDeclined),
+          const SizedBox(height: 12),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            decoration: BoxDecoration(
+              color: statusBg.withValues(alpha: 0.65),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: statusColor.withValues(alpha: 0.3), width: 0.8),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  isDeclined
+                      ? Icons.info_outline_rounded
+                      : Icons.check_circle_outline_rounded,
+                  size: 14,
+                  color: statusColor,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    statusMessage,
+                    style: GoogleFonts.poppins(
+                      fontSize: 11,
+                      color: const Color(0xFF334155),
+                      fontWeight: FontWeight.w500,
+                      height: 1.35,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTrackerStepper(int currentStep, {bool isDeclined = false}) {
+    final steps = ['Submitted', 'Review', 'Interview', 'Finalize'];
+
+    return Row(
+      children: List.generate(steps.length * 2 - 1, (index) {
+        if (index.isOdd) {
+          final stepBefore = index ~/ 2;
+          final isCompleted = !isDeclined && stepBefore < currentStep;
+          return Expanded(
+            child: Container(
+              height: 2.5,
+              decoration: BoxDecoration(
+                color: isCompleted ? AppTheme.primary : const Color(0xFFE2E8F0),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          );
+        }
+
+        final stepIndex = index ~/ 2;
+        final isCompleted = !isDeclined && stepIndex < currentStep;
+        final isCurrent = !isDeclined && stepIndex == currentStep;
+        final isStepDeclined = isDeclined && stepIndex == currentStep;
+
+        final Color circleColor = isStepDeclined
+            ? const Color(0xFFDC2626)
+            : isCompleted || isCurrent
+                ? AppTheme.primary
+                : const Color(0xFFCBD5E1);
+
+        final Color circleBg = isStepDeclined
+            ? const Color(0xFFFEE2E2)
+            : isCompleted
+                ? AppTheme.primary
+                : isCurrent
+                    ? AppTheme.primary.withValues(alpha: 0.15)
+                    : const Color(0xFFF1F5F9);
+
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 22,
+              height: 22,
+              decoration: BoxDecoration(
+                color: circleBg,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: circleColor,
+                  width: isCurrent ? 2 : 1.5,
+                ),
+                boxShadow: isCurrent
+                    ? [
+                        BoxShadow(
+                          color: AppTheme.primary.withValues(alpha: 0.25),
+                          blurRadius: 6,
+                          offset: const Offset(0, 1),
+                        ),
+                      ]
+                    : null,
+              ),
+              child: Center(
+                child: isCompleted
+                    ? const Icon(Icons.check, size: 12, color: Colors.white)
+                    : isStepDeclined
+                        ? const Icon(Icons.close, size: 12, color: Color(0xFFDC2626))
+                        : Container(
+                            width: 6,
+                            height: 6,
+                            decoration: BoxDecoration(
+                              color: circleColor,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              steps[stepIndex],
+              style: GoogleFonts.poppins(
+                fontSize: 9.5,
+                fontWeight: isCurrent || isCompleted ? FontWeight.w700 : FontWeight.w500,
+                color: isCurrent ? const Color(0xFF0F172A) : const Color(0xFF64748B),
+                letterSpacing: -0.2,
+              ),
+            ),
+          ],
+        );
+      }),
     );
   }
 
