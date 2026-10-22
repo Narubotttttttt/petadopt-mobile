@@ -65,6 +65,7 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
   String get _type => widget.pet['type']?.toString() ?? 'Pet';
   String get _age => widget.pet['age']?.toString() ?? 'Adult';
   String get _gender => widget.pet['gender']?.toString() ?? 'Unknown';
+  String get _size => widget.pet['size']?.toString() ?? 'Medium';
   String get _color => widget.pet['color']?.toString() ?? 'N/A';
   String get _description => (widget.pet['description']?.toString().isNotEmpty == true && widget.pet['description'] != 'null')
       ? widget.pet['description'].toString()
@@ -625,7 +626,7 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                   Row(
                     children: [
                       _infoCard(Icons.cake_outlined, 'Age', _age),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 6),
                       _infoCard(
                         _gender.toLowerCase() == 'male'
                             ? Icons.male_rounded
@@ -633,7 +634,9 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                         'Gender',
                         _gender,
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 6),
+                      _infoCard(Icons.straighten_rounded, 'Size', _size),
+                      const SizedBox(width: 6),
                       _infoCard(Icons.palette_outlined, 'Color', _color),
                     ],
                   ),
@@ -854,7 +857,7 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
   Widget _infoCard(IconData icon, String label, String value) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+        padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 6),
         decoration: BoxDecoration(
           color: AppTheme.surface,
           borderRadius: BorderRadius.circular(14),

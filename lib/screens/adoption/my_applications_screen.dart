@@ -139,7 +139,7 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
                               onRefresh: _fetchApplications,
                               color: AppTheme.primary,
                               child: ListView.separated(
-                                padding: const EdgeInsets.all(16),
+                                padding: const EdgeInsets.fromLTRB(16, 16, 16, 105),
                                 itemCount: filteredList.length,
                                 separatorBuilder: (_, _) => const SizedBox(height: 12),
                                 itemBuilder: (context, index) {

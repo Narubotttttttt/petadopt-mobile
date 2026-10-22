@@ -17,7 +17,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
   bool _isLoading = false;
   bool _showResults = false;
   List<Map<String, dynamic>> _recommendations = [];
-  String _loadingStatus = 'Analyzing your preferred color, age & gender...';
+  String _loadingStatus = 'Analyzing your living environment & lifestyle compatibility...';
   int _loadingStep = 1;
 
   // Step 1: Basics & Appearance
@@ -104,7 +104,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
     setState(() {
       _isLoading = true;
       _loadingStep = 1;
-      _loadingStatus = 'Analyzing your preferred color, age & gender traits...';
+      _loadingStatus = 'Evaluating pet temperament & home environment match...';
     });
 
     final payload = {
@@ -139,7 +139,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
       if (mounted && _isLoading) {
         setState(() {
           _loadingStep = 3;
-          _loadingStatus = 'Ranking top matches by demographic & lifestyle alignment...';
+          _loadingStatus = 'Ranking top matches by lifestyle & environmental safety...';
         });
       }
 
@@ -900,6 +900,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
                 'id': pet['pet_id'] ?? pet['id'],
                 'name': pet['name'] ?? 'Pet no. ${pet['pet_id']}',
                 'breed': pet['breed'] ?? 'Mixed Breed',
+                'size': pet['size'] ?? 'Medium',
                 'age': pet['age'] ?? 'Adult',
                 'gender': pet['gender'] ?? 'male',
                 'type': pet['type'] ?? 'cat',
@@ -978,7 +979,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              '${pet['breed'] ?? 'Mixed Breed'} • ${pet['age'] ?? 'Adult'}',
+                              '${pet['size'] != null ? pet['size'].toString() : 'Medium'} • ${pet['type'] != null ? (pet['type'].toString().toUpperCase()) : 'PET'} • ${pet['age'] ?? 'Adult'}',
                               style: GoogleFonts.poppins(fontSize: 12, color: AppTheme.textSecondary),
                             ),
                             const SizedBox(height: 6),

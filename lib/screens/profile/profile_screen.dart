@@ -270,7 +270,7 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
             _buildMenuSection(context),
             const SizedBox(height: 16),
             _buildLogoutButton(context),
-            const SizedBox(height: 32),
+            const SizedBox(height: 105),
           ],
         ),
       ),

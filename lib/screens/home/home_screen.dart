@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:ui' show ImageFilter;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -411,110 +412,178 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       },
       child: Scaffold(
         backgroundColor: Colors.white,
+        extendBody: true,
         body: IndexedStack(
           index: _selectedIndex,
           children: _tabs,
         ),
-        bottomNavigationBar: Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border(
-              top: BorderSide(
-                color: AppTheme.cardBorder,
-                width: 1.0,
+        bottomNavigationBar: _buildFloatingBottomNav(context),
+      ),
+    );
+  }
+
+  Widget _buildFloatingBottomNav(BuildContext context) {
+    final bottomInset = MediaQuery.of(context).padding.bottom;
+    final bottomMargin = bottomInset > 0 ? bottomInset + 4.0 : 16.0;
+
+    return Padding(
+      padding: EdgeInsets.only(
+        left: 20,
+        right: 20,
+        bottom: bottomMargin,
+      ),
+      child: Container(
+        height: 64,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(32),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF0F172A).withValues(alpha: 0.12),
+              blurRadius: 24,
+              offset: const Offset(0, 8),
+              spreadRadius: -2,
+            ),
+            BoxShadow(
+              color: AppTheme.primary.withValues(alpha: 0.08),
+              blurRadius: 14,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(32),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.94),
+                borderRadius: BorderRadius.circular(32),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.85),
+                  width: 1.2,
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _buildFloatingNavItem(
+                    index: 0,
+                    label: 'Home',
+                    icon: Icons.home_outlined,
+                    activeIcon: Icons.home_rounded,
+                  ),
+                  _buildFloatingNavItem(
+                    index: 1,
+                    label: 'Pet Match',
+                    icon: Icons.auto_awesome_outlined,
+                    activeIcon: Icons.auto_awesome_rounded,
+                  ),
+                  _buildFloatingNavItem(
+                    index: 2,
+                    label: 'Applications',
+                    icon: Icons.assignment_outlined,
+                    activeIcon: Icons.assignment_rounded,
+                    hasBadge: _hasUnreadApplications,
+                  ),
+                  _buildFloatingNavItem(
+                    index: 3,
+                    label: 'Profile',
+                    icon: Icons.person_outline_rounded,
+                    activeIcon: Icons.person_rounded,
+                  ),
+                ],
               ),
             ),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF0F172A).withValues(alpha: 0.04),
-                blurRadius: 10,
-                offset: const Offset(0, -3),
-              ),
-            ],
           ),
-          child: BottomNavigationBar(
-            currentIndex: _selectedIndex,
-            onTap: (index) {
-              final wasNotHome = _selectedIndex != 0;
-              setState(() {
-                if (index == 1 && _selectedIndex != 1) {
-                  _petListEntranceTrigger++;
-                }
-                _selectedIndex = index;
-              });
-              if (index == 0 && wasNotHome) {
-                _homeTabKey.currentState?.reload();
-              } else if (index == 2) {
-                _markApplicationsAsViewed();
-              } else if (index == 3) {
-                ApiService.getProfile();
-              }
-            },
-            type: BottomNavigationBarType.fixed,
-            backgroundColor: Colors.white,
-            elevation: 0,
-            selectedItemColor: AppTheme.primary,
-            unselectedItemColor: const Color(0xFF94A3B8),
-            selectedLabelStyle: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w600),
-            unselectedLabelStyle: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w500),
-            items: [
-              const BottomNavigationBarItem(
-                icon: Icon(Icons.home_outlined),
-                activeIcon: Icon(Icons.home_rounded),
-                label: 'Home',
-              ),
-              const BottomNavigationBarItem(
-                icon: Icon(Icons.auto_awesome_outlined),
-                activeIcon: Icon(Icons.auto_awesome_rounded),
-                label: 'Pet Match',
-              ),
-              BottomNavigationBarItem(
-                icon: Stack(
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFloatingNavItem({
+    required int index,
+    required String label,
+    required IconData icon,
+    required IconData activeIcon,
+    bool hasBadge = false,
+  }) {
+    final isSelected = _selectedIndex == index;
+
+    return Expanded(
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () {
+          HapticFeedback.selectionClick();
+          final wasNotHome = _selectedIndex != 0;
+          setState(() {
+            if (index == 1 && _selectedIndex != 1) {
+              _petListEntranceTrigger++;
+            }
+            _selectedIndex = index;
+          });
+          if (index == 0 && wasNotHome) {
+            _homeTabKey.currentState?.reload();
+          } else if (index == 2) {
+            _markApplicationsAsViewed();
+          } else if (index == 3) {
+            ApiService.getProfile();
+          }
+        },
+        child: Center(
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeOutCubic,
+            padding: EdgeInsets.symmetric(
+              horizontal: isSelected ? 12 : 8,
+              vertical: 5,
+            ),
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? AppTheme.primary.withValues(alpha: 0.12)
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Stack(
                   clipBehavior: Clip.none,
                   children: [
-                    const Icon(Icons.assignment_outlined),
-                    if (_hasUnreadApplications)
+                    Icon(
+                      isSelected ? activeIcon : icon,
+                      size: 21,
+                      color: isSelected ? AppTheme.primary : const Color(0xFF64748B),
+                    ),
+                    if (hasBadge)
                       Positioned(
                         top: -2,
-                        right: -2,
+                        right: -3,
                         child: Container(
                           width: 8,
                           height: 8,
-                          decoration: const BoxDecoration(
-                            color: Color(0xFFFF4D4F),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFF4D4F),
                             shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 1.5),
                           ),
                         ),
                       ),
                   ],
                 ),
-                activeIcon: Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    const Icon(Icons.assignment_rounded),
-                    if (_hasUnreadApplications)
-                      Positioned(
-                        top: -2,
-                        right: -2,
-                        child: Container(
-                          width: 8,
-                          height: 8,
-                          decoration: const BoxDecoration(
-                            color: Color(0xFFFF4D4F),
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                      ),
-                  ],
+                const SizedBox(height: 3),
+                Text(
+                  label,
+                  maxLines: 1,
+                  style: GoogleFonts.poppins(
+                    fontSize: 10.5,
+                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                    color: isSelected ? AppTheme.primary : const Color(0xFF64748B),
+                    letterSpacing: -0.1,
+                  ),
                 ),
-                label: 'Applications',
-              ),
-              const BottomNavigationBarItem(
-                icon: Icon(Icons.person_outline_rounded),
-                activeIcon: Icon(Icons.person_rounded),
-                label: 'Profile',
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -1345,8 +1414,8 @@ class _HomeTabState extends State<_HomeTab> {
     // Spacing between the two cards
     final cardGap = (remainingHeight * 0.03 + 7.0).clamp(9.0, 12.0);
 
-    // Bottom padding below card 2
-    final bottomSpacing = (remainingHeight * 0.05 + 10.0).clamp(14.0, 26.0);
+    // Bottom padding below card 2 with extra clearance for floating navigation bar
+    final bottomSpacing = (remainingHeight * 0.05 + 10.0).clamp(14.0, 26.0) + 85.0;
 
     return RefreshIndicator(
       onRefresh: _loadDashboardData,
@@ -1604,40 +1673,48 @@ class _HomeTabState extends State<_HomeTab> {
         // Start Pet Matching Button
         Container(
           width: double.infinity,
-          height: 48,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(15),
+            borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: AppTheme.primary.withValues(alpha: 0.25),
-                blurRadius: 10,
-                offset: const Offset(0, 3),
+                color: AppTheme.primary.withValues(alpha: 0.32),
+                blurRadius: 14,
+                offset: const Offset(0, 4),
               ),
             ],
           ),
-          child: ElevatedButton.icon(
+          child: ElevatedButton(
             onPressed: _openAiMatchmaker,
-            icon: const Icon(
-              Icons.auto_awesome_rounded,
-              color: Colors.white,
-              size: 17,
-            ),
-            label: Text(
-              'Start Pet Matching',
-              style: GoogleFonts.poppins(
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: Colors.white,
-                letterSpacing: 0.1,
-              ),
-            ),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.primary,
               foregroundColor: Colors.white,
               elevation: 0,
+              minimumSize: const Size(double.infinity, 52),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(15),
+                borderRadius: BorderRadius.circular(16),
               ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.auto_awesome_rounded,
+                  color: Colors.white,
+                  size: 19,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Start Pet Matching',
+                  style: GoogleFonts.poppins(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                    letterSpacing: 0.2,
+                  ),
+                ),
+              ],
             ),
           ),
         ),
