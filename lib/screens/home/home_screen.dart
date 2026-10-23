@@ -347,8 +347,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     } catch (_) {}
   }
 
-  String _matchesLifestyle = 'none';
-  String _matchesSearch = '';
   int _petListEntranceTrigger = 0;
   final GlobalKey<_HomeTabState> _homeTabKey = GlobalKey<_HomeTabState>();
 
@@ -363,24 +361,20 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       },
       onPetFinderPressed: () {
         setState(() {
-          _matchesLifestyle = 'none';
-          _matchesSearch = '';
           _petListEntranceTrigger++;
           _selectedIndex = 1;
         });
       },
       onViewApplicationsPressed: () => setState(() => _selectedIndex = 2),
       onViewProfilePressed: () => setState(() => _selectedIndex = 3),
-      onLifestyleFilter: (lifestyle) {
+      onLifestyleFilter: (_) {
         setState(() {
-          _matchesLifestyle = lifestyle;
           _petListEntranceTrigger++;
           _selectedIndex = 1;
         });
       },
-      onSearchSubmitted: (query) {
+      onSearchSubmitted: (_) {
         setState(() {
-          _matchesSearch = query;
           _petListEntranceTrigger++;
           _selectedIndex = 1;
         });
@@ -388,8 +382,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     ),
     PetListScreen(
       key: ValueKey('pet_list_$_petListEntranceTrigger'),
-      initialLifestyle: _matchesLifestyle,
-      initialSearch: _matchesSearch,
       entranceTrigger: _petListEntranceTrigger,
     ),
     const MyApplicationsScreen(),
@@ -516,7 +508,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           HapticFeedback.selectionClick();
           final wasNotHome = _selectedIndex != 0;
           setState(() {
-            if (index == 1 && _selectedIndex != 1) {
+            if (index == 1) {
               _petListEntranceTrigger++;
             }
             _selectedIndex = index;
@@ -874,15 +866,7 @@ class _HomeTabState extends State<_HomeTab> {
     } else if (widget.onSeeAllPressed != null) {
       widget.onSeeAllPressed!();
     } else {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => PetListScreen(
-            key: ValueKey('pet_list_${DateTime.now().millisecondsSinceEpoch}'),
-            entranceTrigger: DateTime.now().millisecondsSinceEpoch,
-          ),
-        ),
-      );
+      Navigator.pushNamed(context, '/match-quiz');
     }
   }
 

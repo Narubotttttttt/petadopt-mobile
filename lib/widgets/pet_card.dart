@@ -80,14 +80,14 @@ class _PetCardState extends State<PetCard> {
                   child: _imageUrl != null
                       ? Image.network(
                           _imageUrl!,
-                          height: 145,
+                          height: 120,
                           width: double.infinity,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, _, _) => _buildPlaceholder(145),
+                          errorBuilder: (_, _, _) => _buildPlaceholder(120),
                           loadingBuilder: (_, child, progress) {
                             if (progress == null) return child;
                             return Container(
-                              height: 145,
+                              height: 120,
                               color: AppTheme.surface,
                               child: Center(
                                 child: SizedBox(
@@ -102,7 +102,7 @@ class _PetCardState extends State<PetCard> {
                             );
                           },
                         )
-                      : _buildPlaceholder(145),
+                      : _buildPlaceholder(120),
                 ),
                 Positioned(
                   top: 8,

@@ -6,7 +6,12 @@ import 'package:mobile_petadopt/theme/app_theme.dart';
 import 'package:mobile_petadopt/widgets/pet_recommendation_loader.dart';
 
 class MatchQuizScreen extends StatefulWidget {
-  const MatchQuizScreen({super.key});
+  final bool isEmbeddedInTab;
+
+  const MatchQuizScreen({
+    super.key,
+    this.isEmbeddedInTab = false,
+  });
 
   @override
   State<MatchQuizScreen> createState() => _MatchQuizScreenState();
@@ -87,6 +92,46 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
   void initState() {
     super.initState();
     _checkBanStanding();
+    _loadSavedPreferences();
+  }
+
+  Future<void> _loadSavedPreferences() async {
+    try {
+      final saved = await ApiService.getSavedPreferences();
+      if (saved != null && mounted) {
+        setState(() {
+          _preferredSpecies = saved['preferred_species']?.toString();
+          _preferredAge = saved['preferred_age']?.toString();
+          _preferredGender = saved['preferred_gender']?.toString();
+          _preferredColor = saved['preferred_color']?.toString();
+          _livingEnvironment = saved['living_environment']?.toString();
+          _activityLevel = saved['activity_level']?.toString();
+          _petExperience = saved['pet_experience']?.toString();
+          if (saved['has_children'] != null) {
+            _hasChildren = saved['has_children'] is bool
+                ? saved['has_children']
+                : saved['has_children'].toString() == '1' || saved['has_children'].toString() == 'true';
+          }
+          if (saved['has_other_pets'] != null) {
+            _hasOtherPets = saved['has_other_pets'] is bool
+                ? saved['has_other_pets']
+                : saved['has_other_pets'].toString() == '1' || saved['has_other_pets'].toString() == 'true';
+          }
+          _hoursAlone = saved['hours_alone']?.toString();
+          if (saved['special_care_capacity'] != null) {
+            _specialCareCapacity = saved['special_care_capacity'] is bool
+                ? saved['special_care_capacity']
+                : saved['special_care_capacity'].toString() == '1' || saved['special_care_capacity'].toString() == 'true';
+          }
+          if (saved['desired_temperaments'] is List) {
+            _desiredTemperaments.clear();
+            for (final t in saved['desired_temperaments']) {
+              _desiredTemperaments.add(t.toString());
+            }
+          }
+        });
+      }
+    } catch (_) {}
   }
 
   Future<void> _checkBanStanding() async {
@@ -147,7 +192,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
       final availableRecs = recs.where((pet) {
         final status = pet['status']?.toString().toLowerCase();
         return status == null || status == 'available';
-      }).toList();
+      }).take(3).toList();
 
       // Ensure the full animated recommendation evaluation cycle finishes naturally (~3.5s total)
       final elapsed = DateTime.now().difference(startTime).inMilliseconds;
@@ -180,18 +225,27 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
-          onPressed: () {
-            if (_showResults) {
-              setState(() => _showResults = false);
-            } else {
-              Navigator.pop(context);
-            }
-          },
-        ),
+        automaticallyImplyLeading: false,
+        leading: widget.isEmbeddedInTab
+            ? (_showResults
+                ? IconButton(
+                    icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+                    tooltip: 'Back to Quiz',
+                    onPressed: () => setState(() => _showResults = false),
+                  )
+                : null)
+            : IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+                onPressed: () {
+                  if (_showResults) {
+                    setState(() => _showResults = false);
+                  } else {
+                    Navigator.pop(context);
+                  }
+                },
+              ),
         title: Text(
-          _showResults ? 'Your Top Pet Matches' : 'Match a Pet',
+          _showResults ? 'Recommended Pet Matches' : 'Compatibility Assessment',
           style: GoogleFonts.poppins(fontSize: 17, fontWeight: FontWeight.w600),
         ),
         actions: [
@@ -355,12 +409,13 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
   }
 
   Widget _buildQuizView() {
+    final bottomInset = widget.isEmbeddedInTab ? 100.0 : 24.0;
     return Column(
       children: [
         _buildProgressBar(),
         Expanded(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
+            padding: EdgeInsets.fromLTRB(20, 20, 20, bottomInset),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -798,10 +853,11 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
 
   // RESULTS VIEW
   Widget _buildResultsView() {
+    final bottomInset = widget.isEmbeddedInTab ? 110.0 : 20.0;
     if (_recommendations.isEmpty) {
       return Center(
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: EdgeInsets.fromLTRB(24, 24, 24, bottomInset),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -824,7 +880,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.fromLTRB(16, 16, 16, bottomInset),
       itemCount: _recommendations.length + 1,
       itemBuilder: (context, index) {
         if (index == 0) {
@@ -863,9 +919,9 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Top Matching Candidates', style: GoogleFonts.poppins(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
+                      Text('Top 3 Matched Companions', style: GoogleFonts.poppins(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
                       const SizedBox(height: 2),
-                      Text('Ranked using Scikit-Learn Cosine Similarity',
+                      Text('Ranked by AI Compatibility (Shelter policy: up to 3 adoptions)',
                           style: GoogleFonts.poppins(color: Colors.white.withValues(alpha: 0.85), fontSize: 11)),
                     ],
                   ),
@@ -947,6 +1003,31 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            Container(
+                              margin: const EdgeInsets.only(bottom: 4),
+                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: index == 1
+                                    ? const Color(0xFFE0F2FE)
+                                    : const Color(0xFFF1F5F9),
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(
+                                  color: index == 1
+                                      ? const Color(0xFFBAE6FD)
+                                      : const Color(0xFFE2E8F0),
+                                ),
+                              ),
+                              child: Text(
+                                index == 1 ? 'Rank #1 • Best Match' : 'Rank #$index Match',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 9.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: index == 1
+                                      ? AppTheme.primaryDark
+                                      : const Color(0xFF475569),
+                                ),
+                              ),
+                            ),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [

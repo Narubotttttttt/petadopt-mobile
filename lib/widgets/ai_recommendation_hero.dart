@@ -575,10 +575,18 @@ class _AiRecommendationHeroState extends State<AiRecommendationHero>
   late Animation<double> _orbScale;
   late Animation<Offset> _orbSlide;
   late Animation<double> _orbTurn;
+  late Animation<double> _benefitsFade;
+  late Animation<Offset> _benefitsSlide;
+  late Animation<double> _row1Fade;
+  late Animation<Offset> _row1Slide;
+  late Animation<double> _row2Fade;
+  late Animation<Offset> _row2Slide;
+  late Animation<double> _row3Fade;
+  late Animation<Offset> _row3Slide;
   late Animation<double> _searchFade;
   late Animation<Offset> _searchSlide;
 
-  static const String _fullHeadline = "Let's Find Your Perfect Match";
+  static const String _fullHeadline = "Let's Find Your Pawrfect Match";
 
   @override
   void initState() {
@@ -626,23 +634,72 @@ class _AiRecommendationHeroState extends State<AiRecommendationHero>
       curve: const Interval(0.15, 0.38, curve: Curves.easeOutCubic),
     ));
 
-    // 3. The 3D Mascot Orb TURN Motion — right after "How Can I Help You Today?" typewriter completes! (900ms - 1700ms)
+    // 3. The 3D Mascot Orb TURN Motion — right after typewriter completes! (900ms - 1700ms)
     _orbTurn = CurvedAnimation(
       parent: _animController,
       curve: const Interval(0.36, 0.68, curve: Curves.easeInOutCubic),
     );
 
-    // 4. Search / Prompt Bar glides in (1550ms - 2100ms)
-    _searchFade = CurvedAnimation(
+    // 4. Assessment Benefits Card & Staggered Rows (1350ms - 2300ms)
+    _benefitsFade = CurvedAnimation(
       parent: _animController,
-      curve: const Interval(0.62, 0.84, curve: Curves.easeOutCubic),
+      curve: const Interval(0.54, 0.76, curve: Curves.easeOutCubic),
     );
-    _searchSlide = Tween<Offset>(
-      begin: const Offset(0, 0.30),
+    _benefitsSlide = Tween<Offset>(
+      begin: const Offset(0, 0.20),
       end: Offset.zero,
     ).animate(CurvedAnimation(
       parent: _animController,
-      curve: const Interval(0.62, 0.85, curve: Curves.easeOutCubic),
+      curve: const Interval(0.54, 0.78, curve: Curves.easeOutCubic),
+    ));
+
+    _row1Fade = CurvedAnimation(
+      parent: _animController,
+      curve: const Interval(0.58, 0.78, curve: Curves.easeOutCubic),
+    );
+    _row1Slide = Tween<Offset>(
+      begin: const Offset(0, 0.22),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _animController,
+      curve: const Interval(0.58, 0.80, curve: Curves.easeOutCubic),
+    ));
+
+    _row2Fade = CurvedAnimation(
+      parent: _animController,
+      curve: const Interval(0.65, 0.85, curve: Curves.easeOutCubic),
+    );
+    _row2Slide = Tween<Offset>(
+      begin: const Offset(0, 0.22),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _animController,
+      curve: const Interval(0.65, 0.87, curve: Curves.easeOutCubic),
+    ));
+
+    _row3Fade = CurvedAnimation(
+      parent: _animController,
+      curve: const Interval(0.72, 0.92, curve: Curves.easeOutCubic),
+    );
+    _row3Slide = Tween<Offset>(
+      begin: const Offset(0, 0.22),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _animController,
+      curve: const Interval(0.72, 0.94, curve: Curves.easeOutCubic),
+    ));
+
+    // 5. Interactive Quiz Action Bar glides in (1850ms - 2450ms)
+    _searchFade = CurvedAnimation(
+      parent: _animController,
+      curve: const Interval(0.74, 0.96, curve: Curves.easeOutCubic),
+    );
+    _searchSlide = Tween<Offset>(
+      begin: const Offset(0, 0.28),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _animController,
+      curve: const Interval(0.74, 0.98, curve: Curves.easeOutCubic),
     ));
 
     _animController.forward();
@@ -728,27 +785,36 @@ class _AiRecommendationHeroState extends State<AiRecommendationHero>
                       final count = _typewriterAnimation.value;
                       final text = _fullHeadline.characters.take(count).toString();
                       final isTyping = count < _fullHeadline.characters.length;
-                      return RichText(
-                        textAlign: TextAlign.center,
-                        text: TextSpan(
-                          text: text.isEmpty ? ' ' : text,
-                          style: GoogleFonts.poppins(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w800,
-                            color: const Color(0xFF0F172A),
-                            letterSpacing: -0.3,
-                          ),
-                          children: [
-                            if (isTyping)
-                              TextSpan(
-                                text: ' |',
+                      return SizedBox(
+                        height: 28,
+                        child: Center(
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: RichText(
+                              maxLines: 1,
+                              textAlign: TextAlign.center,
+                              text: TextSpan(
+                                text: text.isEmpty ? ' ' : text,
                                 style: GoogleFonts.poppins(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppTheme.primary,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w800,
+                                  color: const Color(0xFF0F172A),
+                                  letterSpacing: -0.4,
                                 ),
+                                children: [
+                                  if (isTyping)
+                                    TextSpan(
+                                      text: ' |',
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppTheme.primary,
+                                      ),
+                                    ),
+                                ],
                               ),
-                          ],
+                            ),
+                          ),
                         ),
                       );
                     },
@@ -776,40 +842,64 @@ class _AiRecommendationHeroState extends State<AiRecommendationHero>
           const SizedBox(height: 18),
 
           if (!widget.isCompact) ...[
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.85),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: const Color(0xFFB2EBF2).withValues(alpha: 0.85)),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF0E7A80).withValues(alpha: 0.04),
-                    blurRadius: 10,
-                    offset: const Offset(0, 3),
+            FadeTransition(
+              opacity: _benefitsFade,
+              child: SlideTransition(
+                position: _benefitsSlide,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.85),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: const Color(0xFFB2EBF2).withValues(alpha: 0.85)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF0E7A80).withValues(alpha: 0.04),
+                        blurRadius: 10,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  _buildBenefitRow(
-                    icon: Icons.home_outlined,
-                    title: 'Living Space & Routine',
-                    subtitle: 'Matched to your apartment or yard and daily schedule',
+                  child: Column(
+                    children: [
+                      FadeTransition(
+                        opacity: _row1Fade,
+                        child: SlideTransition(
+                          position: _row1Slide,
+                          child: _buildBenefitRow(
+                            icon: Icons.home_outlined,
+                            title: 'Living Space & Routine',
+                            subtitle: 'Matched to your apartment or yard and daily schedule',
+                          ),
+                        ),
+                      ),
+                      const Divider(height: 18, color: Color(0xFFE2E8F0)),
+                      FadeTransition(
+                        opacity: _row2Fade,
+                        child: SlideTransition(
+                          position: _row2Slide,
+                          child: _buildBenefitRow(
+                            icon: Icons.psychology_outlined,
+                            title: 'Personality & Energy',
+                            subtitle: 'Pair with playful, calm, or family-friendly companions',
+                          ),
+                        ),
+                      ),
+                      const Divider(height: 18, color: Color(0xFFE2E8F0)),
+                      FadeTransition(
+                        opacity: _row3Fade,
+                        child: SlideTransition(
+                          position: _row3Slide,
+                          child: _buildBenefitRow(
+                            icon: Icons.verified_outlined,
+                            title: 'Compatibility Scoring',
+                            subtitle: 'Calculates match percentages for your best companion',
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  const Divider(height: 18, color: Color(0xFFE2E8F0)),
-                  _buildBenefitRow(
-                    icon: Icons.psychology_outlined,
-                    title: 'Personality & Energy',
-                    subtitle: 'Pair with playful, calm, or family-friendly companions',
-                  ),
-                  const Divider(height: 18, color: Color(0xFFE2E8F0)),
-                  _buildBenefitRow(
-                    icon: Icons.verified_outlined,
-                    title: 'Compatibility Scoring',
-                    subtitle: 'Calculates match percentages for your best companion',
-                  ),
-                ],
+                ),
               ),
             ),
             const SizedBox(height: 18),
