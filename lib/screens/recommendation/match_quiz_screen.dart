@@ -3,7 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile_petadopt/screens/pets/pet_detail_screen.dart';
 import 'package:mobile_petadopt/services/api_service.dart';
 import 'package:mobile_petadopt/theme/app_theme.dart';
-import 'package:mobile_petadopt/widgets/pet_recommendation_loader.dart';
+import 'package:mobile_petadopt/widgets/ai_recommendation_hero.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class MatchQuizScreen extends StatefulWidget {
   final bool isEmbeddedInTab;
@@ -22,15 +23,14 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
   bool _isLoading = false;
   bool _showResults = false;
   bool _isLocked = false;
+  bool _isCheckingLock = true;
+  bool _isLoadingRecommendations = false;
   List<Map<String, dynamic>> _recommendations = [];
   String _loadingStatus = 'Analyzing your living environment and lifestyle compatibility...';
   int _loadingStep = 1;
 
-  // Step 1: Basics & Appearance
+  // Step 1: Companion Type Selection
   String? _preferredSpecies;
-  String? _preferredAge;
-  String? _preferredGender;
-  String? _preferredColor;
 
   // Step 2: Living & Lifestyle
   String? _livingEnvironment;
@@ -59,9 +59,6 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
 
   bool get _hasAnySelection =>
       _preferredSpecies != null ||
-      _preferredAge != null ||
-      _preferredGender != null ||
-      _preferredColor != null ||
       _livingEnvironment != null ||
       _activityLevel != null ||
       _petExperience != null ||
@@ -76,9 +73,6 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
     setState(() {
       _currentStep = 0;
       _preferredSpecies = null;
-      _preferredAge = null;
-      _preferredGender = null;
-      _preferredColor = null;
       _livingEnvironment = null;
       _activityLevel = null;
       _petExperience = null;
@@ -94,19 +88,35 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
   void initState() {
     super.initState();
     _checkBanStanding();
+    _checkCachedLockState();
     _loadSavedPreferences();
+  }
+
+  Future<void> _checkCachedLockState() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final isLockedCached = prefs.getBool('quiz_locked') ?? false;
+      if (isLockedCached && mounted) {
+        setState(() {
+          _isLocked = true;
+        });
+      }
+    } catch (_) {}
   }
 
   Future<void> _loadSavedPreferences() async {
     try {
       final saved = await ApiService.getSavedPreferences();
       if (saved != null && mounted) {
+        try {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setBool('quiz_locked', true);
+        } catch (_) {}
+
         setState(() {
           _isLocked = true;
+          _isCheckingLock = false;
           _preferredSpecies = saved['preferred_species']?.toString();
-          _preferredAge = saved['preferred_age']?.toString();
-          _preferredGender = saved['preferred_gender']?.toString();
-          _preferredColor = saved['preferred_color']?.toString();
           _livingEnvironment = saved['living_environment']?.toString();
           _activityLevel = saved['activity_level']?.toString();
           _petExperience = saved['pet_experience']?.toString();
@@ -133,22 +143,31 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
             }
           }
         });
+        // Pre-fetch recommendations in background so they are ready when clicked,
+        // but DO NOT set _showResults = true!
         _fetchSavedRecommendations();
+        return;
       }
     } catch (_) {}
+    if (mounted) {
+      setState(() {
+        _isCheckingLock = false;
+      });
+    }
   }
 
   Future<void> _fetchSavedRecommendations() async {
     try {
       final recs = await ApiService.getRecommendations();
       final availableRecs = recs.where((pet) {
-        final status = pet['status']?.toString().toLowerCase();
-        return status == null || status == 'available';
+        final status = pet['status']?.toString().trim().toLowerCase();
+        return status == 'available';
       }).take(3).toList();
       if (mounted) {
         setState(() {
           _recommendations = availableRecs;
-          _showResults = true;
+          // CRITICAL: DO NOT auto-set _showResults = true here!
+          // The screen must stay on the locked profile review until the adopter taps 'View Recommended Pets'.
         });
       }
     } catch (_) {}
@@ -313,9 +332,9 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
 
     final payload = {
       'preferred_species': _preferredSpecies ?? 'any',
-      'preferred_age': _preferredAge ?? 'any',
-      'preferred_gender': _preferredGender ?? 'any',
-      'preferred_color': _preferredColor ?? 'any',
+      'preferred_age': 'any',
+      'preferred_gender': 'any',
+      'preferred_color': 'any',
       'living_environment': _livingEnvironment ?? 'apartment',
       'activity_level': _activityLevel ?? 'moderate',
       'pet_experience': _petExperience ?? 'first_time',
@@ -349,8 +368,8 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
 
       final recs = await recsFuture;
       final availableRecs = recs.where((pet) {
-        final status = pet['status']?.toString().toLowerCase();
-        return status == null || status == 'available';
+        final status = pet['status']?.toString().trim().toLowerCase();
+        return status == 'available';
       }).take(3).toList();
 
       // Ensure the full animated recommendation evaluation cycle finishes naturally (~3.4s total)
@@ -360,6 +379,9 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
       }
 
       if (mounted) {
+        try {
+          SharedPreferences.getInstance().then((prefs) => prefs.setBool('quiz_locked', true));
+        } catch (_) {}
         setState(() {
           _isLocked = true;
           _recommendations = availableRecs;
@@ -383,7 +405,12 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
   @override
   Widget build(BuildContext context) {
     return PopScope(
-      canPop: true,
+      canPop: !(_showResults && _isLocked),
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop && _showResults && _isLocked) {
+          setState(() => _showResults = false);
+        }
+      },
       child: Scaffold(
         backgroundColor: AppTheme.background,
         appBar: AppBar(
@@ -393,16 +420,24 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
               : IconButton(
                   icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
                   tooltip: 'Back',
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: () {
+                    if (_showResults && _isLocked) {
+                      setState(() => _showResults = false);
+                    } else {
+                      Navigator.pop(context);
+                    }
+                  },
                 ),
           title: Text(
-            _showResults
-                ? 'Recommended Pet Matches'
-                : (_isLocked ? 'Compatibility Profile' : 'Compatibility Assessment'),
+            _isCheckingLock
+                ? 'Compatibility Assessment'
+                : (_showResults
+                    ? 'Recommended Pet Matches'
+                    : (_isLocked ? 'Compatibility Profile' : 'Compatibility Assessment')),
             style: GoogleFonts.poppins(fontSize: 17, fontWeight: FontWeight.w600),
           ),
           actions: [
-            if (!_showResults && !_isLoading && _hasAnySelection && !_isLocked)
+            if (!_showResults && !_isLoading && _hasAnySelection && !_isLocked && !_isCheckingLock)
               TextButton(
                 onPressed: _resetQuiz,
                 child: Text(
@@ -414,7 +449,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
                   ),
                 ),
               ),
-            if (_isLocked && !_showResults)
+            if (_isLocked && !_showResults && !_isCheckingLock)
               Container(
                 margin: const EdgeInsets.only(right: 14),
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -441,11 +476,51 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
               ),
           ],
         ),
-        body: _isLoading
-            ? _buildLoadingState()
-            : _showResults
-                ? _buildResultsView()
-                : (_isLocked ? _buildLockedProfileView() : _buildQuizView()),
+        body: _isCheckingLock
+            ? _buildInitialLoadingState()
+            : (_isLoading
+                ? _buildLoadingState()
+                : _showResults
+                    ? _buildResultsView()
+                    : (_isLocked ? _buildLockedProfileView() : _buildQuizView())),
+      ),
+    );
+  }
+
+  Widget _buildInitialLoadingState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 76,
+            height: 76,
+            decoration: const BoxDecoration(
+              color: AppTheme.primaryLight,
+              shape: BoxShape.circle,
+            ),
+            child: const Center(
+              child: LuminousAiOrb(size: 44),
+            ),
+          ),
+          const SizedBox(height: 22),
+          Text(
+            'Checking Compatibility Profile...',
+            style: GoogleFonts.poppins(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: AppTheme.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Verifying your shelter assessment status',
+            style: GoogleFonts.poppins(
+              fontSize: 12,
+              color: AppTheme.textSecondary,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -457,10 +532,22 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const PetRecommendationLoader(
-              size: 130,
-              color: Color(0xFF1E293B),
-              withSparkles: true,
+            Container(
+              width: 140,
+              height: 140,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: AppTheme.primary.withValues(alpha: 0.22),
+                    blurRadius: 36,
+                    spreadRadius: 8,
+                  ),
+                ],
+              ),
+              child: const Center(
+                child: LuminousAiOrb(size: 112),
+              ),
             ),
             const SizedBox(height: 32),
             Text(
@@ -512,19 +599,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
   void _handleNextStep() {
     if (_currentStep == 0) {
       if (_preferredSpecies == null) {
-        _showValidationError('Please select a preferred species (or Any Species).');
-        return;
-      }
-      if (_preferredAge == null) {
-        _showValidationError('Please select a preferred age group (or Any Age).');
-        return;
-      }
-      if (_preferredGender == null) {
-        _showValidationError('Please select a preferred gender (or Any).');
-        return;
-      }
-      if (_preferredColor == null) {
-        _showValidationError('Please select a preferred coat color (or Any Color).');
+        _showValidationError('Please select which companion you are looking to adopt (or Any Species).');
         return;
       }
     } else if (_currentStep == 1) {
@@ -648,7 +723,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
 
   Widget _buildProgressBar() {
     final titles = [
-      'Preferences',
+      'Companion Type',
       'Living Space',
       'Experience',
       'Personality',
@@ -688,116 +763,34 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
     );
   }
 
-  List<String> get _currentColorOptions {
-    if (_preferredSpecies == 'dog') {
-      return const [
-        'Any Color',
-        'Black',
-        'Brown/Tan',
-        'White',
-        'Golden/Cream',
-        'Brindle',
-        'Tricolor',
-        'Gray',
-      ];
-    } else if (_preferredSpecies == 'cat') {
-      return const [
-        'Any Color',
-        'Orange/Ginger',
-        'Black',
-        'White',
-        'Brown',
-        'Calico',
-        'Tortoiseshell',
-        'Tabby/Striped',
-        'Gray',
-      ];
-    } else {
-      return const [
-        'Any Color',
-        'Black',
-        'Brown/Tan',
-        'White',
-        'Golden/Cream',
-        'Orange/Ginger',
-        'Tricolor/Calico',
-        'Tabby/Brindle',
-        'Gray',
-      ];
-    }
-  }
-
-  // STEP 1: Species, Age, Gender, Color
+  // STEP 1: Target Companion Type
   Widget _buildStep1() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Pet Preferences', style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
+        Text(
+          'Target Companion Type',
+          style: GoogleFonts.poppins(
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
+            color: AppTheme.textPrimary,
+          ),
+        ),
         const SizedBox(height: 4),
-        Text('Tell us what kind of pet you are looking for', style: GoogleFonts.poppins(fontSize: 13, color: AppTheme.textSecondary)),
+        Text(
+          'Tell us which companion you are looking to adopt',
+          style: GoogleFonts.poppins(fontSize: 13, color: AppTheme.textSecondary),
+        ),
         const SizedBox(height: 24),
-        _buildSectionTitle('Preferred Pet Species'),
+        _buildSectionTitle('Which companion are you looking for?'),
         _buildRadioGroup(
           options: [
-            {'val': 'any', 'label': 'Any Species'},
+            {'val': 'any', 'label': 'Any Species (Dogs & Cats)'},
             {'val': 'dog', 'label': 'Dogs Only'},
             {'val': 'cat', 'label': 'Cats Only'},
           ],
           selected: _preferredSpecies,
-          onSelected: (val) {
-            setState(() {
-              if (_preferredSpecies != val) {
-                _preferredSpecies = val;
-                if (_preferredColor != null &&
-                    _preferredColor != 'any' &&
-                    !_currentColorOptions.contains(_preferredColor)) {
-                  _preferredColor = null;
-                }
-              }
-            });
-          },
-        ),
-        const SizedBox(height: 20),
-        _buildSectionTitle('Preferred Age Group'),
-        _buildRadioGroup(
-          options: [
-            {'val': 'any', 'label': 'Any Age'},
-            {
-              'val': 'kitten_puppy',
-              'label': _preferredSpecies == 'dog'
-                  ? 'Puppy (1-6 months)'
-                  : (_preferredSpecies == 'cat'
-                      ? 'Kitten (1-6 months)'
-                      : 'Puppy / Kitten (1-6 months)'),
-            },
-            {'val': 'adult', 'label': 'Adult (1+ yrs)'},
-          ],
-          selected: _preferredAge,
-          onSelected: (val) => setState(() => _preferredAge = val),
-        ),
-        const SizedBox(height: 20),
-        _buildSectionTitle('Preferred Gender'),
-        _buildRadioGroup(
-          options: [
-            {'val': 'any', 'label': 'Any'},
-            {'val': 'male', 'label': 'Male'},
-            {'val': 'female', 'label': 'Female'},
-          ],
-          selected: _preferredGender,
-          onSelected: (val) => setState(() => _preferredGender = val),
-        ),
-        const SizedBox(height: 20),
-        _buildSectionTitle(_preferredSpecies == 'dog'
-            ? 'Preferred Dog Coat Color'
-            : (_preferredSpecies == 'cat'
-                ? 'Preferred Cat Coat Color'
-                : 'Preferred Coat Color')),
-        _buildChipGroup(
-          options: _currentColorOptions,
-          selected: _preferredColor == 'any' ? 'Any Color' : _preferredColor,
-          onSelected: (val) {
-            setState(() => _preferredColor = val == 'Any Color' ? 'any' : val);
-          },
+          onSelected: (val) => setState(() => _preferredSpecies = val),
         ),
       ],
     );
@@ -1024,15 +1017,12 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
 
         const SizedBox(height: 20),
 
-        // Section 1: Pet Preferences Summary
+        // Section 1: Target Companion Type Summary
         _buildReviewSectionCard(
-          title: 'Pet Preferences',
+          title: 'Target Companion Type',
           stepIndex: 0,
           rows: [
             {'label': 'Species', 'val': _getSpeciesLabel()},
-            {'label': 'Age Group', 'val': _getAgeLabel()},
-            {'label': 'Gender', 'val': _getGenderLabel()},
-            {'label': 'Coat Color', 'val': _getColorLabel()},
           ],
         ),
 
@@ -1248,10 +1238,31 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
-              onPressed: () => setState(() => _showResults = true),
-              icon: const Icon(Icons.pets_rounded, size: 18),
+              onPressed: _isLoadingRecommendations
+                  ? null
+                  : () async {
+                      if (_recommendations.isEmpty) {
+                        setState(() => _isLoadingRecommendations = true);
+                        await _fetchSavedRecommendations();
+                        if (mounted) {
+                          setState(() {
+                            _isLoadingRecommendations = false;
+                            _showResults = true;
+                          });
+                        }
+                      } else {
+                        setState(() => _showResults = true);
+                      }
+                    },
+              icon: _isLoadingRecommendations
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    )
+                  : const Icon(Icons.pets_rounded, size: 18),
               label: Text(
-                'View Recommended Pets',
+                _isLoadingRecommendations ? 'Loading Recommendations...' : 'View Recommended Pets',
                 style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700),
               ),
               style: ElevatedButton.styleFrom(
@@ -1273,14 +1284,11 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
           const SizedBox(height: 12),
 
           _buildReviewSectionCard(
-            title: 'Pet Preferences',
+            title: 'Target Companion Type',
             stepIndex: 0,
             showEditButton: false,
             rows: [
               {'label': 'Species', 'val': _getSpeciesLabel()},
-              {'label': 'Age Group', 'val': _getAgeLabel()},
-              {'label': 'Gender', 'val': _getGenderLabel()},
-              {'label': 'Coat Color', 'val': _getColorLabel()},
             ],
           ),
 
@@ -1359,26 +1367,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
     return 'Any Species (Dogs & Cats)';
   }
 
-  String _getAgeLabel() {
-    if (_preferredAge == 'kitten_puppy') {
-      return _preferredSpecies == 'dog'
-          ? 'Puppy (1-6 months)'
-          : (_preferredSpecies == 'cat' ? 'Kitten (1-6 months)' : 'Puppy / Kitten (1-6 months)');
-    }
-    if (_preferredAge == 'adult') return 'Adult (1+ yrs)';
-    return 'Any Age';
-  }
 
-  String _getGenderLabel() {
-    if (_preferredGender == 'male') return 'Male';
-    if (_preferredGender == 'female') return 'Female';
-    return 'Any Gender';
-  }
-
-  String _getColorLabel() {
-    if (_preferredColor == null || _preferredColor == 'any') return 'Any Color';
-    return _preferredColor!;
-  }
 
   String _getResidenceLabel() {
     if (_livingEnvironment == 'apartment') return 'Apartment / Condominium';
@@ -1460,42 +1449,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
     );
   }
 
-  Widget _buildChipGroup({
-    required List<String> options,
-    required String? selected,
-    required Function(String) onSelected,
-  }) {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: options.map((opt) {
-        final isSelected = opt == selected;
-        return ChoiceChip(
-          label: Text(
-            opt,
-            style: GoogleFonts.poppins(
-              fontSize: 12,
-              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-              color: isSelected ? AppTheme.primaryDark : AppTheme.textPrimary,
-            ),
-          ),
-          selected: isSelected,
-          selectedColor: AppTheme.primaryLight,
-          backgroundColor: Colors.white,
-          showCheckmark: true,
-          checkmarkColor: AppTheme.primaryDark,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-            side: BorderSide(
-              color: isSelected ? AppTheme.primary : Colors.grey.shade300,
-              width: isSelected ? 1.5 : 1,
-            ),
-          ),
-          onSelected: (_) => onSelected(opt),
-        );
-      }).toList(),
-    );
-  }
+
 
   // RESULTS VIEW
   Widget _buildResultsView() {
@@ -1530,9 +1484,12 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
       );
     }
 
+    final hasBottomAction = _isLocked;
+    final totalItems = _recommendations.length + 1 + (hasBottomAction ? 1 : 0);
+
     return ListView.builder(
       padding: EdgeInsets.fromLTRB(16, 16, 16, bottomInset),
-      itemCount: _recommendations.length + 1,
+      itemCount: totalItems,
       itemBuilder: (context, index) {
         if (index == 0) {
           return Container(
@@ -1559,10 +1516,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
                     ],
                   ),
                   child: const Center(
-                    child: PetRecommendationIcon(
-                      size: 32,
-                      color: Color(0xFF1E293B),
-                    ),
+                    child: LuminousAiOrb(size: 34),
                   ),
                 ),
                 const SizedBox(width: 14),
@@ -1604,8 +1558,37 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
           );
         }
 
+        if (hasBottomAction && index > _recommendations.length) {
+          return Padding(
+            padding: const EdgeInsets.only(top: 8, bottom: 20),
+            child: Center(
+              child: OutlinedButton.icon(
+                onPressed: () => setState(() => _showResults = false),
+                icon: const Icon(Icons.assignment_outlined, size: 16),
+                label: Text(
+                  'View Saved Preferences Summary',
+                  style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600),
+                ),
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: AppTheme.primary.withValues(alpha: 0.5)),
+                  foregroundColor: AppTheme.primary,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                ),
+              ),
+            ),
+          );
+        }
+
+        if (index - 1 < 0 || index - 1 >= _recommendations.length) {
+          return const SizedBox.shrink();
+        }
+
         final pet = _recommendations[index - 1];
-        final matchPct = (pet['match_percentage'] as num?)?.toDouble() ?? 80.0;
+        final rawPct = pet['match_percentage'] ?? pet['match_score'];
+        final double matchPct = rawPct is num
+            ? rawPct.toDouble()
+            : (double.tryParse(rawPct.toString().replaceAll('%', '').trim()) ?? 80.0);
         final reasons = (pet['match_reasons'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [];
 
         return Card(

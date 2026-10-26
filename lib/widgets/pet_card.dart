@@ -50,7 +50,10 @@ class _PetCardState extends State<PetCard> {
   }
 
   Widget _buildVertical() {
-    final matchPct = widget.pet['match_percentage'] as num?;
+    final rawPct = widget.pet['match_percentage'] ?? widget.pet['compatibility_score'];
+    final matchPct = rawPct is num
+        ? rawPct
+        : (rawPct != null ? double.tryParse(rawPct.toString().replaceAll('%', '').trim()) : null);
 
     return GestureDetector(
       onTap: widget.onTap,
@@ -269,7 +272,10 @@ class _PetCardState extends State<PetCard> {
   }
 
   Widget _buildHorizontal() {
-    final matchPct = widget.pet['match_percentage'] as num?;
+    final rawPct = widget.pet['match_percentage'] ?? widget.pet['compatibility_score'];
+    final matchPct = rawPct is num
+        ? rawPct
+        : (rawPct != null ? double.tryParse(rawPct.toString().replaceAll('%', '').trim()) : null);
 
     return GestureDetector(
       onTap: widget.onTap,

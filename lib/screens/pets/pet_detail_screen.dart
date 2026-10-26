@@ -100,7 +100,12 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
     return [];
   }
 
-  num? get _matchPercentage => widget.pet['match_percentage'] as num?;
+  num? get _matchPercentage {
+    final rawPct = widget.pet['match_percentage'] ?? widget.pet['compatibility_score'];
+    if (rawPct == null) return null;
+    if (rawPct is num) return rawPct;
+    return double.tryParse(rawPct.toString().replaceAll('%', '').trim());
+  }
 
   Future<void> _handleApplyForAdoption() async {
     if (_hasApplied) {
