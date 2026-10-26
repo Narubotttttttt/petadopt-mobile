@@ -13,6 +13,7 @@ import 'package:mobile_petadopt/screens/adoption/adopted_pet_hub_screen.dart';
 import 'package:mobile_petadopt/screens/adoption/my_adopted_pets_screen.dart';
 import 'package:mobile_petadopt/screens/adoption/pet_medical_card_screen.dart';
 import 'package:mobile_petadopt/screens/profile/profile_screen.dart';
+import 'package:mobile_petadopt/widgets/skeleton_loader.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -1410,11 +1411,11 @@ class _HomeTabState extends State<_HomeTab> {
           _buildModernHeader(context),
           SliverToBoxAdapter(
             child: _isLoading
-                ? const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 80),
-                    child: Center(
-                      child: CircularProgressIndicator(color: AppTheme.primary),
-                    ),
+                ? HomeSkeletonLoader(
+                    heroImageHeight: heroImageHeight,
+                    cardVerticalPadding: cardVerticalPadding,
+                    cardGap: cardGap,
+                    sectionGap: sectionGap,
                   )
                 : Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 18),

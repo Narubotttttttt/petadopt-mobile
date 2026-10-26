@@ -21,8 +21,9 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
   int _currentStep = 0;
   bool _isLoading = false;
   bool _showResults = false;
+  bool _isLocked = false;
   List<Map<String, dynamic>> _recommendations = [];
-  String _loadingStatus = 'Analyzing your living environment & lifestyle compatibility...';
+  String _loadingStatus = 'Analyzing your living environment and lifestyle compatibility...';
   int _loadingStep = 1;
 
   // Step 1: Basics & Appearance
@@ -71,6 +72,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
       _desiredTemperaments.isNotEmpty;
 
   void _resetQuiz() {
+    if (_isLocked) return;
     setState(() {
       _currentStep = 0;
       _preferredSpecies = null;
@@ -100,6 +102,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
       final saved = await ApiService.getSavedPreferences();
       if (saved != null && mounted) {
         setState(() {
+          _isLocked = true;
           _preferredSpecies = saved['preferred_species']?.toString();
           _preferredAge = saved['preferred_age']?.toString();
           _preferredGender = saved['preferred_gender']?.toString();
@@ -130,6 +133,23 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
             }
           }
         });
+        _fetchSavedRecommendations();
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _fetchSavedRecommendations() async {
+    try {
+      final recs = await ApiService.getRecommendations();
+      final availableRecs = recs.where((pet) {
+        final status = pet['status']?.toString().toLowerCase();
+        return status == null || status == 'available';
+      }).take(3).toList();
+      if (mounted) {
+        setState(() {
+          _recommendations = availableRecs;
+          _showResults = true;
+        });
       }
     } catch (_) {}
   }
@@ -144,12 +164,151 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
     } catch (_) {}
   }
 
+  Future<void> _confirmAndSubmitQuiz() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        titlePadding: const EdgeInsets.fromLTRB(22, 22, 22, 12),
+        contentPadding: const EdgeInsets.fromLTRB(22, 0, 22, 16),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEF3C7),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(Icons.lock_outline_rounded, color: Color(0xFFD97706), size: 22),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'Submit Assessment?',
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.textPrimary,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Please review your answers before submitting. In accordance with shelter policy:',
+              style: GoogleFonts.poppins(
+                fontSize: 12.5,
+                color: AppTheme.textSecondary,
+                height: 1.45,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFFBEB),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFFDE68A)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildDialogBullet('Your answers cannot be edited or modified after submission.'),
+                  const SizedBox(height: 6),
+                  _buildDialogBullet('You will not be able to retake the quiz again.'),
+                  const SizedBox(height: 6),
+                  _buildDialogBullet('Recommendations will be permanently based on these answers.'),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+            Text(
+              'Are you sure you want to finalize and submit to the recommendation engine?',
+              style: GoogleFonts.poppins(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w600,
+                color: AppTheme.textPrimary,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          OutlinedButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            style: OutlinedButton.styleFrom(
+              side: BorderSide(color: Colors.grey.shade300),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            ),
+            child: Text(
+              'Review Again',
+              style: GoogleFonts.poppins(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w600,
+                color: AppTheme.textSecondary,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primary,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              elevation: 0,
+            ),
+            child: Text(
+              'Confirm & Submit',
+              style: GoogleFonts.poppins(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      _submitQuiz();
+    }
+  }
+
+  Widget _buildDialogBullet(String text) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.only(top: 5, right: 8),
+          child: Icon(Icons.circle, size: 5, color: Color(0xFFD97706)),
+        ),
+        Expanded(
+          child: Text(
+            text,
+            style: GoogleFonts.poppins(
+              fontSize: 11.5,
+              fontWeight: FontWeight.w500,
+              color: const Color(0xFF92400E),
+              height: 1.35,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 
   Future<void> _submitQuiz() async {
     setState(() {
       _isLoading = true;
       _loadingStep = 1;
-      _loadingStatus = 'Evaluating pet temperament & home environment match...';
+      _loadingStatus = 'Evaluating pet temperament and home environment match...';
     });
 
     final payload = {
@@ -176,7 +335,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
       if (mounted && _isLoading) {
         setState(() {
           _loadingStep = 2;
-          _loadingStatus = 'Evaluating pet temperaments & lifestyle fit...';
+          _loadingStatus = 'Evaluating pet temperaments and lifestyle fit...';
         });
       }
 
@@ -184,7 +343,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
       if (mounted && _isLoading) {
         setState(() {
           _loadingStep = 3;
-          _loadingStatus = 'Ranking top matches by lifestyle & environmental safety...';
+          _loadingStatus = 'Ranking top matches by lifestyle and environmental safety...';
         });
       }
 
@@ -194,7 +353,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
         return status == null || status == 'available';
       }).take(3).toList();
 
-      // Ensure the full animated recommendation evaluation cycle finishes naturally (~3.5s total)
+      // Ensure the full animated recommendation evaluation cycle finishes naturally (~3.4s total)
       final elapsed = DateTime.now().difference(startTime).inMilliseconds;
       if (elapsed < 3400) {
         await Future.delayed(Duration(milliseconds: 3400 - elapsed));
@@ -202,6 +361,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
 
       if (mounted) {
         setState(() {
+          _isLocked = true;
           _recommendations = availableRecs;
           _showResults = true;
           _isLoading = false;
@@ -222,52 +382,71 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.background,
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        leading: widget.isEmbeddedInTab
-            ? (_showResults
-                ? IconButton(
-                    icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
-                    tooltip: 'Back to Quiz',
-                    onPressed: () => setState(() => _showResults = false),
-                  )
-                : null)
-            : IconButton(
-                icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
-                onPressed: () {
-                  if (_showResults) {
-                    setState(() => _showResults = false);
-                  } else {
-                    Navigator.pop(context);
-                  }
-                },
-              ),
-        title: Text(
-          _showResults ? 'Recommended Pet Matches' : 'Compatibility Assessment',
-          style: GoogleFonts.poppins(fontSize: 17, fontWeight: FontWeight.w600),
-        ),
-        actions: [
-          if (!_showResults && !_isLoading && _hasAnySelection)
-            TextButton(
-              onPressed: _resetQuiz,
-              child: Text(
-                'Clear',
-                style: GoogleFonts.poppins(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.textSecondary,
+    return PopScope(
+      canPop: true,
+      child: Scaffold(
+        backgroundColor: AppTheme.background,
+        appBar: AppBar(
+          automaticallyImplyLeading: false,
+          leading: widget.isEmbeddedInTab
+              ? null
+              : IconButton(
+                  icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+                  tooltip: 'Back',
+                  onPressed: () => Navigator.pop(context),
+                ),
+          title: Text(
+            _showResults
+                ? 'Recommended Pet Matches'
+                : (_isLocked ? 'Compatibility Profile' : 'Compatibility Assessment'),
+            style: GoogleFonts.poppins(fontSize: 17, fontWeight: FontWeight.w600),
+          ),
+          actions: [
+            if (!_showResults && !_isLoading && _hasAnySelection && !_isLocked)
+              TextButton(
+                onPressed: _resetQuiz,
+                child: Text(
+                  'Clear',
+                  style: GoogleFonts.poppins(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.textSecondary,
+                  ),
                 ),
               ),
-            ),
-        ],
+            if (_isLocked && !_showResults)
+              Container(
+                margin: const EdgeInsets.only(right: 14),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFFCBD5E1)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.lock_rounded, size: 13, color: Color(0xFF475569)),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Locked',
+                      style: GoogleFonts.poppins(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF475569),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
+        body: _isLoading
+            ? _buildLoadingState()
+            : _showResults
+                ? _buildResultsView()
+                : (_isLocked ? _buildLockedProfileView() : _buildQuizView()),
       ),
-      body: _isLoading
-          ? _buildLoadingState()
-          : _showResults
-              ? _buildResultsView()
-              : _buildQuizView(),
     );
   }
 
@@ -385,10 +564,10 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
       }
     }
 
-    if (_currentStep < 3) {
+    if (_currentStep < 4) {
       setState(() => _currentStep++);
     } else {
-      _submitQuiz();
+      _confirmAndSubmitQuiz();
     }
   }
 
@@ -423,6 +602,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
                 if (_currentStep == 1) _buildStep2(),
                 if (_currentStep == 2) _buildStep3(),
                 if (_currentStep == 3) _buildStep4(),
+                if (_currentStep == 4) _buildStep5Review(),
                 const SizedBox(height: 32),
                 Row(
                   children: [
@@ -445,13 +625,13 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
                       child: ElevatedButton(
                         onPressed: _handleNextStep,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.primary,
+                          backgroundColor: _currentStep == 4 ? const Color(0xFF0F766E) : AppTheme.primary,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                           elevation: 2,
                         ),
                         child: Text(
-                          _currentStep < 3 ? 'Next Step' : 'Find My Perfect Match',
+                          _currentStep < 4 ? 'Next Step' : 'Confirm & Submit Quiz',
                           style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 14, color: Colors.white),
                         ),
                       ),
@@ -467,7 +647,13 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
   }
 
   Widget _buildProgressBar() {
-    final titles = ['Preferences', 'Living Space', 'Experience', 'Personality'];
+    final titles = [
+      'Preferences',
+      'Living Space',
+      'Experience',
+      'Personality',
+      'Review & Confirm',
+    ];
     return Container(
       color: Colors.white,
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
@@ -477,17 +663,21 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Step ${_currentStep + 1} of 4: ${titles[_currentStep]}',
-                  style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.primary)),
-              Text('${((_currentStep + 1) / 4 * 100).toInt()}%',
-                  style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.textSecondary)),
+              Text(
+                'Step ${_currentStep + 1} of 5: ${titles[_currentStep]}',
+                style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.primary),
+              ),
+              Text(
+                '${((_currentStep + 1) / 5 * 100).toInt()}%',
+                style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.textSecondary),
+              ),
             ],
           ),
           const SizedBox(height: 8),
           ClipRRect(
             borderRadius: BorderRadius.circular(6),
             child: LinearProgressIndicator(
-              value: (_currentStep + 1) / 4,
+              value: (_currentStep + 1) / 5,
               minHeight: 6,
               backgroundColor: Colors.grey.shade200,
               color: AppTheme.primary,
@@ -761,6 +951,462 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
     );
   }
 
+  // STEP 5: Review & Confirmation Screen (Final Page)
+  Widget _buildStep5Review() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Review Your Answers',
+          style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.w700, color: AppTheme.textPrimary),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Please verify all your choices before final submission to the engine.',
+          style: GoogleFonts.poppins(fontSize: 13, color: AppTheme.textSecondary),
+        ),
+        const SizedBox(height: 18),
+
+        // Prominent Warning Notice
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFFBEB),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFFFDE68A), width: 1.5),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFFF59E0B).withValues(alpha: 0.08),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFEF3C7),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.warning_amber_rounded, color: Color(0xFFD97706), size: 24),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Important: One-Time Submission Only',
+                      style: GoogleFonts.poppins(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF92400E),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Please review all your answers carefully. Once submitted, your quiz responses cannot be changed, edited, or retaken. The recommendation engine will permanently use these responses for your pet matches.',
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        color: const Color(0xFF78350F),
+                        height: 1.45,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 20),
+
+        // Section 1: Pet Preferences Summary
+        _buildReviewSectionCard(
+          title: 'Pet Preferences',
+          stepIndex: 0,
+          rows: [
+            {'label': 'Species', 'val': _getSpeciesLabel()},
+            {'label': 'Age Group', 'val': _getAgeLabel()},
+            {'label': 'Gender', 'val': _getGenderLabel()},
+            {'label': 'Coat Color', 'val': _getColorLabel()},
+          ],
+        ),
+
+        // Section 2: Living Space Summary
+        _buildReviewSectionCard(
+          title: 'Living Space & Routine',
+          stepIndex: 1,
+          rows: [
+            {'label': 'Residence', 'val': _getResidenceLabel()},
+            {'label': 'Activity Level', 'val': _getActivityLabel()},
+          ],
+        ),
+
+        // Section 3: Household & Experience Summary
+        _buildReviewSectionCard(
+          title: 'Experience & Household',
+          stepIndex: 2,
+          rows: [
+            {'label': 'Pet Experience', 'val': _getExperienceLabel()},
+            {'label': 'Children in Home', 'val': _hasChildren == true ? 'Yes, children present' : 'No children'},
+            {'label': 'Existing Pets', 'val': _hasOtherPets == true ? 'Yes, other pets in home' : 'No other pets'},
+          ],
+        ),
+
+        // Section 4: Care Capacity & Temperaments Summary
+        _buildReviewSectionCard(
+          title: 'Care Capacity & Temperament',
+          stepIndex: 3,
+          rows: [
+            {'label': 'Hours Alone Daily', 'val': _getHoursAloneLabel()},
+            {'label': 'Special Care Needs', 'val': _specialCareCapacity == true ? 'Open to special care / medical' : 'Standard care only'},
+          ],
+          extraWidget: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 10),
+              Text(
+                'Desired Temperament Traits:',
+                style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.textPrimary),
+              ),
+              const SizedBox(height: 6),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: _desiredTemperaments.map((trait) {
+                  return Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryLight,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: AppTheme.primary.withValues(alpha: 0.3)),
+                    ),
+                    child: Text(
+                      trait,
+                      style: GoogleFonts.poppins(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.primaryDark,
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildReviewSectionCard({
+    required String title,
+    required int stepIndex,
+    required List<Map<String, String>> rows,
+    Widget? extraWidget,
+    bool showEditButton = true,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                title,
+                style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700, color: AppTheme.textPrimary),
+              ),
+              if (showEditButton && !_isLocked)
+                InkWell(
+                  onTap: () => setState(() => _currentStep = stepIndex),
+                  borderRadius: BorderRadius.circular(6),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.edit_outlined, size: 13, color: AppTheme.primary),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Edit',
+                          style: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w600, color: AppTheme.primary),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const Divider(height: 16),
+          ...rows.map((row) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    width: 130,
+                    child: Text(
+                      row['label']!,
+                      style: GoogleFonts.poppins(fontSize: 12, color: AppTheme.textSecondary),
+                    ),
+                  ),
+                  Expanded(
+                    child: Text(
+                      row['val']!,
+                      style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.textPrimary),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+          ?extraWidget,
+        ],
+      ),
+    );
+  }
+
+  // Locked Profile View (for adopters who already finalized the quiz)
+  Widget _buildLockedProfileView() {
+    final bottomInset = widget.isEmbeddedInTab ? 100.0 : 24.0;
+    return SingleChildScrollView(
+      padding: EdgeInsets.fromLTRB(20, 20, 20, bottomInset),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Locked Info Card
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFCBD5E1), width: 1.2),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE2E8F0),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.lock_rounded, color: Color(0xFF334155), size: 22),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Compatibility Quiz Locked',
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF1E293B),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'You have already submitted and finalized your compatibility assessment. In accordance with shelter policy, assessment answers are permanent and cannot be modified or retaken.',
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          color: const Color(0xFF64748B),
+                          height: 1.45,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 20),
+
+          // Primary action to view pet recommendations
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () => setState(() => _showResults = true),
+              icon: const Icon(Icons.pets_rounded, size: 18),
+              label: Text(
+                'View Recommended Pets',
+                style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                elevation: 2,
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 24),
+
+          Text(
+            'Your Saved Preferences',
+            style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w700, color: AppTheme.textPrimary),
+          ),
+          const SizedBox(height: 12),
+
+          _buildReviewSectionCard(
+            title: 'Pet Preferences',
+            stepIndex: 0,
+            showEditButton: false,
+            rows: [
+              {'label': 'Species', 'val': _getSpeciesLabel()},
+              {'label': 'Age Group', 'val': _getAgeLabel()},
+              {'label': 'Gender', 'val': _getGenderLabel()},
+              {'label': 'Coat Color', 'val': _getColorLabel()},
+            ],
+          ),
+
+          _buildReviewSectionCard(
+            title: 'Living Space & Routine',
+            stepIndex: 1,
+            showEditButton: false,
+            rows: [
+              {'label': 'Residence', 'val': _getResidenceLabel()},
+              {'label': 'Activity Level', 'val': _getActivityLabel()},
+            ],
+          ),
+
+          _buildReviewSectionCard(
+            title: 'Experience & Household',
+            stepIndex: 2,
+            showEditButton: false,
+            rows: [
+              {'label': 'Pet Experience', 'val': _getExperienceLabel()},
+              {'label': 'Children in Home', 'val': _hasChildren == true ? 'Yes, children present' : 'No children'},
+              {'label': 'Existing Pets', 'val': _hasOtherPets == true ? 'Yes, other pets in home' : 'No other pets'},
+            ],
+          ),
+
+          _buildReviewSectionCard(
+            title: 'Care Capacity & Temperament',
+            stepIndex: 3,
+            showEditButton: false,
+            rows: [
+              {'label': 'Hours Alone Daily', 'val': _getHoursAloneLabel()},
+              {'label': 'Special Care Needs', 'val': _specialCareCapacity == true ? 'Open to special care / medical' : 'Standard care only'},
+            ],
+            extraWidget: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 10),
+                Text(
+                  'Desired Temperament Traits:',
+                  style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.textPrimary),
+                ),
+                const SizedBox(height: 6),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: _desiredTemperaments.map((trait) {
+                    return Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primaryLight,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: AppTheme.primary.withValues(alpha: 0.3)),
+                      ),
+                      child: Text(
+                        trait,
+                        style: GoogleFonts.poppins(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.primaryDark,
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Label Helpers
+  String _getSpeciesLabel() {
+    if (_preferredSpecies == 'dog') return 'Dogs Only';
+    if (_preferredSpecies == 'cat') return 'Cats Only';
+    return 'Any Species (Dogs & Cats)';
+  }
+
+  String _getAgeLabel() {
+    if (_preferredAge == 'kitten_puppy') {
+      return _preferredSpecies == 'dog'
+          ? 'Puppy (1-6 months)'
+          : (_preferredSpecies == 'cat' ? 'Kitten (1-6 months)' : 'Puppy / Kitten (1-6 months)');
+    }
+    if (_preferredAge == 'adult') return 'Adult (1+ yrs)';
+    return 'Any Age';
+  }
+
+  String _getGenderLabel() {
+    if (_preferredGender == 'male') return 'Male';
+    if (_preferredGender == 'female') return 'Female';
+    return 'Any Gender';
+  }
+
+  String _getColorLabel() {
+    if (_preferredColor == null || _preferredColor == 'any') return 'Any Color';
+    return _preferredColor!;
+  }
+
+  String _getResidenceLabel() {
+    if (_livingEnvironment == 'apartment') return 'Apartment / Condominium';
+    if (_livingEnvironment == 'house_with_yard') return 'House with Fenced Yard';
+    if (_livingEnvironment == 'house_no_yard') return 'House without Yard';
+    return 'Standard Residence';
+  }
+
+  String _getActivityLabel() {
+    if (_activityLevel == 'relaxed') return 'Calm & Relaxed (Indoor lounging)';
+    if (_activityLevel == 'moderate') return 'Moderately Active (Daily walks)';
+    if (_activityLevel == 'high') return 'High Energy (Running, hiking)';
+    return 'Moderate';
+  }
+
+  String _getExperienceLabel() {
+    if (_petExperience == 'first_time') return 'First-time Pet Owner';
+    if (_petExperience == 'experienced') return 'Experienced Pet Owner';
+    return 'Standard';
+  }
+
+  String _getHoursAloneLabel() {
+    if (_hoursAlone == '0_3') return '0 - 3 Hours (Full attention)';
+    if (_hoursAlone == '4_7') return '4 - 7 Hours (Standard work routine)';
+    if (_hoursAlone == '8_plus') return '8+ Hours (Independent pets)';
+    return '4 - 7 Hours';
+  }
+
   Widget _buildSectionTitle(String title) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
@@ -865,13 +1511,18 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
               const SizedBox(height: 16),
               Text('No direct matches found', style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w700)),
               const SizedBox(height: 8),
-              Text('Try broadening your preferences or check back soon for newly rescued pets!',
-                  textAlign: TextAlign.center, style: GoogleFonts.poppins(color: AppTheme.textSecondary, fontSize: 13)),
+              Text(
+                _isLocked
+                    ? 'No pets currently match your locked preferences. Check back soon for newly rescued pets!'
+                    : 'Try broadening your preferences or check back soon for newly rescued pets!',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.poppins(color: AppTheme.textSecondary, fontSize: 13),
+              ),
               const SizedBox(height: 20),
               ElevatedButton(
-                onPressed: () => setState(() => _showResults = false),
+                onPressed: () => Navigator.pop(context),
                 style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary),
-                child: Text('Adjust Quiz Answers', style: GoogleFonts.poppins(color: Colors.white)),
+                child: Text('Back to Pets', style: GoogleFonts.poppins(color: Colors.white)),
               ),
             ],
           ),
@@ -926,14 +1577,27 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
                     ],
                   ),
                 ),
-                TextButton(
-                  onPressed: () => setState(() => _showResults = false),
-                  style: TextButton.styleFrom(
-                    backgroundColor: Colors.white.withValues(alpha: 0.2),
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Text('Edit Quiz', style: GoogleFonts.poppins(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600)),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.auto_awesome_rounded, size: 13, color: Colors.white),
+                      const SizedBox(width: 4),
+                      Text(
+                        'AI Matched',
+                        style: GoogleFonts.poppins(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),

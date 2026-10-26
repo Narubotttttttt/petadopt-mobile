@@ -22,6 +22,14 @@ class RecommendationService {
       final json = jsonDecode(response.body) as Map<String, dynamic>;
       final list = json['recommendations'] as List<dynamic>? ?? [];
       return list.map((item) => Map<String, dynamic>.from(item as Map)).toList();
+    } else if (response.statusCode == 403) {
+      try {
+        final json = jsonDecode(response.body) as Map<String, dynamic>;
+        throw Exception(json['message'] ?? 'Your compatibility quiz has already been submitted and cannot be changed.');
+      } catch (e) {
+        if (e is Exception) rethrow;
+        throw Exception('Your compatibility quiz has already been submitted and cannot be changed.');
+      }
     }
 
     return [];
@@ -42,7 +50,9 @@ class RecommendationService {
       if (response.statusCode == 200) {
         final json = jsonDecode(response.body) as Map<String, dynamic>;
         if (json['preferences'] != null) {
-          return Map<String, dynamic>.from(json['preferences'] as Map);
+          final map = Map<String, dynamic>.from(json['preferences'] as Map);
+          map['is_locked'] = json['is_locked'] ?? true;
+          return map;
         }
       }
     } catch (_) {}
