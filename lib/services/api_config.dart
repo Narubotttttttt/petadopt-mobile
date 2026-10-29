@@ -2,7 +2,7 @@ class ApiConfig {
   static const String serverIp = '192.168.1.46';
   static const String serverPort = '8000';
 
-  static const String host = 'http://$serverIp:$serverPort';
+  static const String host = 'https://caws-petadoption.vercel.app';
   static const String baseUrl = '$host/api';
   static const String storageBaseUrl = '$host/storage';
 

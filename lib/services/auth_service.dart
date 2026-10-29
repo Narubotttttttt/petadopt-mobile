@@ -51,6 +51,7 @@ class AuthService {
     final data = jsonDecode(response.body) as Map<String, dynamic>;
 
     if (response.statusCode == 201) {
+      await clearSession();
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(tokenKey, data['token'] as String);
       await prefs.setString('last_active_timestamp', DateTime.now().toIso8601String());
@@ -86,6 +87,7 @@ class AuthService {
       if (data['user'] != null && data['user']['role'] != 'adopter') {
         throw Exception('Admin accounts cannot log in to the mobile app. Please use the Web Admin Portal.');
       }
+      await clearSession();
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(tokenKey, data['token'] as String);
       await prefs.setString('last_active_timestamp', DateTime.now().toIso8601String());
@@ -262,6 +264,19 @@ class AuthService {
     await prefs.remove('user_full_address');
     await prefs.remove('user_city');
     await prefs.remove('user_barangay');
+    await prefs.remove('quiz_locked');
+
+    // Purge any user-scoped or quiz-related local cache
+    try {
+      final allKeys = prefs.getKeys().toList();
+      for (final key in allKeys) {
+        if (key.startsWith('quiz_') ||
+            key.contains('quiz') ||
+            key.contains('recommendation')) {
+          await prefs.remove(key);
+        }
+      }
+    } catch (_) {}
   }
 
   static Future<void> saveFcmToken(String fcmToken) async {

@@ -92,13 +92,33 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
     _loadSavedPreferences();
   }
 
+  Future<String?> _getUserQuizLockKey() async {
+    try {
+      final user = await ApiService.getUser();
+      final userId = user?['id'];
+      if (userId != null) {
+        return 'quiz_locked_user_$userId';
+      }
+    } catch (_) {}
+    return null;
+  }
+
   Future<void> _checkCachedLockState() async {
     try {
+      final lockKey = await _getUserQuizLockKey();
+      if (lockKey == null) {
+        if (mounted) {
+          setState(() {
+            _isLocked = false;
+          });
+        }
+        return;
+      }
       final prefs = await SharedPreferences.getInstance();
-      final isLockedCached = prefs.getBool('quiz_locked') ?? false;
-      if (isLockedCached && mounted) {
+      final isLockedCached = prefs.getBool(lockKey) ?? false;
+      if (mounted) {
         setState(() {
-          _isLocked = true;
+          _isLocked = isLockedCached;
         });
       }
     } catch (_) {}
@@ -106,12 +126,17 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
 
   Future<void> _loadSavedPreferences() async {
     try {
+      final lockKey = await _getUserQuizLockKey();
+      final prefs = await SharedPreferences.getInstance();
       final saved = await ApiService.getSavedPreferences();
+
+      // Clean up legacy device-wide lock key if present
+      await prefs.remove('quiz_locked');
+
       if (saved != null && mounted) {
-        try {
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.setBool('quiz_locked', true);
-        } catch (_) {}
+        if (lockKey != null) {
+          await prefs.setBool(lockKey, true);
+        }
 
         setState(() {
           _isLocked = true;
@@ -143,12 +168,36 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
             }
           }
         });
-        // Pre-fetch recommendations in background so they are ready when clicked,
-        // but DO NOT set _showResults = true!
+
+        // Pre-fetch recommendations in background for this specific user
         _fetchSavedRecommendations();
+        return;
+      } else if (mounted) {
+        // Fresh user or account with no submitted quiz
+        if (lockKey != null) {
+          await prefs.setBool(lockKey, false);
+        }
+
+        setState(() {
+          _isLocked = false;
+          _isCheckingLock = false;
+          _showResults = false;
+          _currentStep = 0;
+          _recommendations = [];
+          _preferredSpecies = null;
+          _livingEnvironment = null;
+          _activityLevel = null;
+          _petExperience = null;
+          _hasChildren = null;
+          _hasOtherPets = null;
+          _hoursAlone = null;
+          _specialCareCapacity = null;
+          _desiredTemperaments.clear();
+        });
         return;
       }
     } catch (_) {}
+
     if (mounted) {
       setState(() {
         _isCheckingLock = false;
@@ -380,7 +429,12 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
 
       if (mounted) {
         try {
-          SharedPreferences.getInstance().then((prefs) => prefs.setBool('quiz_locked', true));
+          final lockKey = await _getUserQuizLockKey();
+          final prefs = await SharedPreferences.getInstance();
+          if (lockKey != null) {
+            await prefs.setBool(lockKey, true);
+          }
+          await prefs.remove('quiz_locked');
         } catch (_) {}
         setState(() {
           _isLocked = true;
