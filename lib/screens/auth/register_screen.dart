@@ -904,9 +904,24 @@ class _RegisterScreenState extends State<RegisterScreen> {
         const SizedBox(height: 14),
 
         if (!_isPhoneOtpSent) ...[
-          _isSendingPhoneOtp
+          _isSendingPhoneOtp || _isRegistering
               ? _loadingButton()
               : _gradientButton('Send SMS Code', _sendPhoneOtp),
+          const SizedBox(height: 12),
+          Center(
+            child: TextButton.icon(
+              onPressed: _isRegistering ? null : _completeRegistration,
+              icon: const Icon(Icons.arrow_forward_rounded, size: 16, color: AppTheme.primary),
+              label: Text(
+                'Skip phone verification for now',
+                style: GoogleFonts.poppins(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.primary,
+                ),
+              ),
+            ),
+          ),
         ] else ...[
           // SMS OTP Input
           TextFormField(
@@ -962,6 +977,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
           _isVerifyingPhoneOtp || _isRegistering
               ? _loadingButton()
               : _gradientButton('Complete Registration', _handleStep3VerifyAndRegister),
+          const SizedBox(height: 10),
+          Center(
+            child: TextButton(
+              onPressed: _isRegistering ? null : _completeRegistration,
+              child: Text(
+                'Skip phone verification',
+                style: GoogleFonts.poppins(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.primary,
+                ),
+              ),
+            ),
+          ),
         ],
 
         const SizedBox(height: 16),

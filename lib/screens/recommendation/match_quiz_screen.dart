@@ -23,7 +23,6 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
   bool _isLoading = false;
   bool _showResults = false;
   bool _isLocked = false;
-  bool _isCheckingLock = true;
   bool _isLoadingRecommendations = false;
   List<Map<String, dynamic>> _recommendations = [];
   String _loadingStatus = 'Analyzing your living environment and lifestyle compatibility...';
@@ -140,7 +139,6 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
 
         setState(() {
           _isLocked = true;
-          _isCheckingLock = false;
           _preferredSpecies = saved['preferred_species']?.toString();
           _livingEnvironment = saved['living_environment']?.toString();
           _activityLevel = saved['activity_level']?.toString();
@@ -180,7 +178,6 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
 
         setState(() {
           _isLocked = false;
-          _isCheckingLock = false;
           _showResults = false;
           _currentStep = 0;
           _recommendations = [];
@@ -200,7 +197,6 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
 
     if (mounted) {
       setState(() {
-        _isCheckingLock = false;
       });
     }
   }
@@ -483,15 +479,13 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
                   },
                 ),
           title: Text(
-            _isCheckingLock
-                ? 'Compatibility Assessment'
-                : (_showResults
-                    ? 'Recommended Pet Matches'
-                    : (_isLocked ? 'Compatibility Profile' : 'Compatibility Assessment')),
+            _showResults
+                ? 'Recommended Pet Matches'
+                : (_isLocked ? 'Compatibility Profile' : 'Compatibility Assessment'),
             style: GoogleFonts.poppins(fontSize: 17, fontWeight: FontWeight.w600),
           ),
           actions: [
-            if (!_showResults && !_isLoading && _hasAnySelection && !_isLocked && !_isCheckingLock)
+            if (!_showResults && !_isLoading && _hasAnySelection && !_isLocked)
               TextButton(
                 onPressed: _resetQuiz,
                 child: Text(
@@ -503,7 +497,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
                   ),
                 ),
               ),
-            if (_isLocked && !_showResults && !_isCheckingLock)
+            if (_isLocked && !_showResults)
               Container(
                 margin: const EdgeInsets.only(right: 14),
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -530,54 +524,15 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
               ),
           ],
         ),
-        body: _isCheckingLock
-            ? _buildInitialLoadingState()
-            : (_isLoading
-                ? _buildLoadingState()
-                : _showResults
-                    ? _buildResultsView()
-                    : (_isLocked ? _buildLockedProfileView() : _buildQuizView())),
+        body: _isLoading
+            ? _buildLoadingState()
+            : _showResults
+                ? _buildResultsView()
+                : (_isLocked ? _buildLockedProfileView() : _buildQuizView()),
       ),
     );
   }
 
-  Widget _buildInitialLoadingState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 76,
-            height: 76,
-            decoration: const BoxDecoration(
-              color: AppTheme.primaryLight,
-              shape: BoxShape.circle,
-            ),
-            child: const Center(
-              child: LuminousAiOrb(size: 44),
-            ),
-          ),
-          const SizedBox(height: 22),
-          Text(
-            'Checking Compatibility Profile...',
-            style: GoogleFonts.poppins(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: AppTheme.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Verifying your shelter assessment status',
-            style: GoogleFonts.poppins(
-              fontSize: 12,
-              color: AppTheme.textSecondary,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildLoadingState() {
     return Center(
