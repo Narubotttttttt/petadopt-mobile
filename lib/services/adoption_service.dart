@@ -49,6 +49,33 @@ class AdoptionService {
     throw Exception(resData['message']?.toString() ?? 'Failed to submit adoption application.');
   }
 
+  static Future<Map<String, dynamic>?> getPrefillData([int? petId]) async {
+    final token = await AuthService.getToken();
+    if (token == null) return null;
+
+    try {
+      final uri = petId != null
+          ? Uri.parse('${ApiConfig.baseUrl}/adoption-applications/prefill?pet_id=$petId')
+          : Uri.parse('${ApiConfig.baseUrl}/adoption-applications/prefill');
+
+      final response = await http
+          .get(
+            uri,
+            headers: ApiClient.headersWithToken(token),
+          )
+          .timeout(ApiConfig.defaultTimeout);
+
+      if (response.statusCode == 200) {
+        final json = jsonDecode(response.body) as Map<String, dynamic>;
+        if (json['success'] == true && json['prefill'] != null) {
+          return Map<String, dynamic>.from(json['prefill'] as Map);
+        }
+      }
+    } catch (_) {}
+
+    return null;
+  }
+
   static Future<String?> getContractDownloadUrl(int id) async {
     final token = await AuthService.getToken();
 

@@ -1598,7 +1598,8 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
         final double matchPct = rawPct is num
             ? rawPct.toDouble()
             : (double.tryParse(rawPct.toString().replaceAll('%', '').trim()) ?? 80.0);
-        final reasons = (pet['match_reasons'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [];
+        final rawReasons = pet['match_reasons'] ?? pet['reasons'];
+        final reasons = (rawReasons as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [];
 
         return Card(
           margin: const EdgeInsets.only(bottom: 14),
@@ -1624,6 +1625,8 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
                 'compatibility_score': pet['match_percentage'],
                 'isRecommended': true,
                 'application_source': 'recommendation',
+                'match_reasons': reasons,
+                'reasons': reasons,
               };
               Navigator.push(
                 context,

@@ -164,6 +164,50 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
       await prefs.setString('user_${userId}_phone', phone.trim());
     }
 
+    // Fetch prefill data from adoption API or saved quiz preferences
+    final petId = widget.pet['id'] != null ? int.tryParse(widget.pet['id'].toString()) : null;
+    Map<String, dynamic>? prefill = await ApiService.getAdoptionPrefillData(petId);
+    if (prefill == null) {
+      final savedPrefs = await ApiService.getSavedPreferences();
+      if (savedPrefs != null) {
+        prefill = savedPrefs;
+      }
+    }
+
+    String? resolvedHomeType;
+    bool? resolvedHasOtherPets;
+    bool? resolvedHasExperience;
+
+    if (prefill != null) {
+      final rawLiving = (prefill['living_environment'] ?? prefill['home_type'])?.toString().toLowerCase() ?? '';
+      if (rawLiving.contains('apartment')) {
+        resolvedHomeType = 'Apartment';
+      } else if (rawLiving.contains('condo')) {
+        resolvedHomeType = 'Condo';
+      } else if (rawLiving.contains('house')) {
+        resolvedHomeType = 'House';
+      } else if (rawLiving.contains('farm')) {
+        resolvedHomeType = 'Farm';
+      } else if (_homeTypes.contains(prefill['home_type'])) {
+        resolvedHomeType = prefill['home_type'].toString();
+      }
+
+      if (prefill['has_other_pets'] != null) {
+        resolvedHasOtherPets = prefill['has_other_pets'] is bool
+            ? prefill['has_other_pets'] as bool
+            : prefill['has_other_pets'].toString() == '1' || prefill['has_other_pets'].toString() == 'true';
+      }
+
+      if (prefill['has_experience'] != null) {
+        resolvedHasExperience = prefill['has_experience'] is bool
+            ? prefill['has_experience'] as bool
+            : prefill['has_experience'].toString() == '1' || prefill['has_experience'].toString() == 'true';
+      } else if (prefill['pet_experience'] != null) {
+        final expStr = prefill['pet_experience'].toString().toLowerCase();
+        resolvedHasExperience = (expStr == 'experienced');
+      }
+    }
+
     if (mounted) {
       setState(() {
         if (userId != null && userId != 'guest') {
@@ -184,12 +228,26 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
         }
         if (phone != null && phone.isNotEmpty) {
           _phoneController.text = phone;
+        } else if (prefill != null && prefill['phone'] != null && prefill['phone'].toString().isNotEmpty) {
+          _phoneController.text = prefill['phone'].toString();
         }
         if (secondaryPhone != null && secondaryPhone.isNotEmpty) {
           _secondaryPhoneController.text = secondaryPhone;
         }
         if (address != null && address.isNotEmpty) {
           _addressController.text = address;
+        } else if (prefill != null && prefill['address'] != null && prefill['address'].toString().isNotEmpty) {
+          _addressController.text = prefill['address'].toString();
+        }
+
+        if (resolvedHomeType != null && _homeType == null) {
+          _homeType = resolvedHomeType;
+        }
+        if (resolvedHasOtherPets != null) {
+          _hasOtherPets = resolvedHasOtherPets;
+        }
+        if (resolvedHasExperience != null) {
+          _hasExperience = resolvedHasExperience;
         }
       });
     }

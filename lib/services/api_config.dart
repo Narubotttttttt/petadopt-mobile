@@ -2,7 +2,12 @@ class ApiConfig {
   static const String serverIp = '192.168.1.46';
   static const String serverPort = '8000';
 
-  static const String host = 'https://caws-petadoption.vercel.app';
+  // Set to true when building for production Vercel
+  static const bool isProduction = false;
+
+  static const String host = isProduction
+      ? 'https://caws-petadoption.vercel.app'
+      : 'http://$serverIp:$serverPort';
   static const String baseUrl = '$host/api';
   static const String storageBaseUrl = '$host/storage';
 

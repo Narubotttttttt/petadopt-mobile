@@ -93,7 +93,7 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
   }
 
   List<String> get _matchReasons {
-    final raw = widget.pet['match_reasons'];
+    final raw = widget.pet['match_reasons'] ?? widget.pet['reasons'];
     if (raw is List) {
       return raw.map((e) => e.toString()).toList();
     }

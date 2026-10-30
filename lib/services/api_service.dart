@@ -119,6 +119,9 @@ class ApiService {
     useSavedSignature: useSavedSignature,
   );
 
+  static Future<Map<String, dynamic>?> getAdoptionPrefillData([int? petId]) =>
+      AdoptionService.getPrefillData(petId);
+
   // Health Tracking & Vaccines
   static Future<Map<String, dynamic>> submitHealthUpdate({
     required int applicationId,
