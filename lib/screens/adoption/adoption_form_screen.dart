@@ -34,8 +34,11 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
   final _reasonController = TextEditingController();
   final _otherPetsDetailsController = TextEditingController();
   final _proposedPetNameController = TextEditingController();
+  final _landlordNameController = TextEditingController();
+  final _landlordPhoneController = TextEditingController();
 
   String? _homeType;
+  String? _homeOwnership;
   bool _hasOtherPets = false;
   bool _hasExperience = false;
   String? _adopterId;
@@ -147,6 +150,8 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
     _reasonController.dispose();
     _otherPetsDetailsController.dispose();
     _proposedPetNameController.dispose();
+    _landlordNameController.dispose();
+    _landlordPhoneController.dispose();
     super.dispose();
   }
 
@@ -201,10 +206,11 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
       if (prefill['has_experience'] != null) {
         resolvedHasExperience = prefill['has_experience'] is bool
             ? prefill['has_experience'] as bool
-            : prefill['has_experience'].toString() == '1' || prefill['has_experience'].toString() == 'true';
+            : ['1', 'true', 'yes', 'experienced'].contains(prefill['has_experience'].toString().toLowerCase().trim()) ||
+                prefill['has_experience'].toString().toLowerCase().contains('experienc');
       } else if (prefill['pet_experience'] != null) {
-        final expStr = prefill['pet_experience'].toString().toLowerCase();
-        resolvedHasExperience = (expStr == 'experienced');
+        final expStr = prefill['pet_experience'].toString().toLowerCase().trim();
+        resolvedHasExperience = expStr == 'experienced' || expStr.contains('experienc') || expStr == 'yes' || expStr == 'true';
       }
     }
 
@@ -242,6 +248,20 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
 
         if (resolvedHomeType != null && _homeType == null) {
           _homeType = resolvedHomeType;
+        }
+        if (prefill != null && prefill['home_ownership'] != null) {
+          final own = prefill['home_ownership'].toString().toLowerCase().trim();
+          if (own == 'rented' || own == 'rent') {
+            _homeOwnership = 'rented';
+          } else if (own == 'owned' || own == 'own') {
+            _homeOwnership = 'owned';
+          }
+        }
+        if (prefill != null && prefill['landlord_name'] != null && prefill['landlord_name'].toString().isNotEmpty) {
+          _landlordNameController.text = prefill['landlord_name'].toString();
+        }
+        if (prefill != null && prefill['landlord_phone'] != null && prefill['landlord_phone'].toString().isNotEmpty) {
+          _landlordPhoneController.text = prefill['landlord_phone'].toString();
         }
         if (resolvedHasOtherPets != null) {
           _hasOtherPets = resolvedHasOtherPets;
@@ -711,6 +731,58 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
       return;
     }
 
+    if (_homeOwnership == null || _homeOwnership!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Please select whether you own or rent your home',
+            style: GoogleFonts.poppins(fontSize: 13),
+          ),
+          backgroundColor: AppTheme.warningColor,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
+      );
+      return;
+    }
+
+    if (_homeOwnership == 'rented') {
+      if (_landlordNameController.text.trim().isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Please provide your landlord or building administrator name',
+              style: GoogleFonts.poppins(fontSize: 13),
+            ),
+            backgroundColor: AppTheme.warningColor,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
+        return;
+      }
+      if (_landlordPhoneController.text.trim().isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Please provide your landlord or building contact phone number',
+              style: GoogleFonts.poppins(fontSize: 13),
+            ),
+            backgroundColor: AppTheme.warningColor,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
+        return;
+      }
+    }
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -752,6 +824,9 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
         'city': city,
         'barangay': barangay,
         'home_type': _homeType,
+        'home_ownership': _homeOwnership,
+        'landlord_name': _homeOwnership == 'rented' ? _landlordNameController.text.trim() : null,
+        'landlord_phone': _homeOwnership == 'rented' ? _landlordPhoneController.text.trim() : null,
         'has_other_pets': _hasOtherPets,
         'other_pets_details': _hasOtherPets ? _otherPetsDetailsController.text.trim() : null,
         'has_experience': _hasExperience,
@@ -823,82 +898,28 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
         title: Text(
           'Adoption Application',
           style: GoogleFonts.poppins(
-            fontSize: 17,
+            fontSize: 16.5,
             fontWeight: FontWeight.w600,
+            color: AppTheme.textPrimary,
           ),
         ),
+        elevation: 0,
+        scrolledUnderElevation: 0,
       ),
       body: Column(
         children: [
-          _buildStepIndicator(),
+          _buildCompactHeader(),
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildPetSummary(),
-                  const SizedBox(height: 24),
                   if (_currentStep == 0) _buildStep1(),
                   if (_currentStep == 1) _buildStep2(),
                   if (_currentStep == 2) _buildStep3(),
                   const SizedBox(height: 28),
-                  Row(
-                    children: [
-                      if (_currentStep > 0) ...[
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: _prevStep,
-                            style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              side: const BorderSide(color: AppTheme.primary),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            child: Text(
-                              'Back',
-                              style: GoogleFonts.poppins(
-                                color: AppTheme.primary,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                      ],
-                      Expanded(
-                        flex: 2,
-                        child: GestureDetector(
-                          onTap: _currentStep == 2 ? _submitForm : _nextStep,
-                          child: Container(
-                            height: 50,
-                            decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [AppTheme.primaryDark, AppTheme.primary],
-                              ),
-                              borderRadius: BorderRadius.circular(12),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppTheme.primary.withValues(alpha: 0.3),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
-                            ),
-                            child: Center(
-                              child: Text(
-                                _currentStep == 2 ? 'Submit Application' : 'Next',
-                                style: GoogleFonts.poppins(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                  _buildBottomNavButtons(),
                 ],
               ),
             ),
@@ -908,180 +929,236 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
     );
   }
 
-  Widget _buildStepIndicator() {
-    final steps = ['Personal Info', 'Documents', 'Lifestyle'];
+  Widget _buildCompactHeader() {
+    const stepTitles = [
+      'Personal Information',
+      'Document Verification',
+      'Lifestyle & Housing',
+    ];
+
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
-      decoration: BoxDecoration(
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+      decoration: const BoxDecoration(
         color: AppTheme.background,
         border: Border(
-          bottom: BorderSide(color: AppTheme.cardBorder),
+          bottom: BorderSide(color: AppTheme.cardBorder, width: 1),
         ),
       ),
-      child: Row(
-        children: List.generate(steps.length, (index) {
-          final isActive = index == _currentStep;
-          final isDone = index < _currentStep;
-          return Expanded(
-            child: Row(
-              children: [
-                Column(
-                  children: [
-                    AnimatedContainer(
-                      duration: const Duration(milliseconds: 250),
-                      width: 30,
-                      height: 30,
-                      decoration: BoxDecoration(
-                        color: isDone || isActive
-                            ? AppTheme.primary
-                            : AppTheme.surface,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: isDone || isActive
-                              ? AppTheme.primary
-                              : AppTheme.cardBorder,
-                          width: 1.5,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: _petImageUrl != null && _petImageUrl!.isNotEmpty
+                    ? Image.network(
+                        _petImageUrl!,
+                        width: 36,
+                        height: 36,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, _, _) => Container(
+                          width: 36,
+                          height: 36,
+                          color: AppTheme.primaryLight,
+                          child: const Icon(Icons.pets_rounded, size: 18, color: AppTheme.primary),
                         ),
+                      )
+                    : Container(
+                        width: 36,
+                        height: 36,
+                        color: AppTheme.primaryLight,
+                        child: const Icon(Icons.pets_rounded, size: 18, color: AppTheme.primary),
                       ),
-                      child: Center(
-                        child: isDone
-                            ? const Icon(
-                                Icons.check_rounded,
-                                size: 16,
-                                color: Colors.white,
-                              )
-                            : Text(
-                                '${index + 1}',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                  color: isActive
-                                      ? Colors.white
-                                      : AppTheme.textSecondary,
-                                ),
-                              ),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     Text(
-                      steps[index],
+                      'Applying for $_petDisplayName',
                       style: GoogleFonts.poppins(
-                        fontSize: 9,
-                        fontWeight:
-                            isActive ? FontWeight.w600 : FontWeight.w400,
-                        color: isActive
-                            ? AppTheme.primary
-                            : AppTheme.textSecondary,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.textPrimary,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Text(
+                      'Step ${_currentStep + 1} of 3 • ${stepTitles[_currentStep]}',
+                      style: GoogleFonts.poppins(
+                        fontSize: 11,
+                        color: AppTheme.textSecondary,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
                 ),
-                if (index < steps.length - 1)
-                  Expanded(
-                    child: Container(
-                      height: 2,
-                      margin: const EdgeInsets.only(bottom: 18),
-                      color: index < _currentStep
-                          ? AppTheme.primary
-                          : AppTheme.cardBorder,
+              ),
+              if (_isFromRecommendation && _compatibilityScore != null)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryLight,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppTheme.primary.withValues(alpha: 0.2)),
+                  ),
+                  child: Text(
+                    '${_compatibilityScore!.toInt()}% Match',
+                    style: GoogleFonts.poppins(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.primaryDark,
                     ),
                   ),
-              ],
-            ),
-          );
-        }),
+                ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: List.generate(3, (index) {
+              final isDoneOrActive = index <= _currentStep;
+              return Expanded(
+                child: Container(
+                  height: 3.5,
+                  margin: EdgeInsets.only(right: index < 2 ? 6 : 0),
+                  decoration: BoxDecoration(
+                    color: isDoneOrActive ? AppTheme.primary : AppTheme.cardBorder,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              );
+            }),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildPetSummary() {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppTheme.primaryLight,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppTheme.primary.withValues(alpha: 0.2)),
-      ),
-      child: Row(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: _petImageUrl != null && _petImageUrl!.isNotEmpty
-                ? Image.network(
-                    _petImageUrl!,
-                    width: 54,
-                    height: 54,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, _, _) => Container(
-                      width: 54,
-                      height: 54,
-                      color: AppTheme.primaryLight,
-                      child: const Center(
-                        child: Icon(Icons.pets_rounded, size: 24, color: AppTheme.primary),
-                      ),
-                    ),
-                  )
-                : Container(
-                    width: 54,
-                    height: 54,
-                    color: AppTheme.primaryLight,
-                    child: const Center(
-                      child: Icon(Icons.pets_rounded, size: 24, color: AppTheme.primary),
-                    ),
-                  ),
+  Widget _buildSectionHeader(String title, {String? subtitle}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: GoogleFonts.poppins(
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            color: AppTheme.textPrimary,
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Applying for $_petDisplayName',
-                  style: GoogleFonts.poppins(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: AppTheme.primaryDark,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                Text(
-                  [
-                    if (widget.pet['breed'] != null && widget.pet['breed'].toString().isNotEmpty && widget.pet['breed'].toString().toLowerCase() != 'null') widget.pet['breed'].toString(),
-                    if (widget.pet['age'] != null && widget.pet['age'].toString().isNotEmpty && widget.pet['age'].toString().toLowerCase() != 'null') widget.pet['age'].toString(),
-                    if (widget.pet['gender'] != null && widget.pet['gender'].toString().isNotEmpty && widget.pet['gender'].toString().toLowerCase() != 'null') widget.pet['gender'].toString(),
-                  ].join(' • '),
-                  style: GoogleFonts.poppins(
-                    fontSize: 11,
-                    color: AppTheme.primary,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                if (_isFromRecommendation) ...[
-                  const SizedBox(height: 4),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: AppTheme.primary,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      _compatibilityScore != null
-                          ? 'Quiz Match (${_compatibilityScore!.toInt()}%)'
-                          : 'Quiz Match',
-                      style: GoogleFonts.poppins(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ],
-              ],
+        ),
+        if (subtitle != null) ...[
+          const SizedBox(height: 2),
+          Text(
+            subtitle,
+            style: GoogleFonts.poppins(
+              fontSize: 11,
+              color: AppTheme.textSecondary,
+              height: 1.35,
             ),
           ),
         ],
+      ],
+    );
+  }
+
+  Widget _buildCardContainer({required List<Widget> children}) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppTheme.cardBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: children,
+      ),
+    );
+  }
+
+  InputDecoration _minimalInputDecoration({
+    required String label,
+    String? hint,
+    IconData? icon,
+  }) {
+    return InputDecoration(
+      labelText: label,
+      hintText: hint,
+      alignLabelWithHint: true,
+      labelStyle: GoogleFonts.poppins(
+        fontSize: 12,
+        color: AppTheme.textSecondary,
+      ),
+      hintStyle: GoogleFonts.poppins(
+        fontSize: 12,
+        color: AppTheme.textSecondary.withValues(alpha: 0.6),
+      ),
+      prefixIcon: icon != null
+          ? Icon(icon, size: 18, color: AppTheme.textSecondary)
+          : null,
+      filled: true,
+      fillColor: Colors.white,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: AppTheme.cardBorder),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: AppTheme.cardBorder),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: AppTheme.primary, width: 1.5),
+      ),
+    );
+  }
+
+  Widget _buildSegmentedSelector<T>({
+    required List<T> options,
+    required T? selected,
+    required String Function(T) getLabel,
+    required ValueChanged<T> onSelected,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppTheme.cardBorder),
+      ),
+      child: Row(
+        children: options.map((opt) {
+          final isSelected = selected == opt;
+          return Expanded(
+            child: GestureDetector(
+              onTap: () => onSelected(opt),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: isSelected ? AppTheme.primary : Colors.transparent,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  getLabel(opt),
+                  style: GoogleFonts.poppins(
+                    fontSize: 11.5,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                    color: isSelected ? Colors.white : AppTheme.textSecondary,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ),
+          );
+        }).toList(),
       ),
     );
   }
@@ -1095,14 +1172,7 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'Personal Information',
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: AppTheme.textPrimary,
-                ),
-              ),
+              _buildSectionHeader('Applicant Identity', subtitle: 'Must match your valid government ID'),
               if (_adopterId != null)
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -1123,190 +1193,108 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
             ],
           ),
           const SizedBox(height: 10),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            decoration: BoxDecoration(
-              color: const Color(0xFFEFF6FF),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFBFDBFE)),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Icon(
-                  Icons.info_outline_rounded,
-                  color: Color(0xFF2563EB),
-                  size: 18,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Reminder: Please enter your exact real full name as it appears on your Government ID for adoption verification.',
-                    style: GoogleFonts.poppins(
-                      fontSize: 11.5,
-                      color: const Color(0xFF1E40AF),
-                      fontWeight: FontWeight.w500,
-                      height: 1.4,
+          _buildCardContainer(
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    flex: 3,
+                    child: TextFormField(
+                      controller: _firstNameController,
+                      textCapitalization: TextCapitalization.words,
+                      decoration: _minimalInputDecoration(
+                        label: 'First Name *',
+                        hint: 'e.g. Juan',
+                        icon: Icons.person_outline_rounded,
+                      ),
+                      validator: (value) =>
+                          value == null || value.trim().isEmpty ? 'Required' : null,
                     ),
                   ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                flex: 3,
-                child: TextFormField(
-                  controller: _firstNameController,
-                  textCapitalization: TextCapitalization.words,
-                  decoration: const InputDecoration(
-                    labelText: 'First Name',
-                    hintText: 'e.g. Juan',
-                    prefixIcon: Icon(Icons.person_outline_rounded,
-                        color: AppTheme.textSecondary, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    flex: 2,
+                    child: TextFormField(
+                      controller: _middleNameController,
+                      textCapitalization: TextCapitalization.words,
+                      decoration: _minimalInputDecoration(
+                        label: 'Middle',
+                        hint: 'Optional',
+                      ),
+                    ),
                   ),
-                  validator: (value) =>
-                      value == null || value.trim().isEmpty ? 'Required' : null,
-                ),
+                ],
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                flex: 2,
-                child: TextFormField(
-                  controller: _middleNameController,
-                  textCapitalization: TextCapitalization.words,
-                  decoration: const InputDecoration(
-                    labelText: 'Middle (Opt)',
-                    hintText: 'e.g. M.',
-                  ),
+              const SizedBox(height: 10),
+              TextFormField(
+                controller: _lastNameController,
+                textCapitalization: TextCapitalization.words,
+                decoration: _minimalInputDecoration(
+                  label: 'Last Name *',
+                  hint: 'e.g. Dela Cruz',
+                  icon: Icons.badge_outlined,
                 ),
+                validator: (value) =>
+                    value == null || value.trim().isEmpty ? 'Please enter your last name' : null,
               ),
             ],
           ),
-          const SizedBox(height: 14),
-          TextFormField(
-            controller: _lastNameController,
-            textCapitalization: TextCapitalization.words,
-            decoration: const InputDecoration(
-              labelText: 'Last Name',
-              hintText: 'e.g. Dela Cruz',
-              prefixIcon: Icon(Icons.badge_outlined,
-                  color: AppTheme.textSecondary, size: 20),
-            ),
-            validator: (value) =>
-                value == null || value.trim().isEmpty ? 'Please enter your last name' : null,
-          ),
-          const SizedBox(height: 14),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          const SizedBox(height: 18),
+          _buildSectionHeader('Contact & Residence', subtitle: 'For shelter notifications and home verification'),
+          const SizedBox(height: 10),
+          _buildCardContainer(
             children: [
-              Text(
-                'Primary Mobile Number *',
-                style: GoogleFonts.poppins(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.textSecondary,
+              TextFormField(
+                controller: _phoneController,
+                keyboardType: TextInputType.phone,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(11),
+                ],
+                decoration: _minimalInputDecoration(
+                  label: 'Primary Phone (11 digits) *',
+                  hint: '09123456789',
+                  icon: Icons.phone_outlined,
                 ),
+                validator: (value) => PhoneAuthService.validatePhilippineNumber(value),
               ),
-              if (_phoneController.text.isNotEmpty)
-                Text(
-                  'Auto-filled',
-                  style: GoogleFonts.poppins(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
-                    color: AppTheme.primary,
-                  ),
+              const SizedBox(height: 10),
+              TextFormField(
+                controller: _secondaryPhoneController,
+                keyboardType: TextInputType.phone,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(11),
+                ],
+                decoration: _minimalInputDecoration(
+                  label: 'Secondary Phone (Optional)',
+                  hint: '09987654321',
+                  icon: Icons.phone_iphone_rounded,
                 ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          TextFormField(
-            controller: _phoneController,
-            keyboardType: TextInputType.phone,
-            inputFormatters: [
-              FilteringTextInputFormatter.digitsOnly,
-              LengthLimitingTextInputFormatter(11),
-            ],
-            decoration: const InputDecoration(
-              labelText: 'Primary Phone (11 digits)',
-              hintText: '09123456789',
-              prefixIcon: Icon(Icons.phone_outlined,
-                  color: AppTheme.textSecondary, size: 20),
-            ),
-            validator: (value) => PhoneAuthService.validatePhilippineNumber(value),
-          ),
-          const SizedBox(height: 12),
-          TextFormField(
-            controller: _secondaryPhoneController,
-            keyboardType: TextInputType.phone,
-            inputFormatters: [
-              FilteringTextInputFormatter.digitsOnly,
-              LengthLimitingTextInputFormatter(11),
-            ],
-            decoration: const InputDecoration(
-              labelText: 'Secondary / Backup Phone (Optional)',
-              hintText: '09987654321',
-              prefixIcon: Icon(Icons.phone_iphone_rounded,
-                  color: AppTheme.textSecondary, size: 20),
-            ),
-            validator: (val) {
-              if (val != null && val.trim().isNotEmpty) {
-                final err = PhoneAuthService.validatePhilippineNumber(val);
-                if (err != null) return err;
-                if (val.trim() == _phoneController.text.trim()) {
-                  return 'Must be different from primary number';
-                }
-              }
-              return null;
-            },
-          ),
-          const SizedBox(height: 14),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Saved Residence Location',
-                style: GoogleFonts.poppins(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.textSecondary,
-                ),
-              ),
-              TextButton(
-                onPressed: () async {
-                  final res = await Navigator.pushNamed(context, '/edit-address');
-                  if (res == true && mounted) {
-                    _loadUserAndAddress();
+                validator: (val) {
+                  if (val != null && val.trim().isNotEmpty) {
+                    final err = PhoneAuthService.validatePhilippineNumber(val);
+                    if (err != null) return err;
+                    if (val.trim() == _phoneController.text.trim()) {
+                      return 'Must be different from primary number';
+                    }
                   }
+                  return null;
                 },
-                child: Text(
-                  'Change',
-                  style: GoogleFonts.poppins(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: AppTheme.primary,
-                  ),
+              ),
+              const SizedBox(height: 10),
+              TextFormField(
+                controller: _addressController,
+                maxLines: 2,
+                decoration: _minimalInputDecoration(
+                  label: 'Complete Address *',
+                  hint: 'Street, Barangay, City, Province',
+                  icon: Icons.location_on_outlined,
                 ),
+                validator: (value) =>
+                    value == null || value.trim().isEmpty ? 'Please enter your address' : null,
               ),
             ],
-          ),
-          const SizedBox(height: 4),
-          TextFormField(
-            controller: _addressController,
-            maxLines: 3,
-            decoration: const InputDecoration(
-              labelText: 'Complete Address',
-              alignLabelWithHint: true,
-              prefixIcon: Padding(
-                padding: EdgeInsets.only(bottom: 40),
-                child: Icon(Icons.location_on_outlined,
-                    color: AppTheme.textSecondary, size: 20),
-              ),
-            ),
-            validator: (value) =>
-                value == null || value.isEmpty ? 'Please set your location' : null,
           ),
         ],
       ),
@@ -1317,108 +1305,72 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Document Verification',
-          style: GoogleFonts.poppins(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-            color: AppTheme.textPrimary,
-          ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          'Please select your government ID type and upload clear photos for adoption verification.',
-          style: GoogleFonts.poppins(
-            fontSize: 12,
-            color: AppTheme.textSecondary,
-            height: 1.5,
-          ),
-        ),
-        const SizedBox(height: 16),
-        Text(
-          'Valid ID Type *',
-          style: GoogleFonts.poppins(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: AppTheme.textPrimary,
-          ),
-        ),
-        const SizedBox(height: 6),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-          decoration: BoxDecoration(
-            color: AppTheme.surface,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppTheme.cardBorder),
-          ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-              value: _selectedIdType,
-              isExpanded: true,
-              hint: Row(
-                children: [
-                  const Icon(Icons.credit_card_rounded, size: 18, color: AppTheme.textSecondary),
-                  const SizedBox(width: 8),
-                  Expanded(
+        _buildSectionHeader('Document Verification', subtitle: 'Upload photos of your ID and barangay residency certificate'),
+        const SizedBox(height: 12),
+        _buildCardContainer(
+          children: [
+            Text(
+              'Valid Government ID Type *',
+              style: GoogleFonts.poppins(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w600,
+                color: AppTheme.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: AppTheme.cardBorder),
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  value: _selectedIdType,
+                  isExpanded: true,
+                  hint: Text(
+                    'Select government ID type...',
+                    style: GoogleFonts.poppins(fontSize: 12, color: AppTheme.textSecondary),
+                  ),
+                  icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppTheme.primary, size: 20),
+                  items: _validIdTypes.map((type) => DropdownMenuItem(
+                    value: type,
                     child: Text(
-                      'Choose ID Type (e.g. National ID, Driver\'s License)...',
-                      style: GoogleFonts.poppins(
-                        fontSize: 12.5,
-                        color: AppTheme.textSecondary,
-                      ),
+                      type,
+                      style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w500, color: AppTheme.textPrimary),
                       overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                ],
+                  )).toList(),
+                  onChanged: (val) {
+                    if (val != null) setState(() => _selectedIdType = val);
+                  },
+                ),
               ),
-              icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppTheme.primary),
-              items: _validIdTypes.map((String type) {
-                return DropdownMenuItem<String>(
-                  value: type,
-                  child: Row(
-                    children: [
-                      const Icon(Icons.credit_card_rounded, size: 18, color: AppTheme.primary),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          type,
-                          style: GoogleFonts.poppins(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                            color: AppTheme.textPrimary,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              }).toList(),
-              onChanged: (String? newValue) {
-                if (newValue != null) {
-                  setState(() => _selectedIdType = newValue);
-                }
-              },
             ),
-          ),
+            const SizedBox(height: 14),
+            _buildUploadBox(
+              title: 'Photo of Valid Government ID',
+              buttonText: 'Tap to upload Valid ID',
+              icon: Icons.badge_outlined,
+              image: _validIdImage,
+              onTap: () => _showImagePickerSheet(true),
+              onRemove: () => setState(() => _validIdImage = null),
+            ),
+          ],
         ),
         const SizedBox(height: 16),
-        _buildUploadBox(
-          title: 'Valid Government ID',
-          buttonText: 'Tap to upload Valid ID',
-          icon: Icons.badge_outlined,
-          image: _validIdImage,
-          onTap: () => _showImagePickerSheet(true),
-          onRemove: () => setState(() => _validIdImage = null),
-        ),
-        const SizedBox(height: 16),
-        _buildUploadBox(
-          title: 'Barangay Certificate',
-          buttonText: 'Tap to upload Barangay Certificate',
-          icon: Icons.description_outlined,
-          image: _certificateImage,
-          onTap: () => _showImagePickerSheet(false),
-          onRemove: () => setState(() => _certificateImage = null),
+        _buildCardContainer(
+          children: [
+            _buildUploadBox(
+              title: 'Barangay Certificate of Residency',
+              buttonText: 'Tap to upload Barangay Certificate',
+              icon: Icons.description_outlined,
+              image: _certificateImage,
+              onTap: () => _showImagePickerSheet(false),
+              onRemove: () => setState(() => _certificateImage = null),
+            ),
+          ],
         ),
       ],
     );
@@ -1438,30 +1390,30 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
         Text(
           title,
           style: GoogleFonts.poppins(
-            fontSize: 13,
+            fontSize: 12.5,
             fontWeight: FontWeight.w600,
             color: AppTheme.textPrimary,
           ),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 8),
         GestureDetector(
           onTap: onTap,
           child: Container(
             width: double.infinity,
-            height: 135,
+            height: 125,
             decoration: BoxDecoration(
-              color: AppTheme.surface,
-              borderRadius: BorderRadius.circular(16),
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: image != null ? AppTheme.primary : AppTheme.cardBorder,
-                width: image != null ? 2 : 1,
+                width: image != null ? 1.5 : 1,
               ),
             ),
             child: image != null
                 ? Stack(
                     children: [
                       ClipRRect(
-                        borderRadius: BorderRadius.circular(15),
+                        borderRadius: BorderRadius.circular(11),
                         child: kIsWeb
                             ? Image.network(image.path, fit: BoxFit.cover, width: double.infinity, height: double.infinity)
                             : Image.file(File(image.path), fit: BoxFit.cover, width: double.infinity, height: double.infinity),
@@ -1472,12 +1424,12 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
                         child: GestureDetector(
                           onTap: onRemove,
                           child: Container(
-                            padding: const EdgeInsets.all(6),
+                            padding: const EdgeInsets.all(5),
                             decoration: const BoxDecoration(
                               color: Colors.redAccent,
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(Icons.close_rounded, color: Colors.white, size: 16),
+                            child: const Icon(Icons.close_rounded, color: Colors.white, size: 14),
                           ),
                         ),
                       ),
@@ -1487,19 +1439,19 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Container(
-                        width: 44,
-                        height: 44,
+                        width: 38,
+                        height: 38,
                         decoration: const BoxDecoration(
                           color: AppTheme.primaryLight,
                           shape: BoxShape.circle,
                         ),
-                        child: Icon(icon, color: AppTheme.primary, size: 22),
+                        child: Icon(icon, color: AppTheme.primary, size: 20),
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 8),
                       Text(
                         buttonText,
                         style: GoogleFonts.poppins(
-                          fontSize: 13,
+                          fontSize: 12,
                           fontWeight: FontWeight.w600,
                           color: AppTheme.primaryDark,
                         ),
@@ -1516,168 +1468,400 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Your Lifestyle & Preferences',
-          style: GoogleFonts.poppins(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-            color: AppTheme.textPrimary,
-          ),
-        ),
-        const SizedBox(height: 16),
-        Text(
-          'Proposed New Name for ${widget.pet['name']} (Optional)',
-          style: GoogleFonts.poppins(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: AppTheme.textPrimary,
-          ),
-        ),
-        const SizedBox(height: 6),
-        TextFormField(
-          controller: _proposedPetNameController,
-          decoration: const InputDecoration(
-            hintText: 'e.g. Max, Milo, Bella',
-            prefixIcon: Icon(
-              Icons.label_outline_rounded,
-              color: AppTheme.primary,
-              size: 20,
-            ),
-          ),
-        ),
-        const SizedBox(height: 16),
-        Text(
-          'Type of Home *',
-          style: GoogleFonts.poppins(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: AppTheme.textPrimary,
-          ),
-        ),
+        _buildSectionHeader('Residence & Housing', subtitle: 'Helps match pet size and shelter home policies'),
         const SizedBox(height: 10),
-        Wrap(
-          spacing: 8,
-          children: _homeTypes.map((type) {
-            final isSelected = _homeType == type;
-            return GestureDetector(
-              onTap: () => setState(() => _homeType = type),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
+        _buildCardContainer(
+          children: [
+            Text(
+              'Type of Home *',
+              style: GoogleFonts.poppins(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w600,
+                color: AppTheme.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            _buildSegmentedSelector<String>(
+              options: _homeTypes,
+              selected: _homeType,
+              getLabel: (t) => t,
+              onSelected: (val) => setState(() => _homeType = val),
+            ),
+            const SizedBox(height: 14),
+            Text(
+              'Home Ownership *',
+              style: GoogleFonts.poppins(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w600,
+                color: AppTheme.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildInteractiveChoiceCard(
+                    isSelected: _homeOwnership == 'owned',
+                    onTap: () => setState(() => _homeOwnership = 'owned'),
+                    title: 'Own Property',
+                    subtitle: 'Owner / family home',
+                    icon: Icons.home_work_outlined,
+                  ),
                 ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _buildInteractiveChoiceCard(
+                    isSelected: _homeOwnership == 'rented',
+                    onTap: () => setState(() => _homeOwnership = 'rented'),
+                    title: 'Renting / Tenant',
+                    subtitle: 'Leased unit or rental',
+                    icon: Icons.apartment_outlined,
+                  ),
+                ),
+              ],
+            ),
+            if (_homeOwnership == 'rented') ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: isSelected ? AppTheme.primary : AppTheme.surface,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: isSelected ? AppTheme.primary : AppTheme.cardBorder,
-                  ),
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: AppTheme.cardBorder),
                 ),
-                child: Text(
-                  type,
-                  style: GoogleFonts.poppins(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: isSelected ? Colors.white : AppTheme.textSecondary,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(Icons.info_outline_rounded, size: 16, color: AppTheme.primary),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Please prepare a written Landlord Consent Letter (or lease agreement copy) to bring to your meet-and-greet screening.',
+                            style: GoogleFonts.poppins(
+                              fontSize: 11,
+                              color: AppTheme.textSecondary,
+                              height: 1.4,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    TextFormField(
+                      controller: _landlordNameController,
+                      decoration: _minimalInputDecoration(
+                        label: 'Landlord / Admin Name *',
+                        hint: 'e.g. Maria Santos',
+                        icon: Icons.person_outline_rounded,
+                      ),
+                      validator: (val) {
+                        if (_homeOwnership == 'rented' && (val == null || val.trim().isEmpty)) {
+                          return 'Please enter landlord name';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 10),
+                    TextFormField(
+                      controller: _landlordPhoneController,
+                      keyboardType: TextInputType.phone,
+                      decoration: _minimalInputDecoration(
+                        label: 'Landlord Contact Phone *',
+                        hint: 'e.g. 0917 123 4567',
+                        icon: Icons.phone_outlined,
+                      ),
+                      validator: (val) {
+                        if (_homeOwnership == 'rented' && (val == null || val.trim().isEmpty)) {
+                          return 'Please enter landlord contact number';
+                        }
+                        return null;
+                      },
+                    ),
+                  ],
                 ),
               ),
-            );
-          }).toList(),
+            ],
+          ],
         ),
-        const SizedBox(height: 16),
-        _toggleItem(
-          'Do you have other pets at home?',
-          _hasOtherPets,
-          (val) => setState(() => _hasOtherPets = val),
-        ),
-        if (_hasOtherPets) ...[
-          const SizedBox(height: 10),
-          Padding(
-            padding: const EdgeInsets.only(left: 8),
-            child: TextFormField(
-              controller: _otherPetsDetailsController,
-              decoration: const InputDecoration(
-                labelText: 'Details of Other Pets',
-                hintText: 'e.g. 2 dogs (1 Shih Tzu, 1 Aspin), 1 Cat',
-                prefixIcon: Icon(
-                  Icons.pets_rounded,
-                  color: AppTheme.primary,
-                  size: 20,
-                ),
-              ),
-              validator: (val) {
-                if (_hasOtherPets && (val == null || val.trim().isEmpty)) {
-                  return 'Please specify how many and what kind of pets';
-                }
-                return null;
-              },
-            ),
-          ),
-        ],
+        const SizedBox(height: 18),
+        _buildSectionHeader('Household & Experience', subtitle: 'Your pet background and current environment'),
         const SizedBox(height: 10),
-        _toggleItem(
-          'Do you have experience owning pets?',
-          _hasExperience,
-          (val) => setState(() => _hasExperience = val),
-        ),
-        const SizedBox(height: 16),
-        Text(
-          'Why do you want to adopt $_petDisplayName?',
-          style: GoogleFonts.poppins(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: AppTheme.textPrimary,
-          ),
-        ),
-        const SizedBox(height: 8),
-        TextFormField(
-          controller: _reasonController,
-          maxLines: 4,
-          decoration: InputDecoration(
-            hintText: 'Tell us why you are the right fit...',
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppTheme.cardBorder),
+        _buildCardContainer(
+          children: [
+            _buildChoiceCardGroup(
+              title: 'Other Pets at Home *',
+              selectedValue: _hasOtherPets,
+              onChanged: (val) => setState(() => _hasOtherPets = val),
+              firstTitle: 'No Other Pets',
+              firstSubtitle: 'First or solo pet',
+              firstIcon: Icons.home_outlined,
+              secondTitle: 'Yes, Have Pets',
+              secondSubtitle: 'Dogs, cats, etc.',
+              secondIcon: Icons.pets_rounded,
             ),
-          ),
+            if (_hasOtherPets) ...[
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _otherPetsDetailsController,
+                decoration: _minimalInputDecoration(
+                  label: 'Details of Other Pets *',
+                  hint: 'e.g. 1 Aspin dog, 1 Persian cat',
+                  icon: Icons.pets_rounded,
+                ),
+                validator: (val) {
+                  if (_hasOtherPets && (val == null || val.trim().isEmpty)) {
+                    return 'Please specify other pets';
+                  }
+                  return null;
+                },
+              ),
+            ],
+            const SizedBox(height: 16),
+            _buildChoiceCardGroup(
+              title: 'Pet Care Experience *',
+              selectedValue: _hasExperience,
+              onChanged: (val) => setState(() => _hasExperience = val),
+              firstTitle: 'First-time Owner',
+              firstSubtitle: 'New to pet parenting',
+              firstIcon: Icons.favorite_border_rounded,
+              secondTitle: 'Experienced Owner',
+              secondSubtitle: 'Cared for pets before',
+              secondIcon: Icons.verified_outlined,
+            ),
+          ],
+        ),
+        const SizedBox(height: 18),
+        _buildSectionHeader('Adoption Intent', subtitle: 'Proposed pet name and message for CAWS shelter'),
+        const SizedBox(height: 10),
+        _buildCardContainer(
+          children: [
+            TextFormField(
+              controller: _proposedPetNameController,
+              decoration: _minimalInputDecoration(
+                label: 'Proposed Pet Name (Optional)',
+                hint: 'e.g. Max, Milo, Bella',
+                icon: Icons.label_outline_rounded,
+              ),
+            ),
+            const SizedBox(height: 10),
+            TextFormField(
+              controller: _reasonController,
+              maxLines: 3,
+              decoration: _minimalInputDecoration(
+                label: 'Why do you want to adopt $_petDisplayName?',
+                hint: 'Tell us why you are the right fit...',
+              ),
+            ),
+          ],
         ),
       ],
     );
   }
 
-  Widget _toggleItem(
-    String label,
-    bool value,
-    ValueChanged<bool> onChanged,
-  ) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: AppTheme.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.cardBorder),
+  Widget _buildChoiceCardGroup({
+    required String title,
+    required bool selectedValue,
+    required ValueChanged<bool> onChanged,
+    required String firstTitle,
+    required String firstSubtitle,
+    required IconData firstIcon,
+    required String secondTitle,
+    required String secondSubtitle,
+    required IconData secondIcon,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: GoogleFonts.poppins(
+            fontSize: 12.5,
+            fontWeight: FontWeight.w600,
+            color: AppTheme.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: _buildInteractiveChoiceCard(
+                isSelected: !selectedValue,
+                onTap: () => onChanged(false),
+                title: firstTitle,
+                subtitle: firstSubtitle,
+                icon: firstIcon,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _buildInteractiveChoiceCard(
+                isSelected: selectedValue,
+                onTap: () => onChanged(true),
+                title: secondTitle,
+                subtitle: secondSubtitle,
+                icon: secondIcon,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildInteractiveChoiceCard({
+    required bool isSelected,
+    required VoidCallback onTap,
+    required String title,
+    required String subtitle,
+    required IconData icon,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.all(11),
+        constraints: const BoxConstraints(minHeight: 110),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AppTheme.primaryLight.withValues(alpha: 0.5)
+              : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? AppTheme.primary : AppTheme.cardBorder,
+            width: isSelected ? 1.5 : 1,
+          ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: AppTheme.primary.withValues(alpha: 0.08),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? AppTheme.primary
+                        : AppTheme.surface,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    icon,
+                    size: 15,
+                    color: isSelected ? Colors.white : AppTheme.textSecondary,
+                  ),
+                ),
+                Container(
+                  width: 16,
+                  height: 16,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isSelected ? AppTheme.primary : AppTheme.cardBorder,
+                      width: isSelected ? 4.5 : 1.5,
+                    ),
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: GoogleFonts.poppins(
+                    fontSize: 12,
+                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                    color: isSelected ? AppTheme.primaryDark : AppTheme.textPrimary,
+                    height: 1.25,
+                  ),
+                  maxLines: 2,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: GoogleFonts.poppins(
+                    fontSize: 10,
+                    color: AppTheme.textSecondary,
+                    height: 1.25,
+                  ),
+                  maxLines: 2,
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
+    );
+  }
+
+  Widget _buildBottomNavButtons() {
+    return Row(
+      children: [
+        if (_currentStep > 0) ...[
           Expanded(
-            child: Text(
-              label,
-              style: GoogleFonts.poppins(
-                fontSize: 13,
-                color: AppTheme.textPrimary,
+            child: OutlinedButton(
+              onPressed: _prevStep,
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                side: const BorderSide(color: AppTheme.cardBorder),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                backgroundColor: Colors.white,
+              ),
+              child: Text(
+                'Back',
+                style: GoogleFonts.poppins(
+                  color: AppTheme.textPrimary,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                ),
               ),
             ),
           ),
-          Switch(
-            value: value,
-            onChanged: onChanged,
-            activeThumbColor: AppTheme.primary,
-          ),
+          const SizedBox(width: 12),
         ],
-      ),
+        Expanded(
+          flex: 2,
+          child: ElevatedButton(
+            onPressed: _currentStep == 2 ? _submitForm : _nextStep,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primary,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: Text(
+              _currentStep == 2 ? 'Submit Application' : 'Continue',
+              style: GoogleFonts.poppins(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+                fontSize: 13.5,
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
