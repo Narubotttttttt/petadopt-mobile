@@ -85,6 +85,7 @@ class HealthService {
 
     return [];
   }
+
   static Future<Map<String, dynamic>> getPetMedicalPassport(int petId) async {
     final token = await AuthService.getToken();
     final response = await http
@@ -103,5 +104,54 @@ class HealthService {
 
     final errData = jsonDecode(response.body) as Map<String, dynamic>?;
     throw Exception(errData?['message']?.toString() ?? 'Failed to load pet card.');
+  }
+
+  static Future<Map<String, dynamic>> submitExternalMedicalLog({
+    required int petId,
+    required String category,
+    required String vaccineName,
+    required String date,
+    String? nextDueDate,
+    required String clinicName,
+    String? veterinarian,
+    required File proofPhoto,
+    String? notes,
+  }) async {
+    final token = await AuthService.getToken();
+    final uri = Uri.parse('${ApiConfig.baseUrl}/pets/$petId/external-medical-log');
+    final request = http.MultipartRequest('POST', uri);
+
+    request.headers.addAll({
+      'Accept': 'application/json',
+      if (token != null) 'Authorization': 'Bearer $token',
+    });
+
+    request.fields['category'] = category;
+    request.fields['vaccine_name'] = vaccineName;
+    request.fields['date'] = date;
+    if (nextDueDate != null && nextDueDate.isNotEmpty) {
+      request.fields['next_due_date'] = nextDueDate;
+    }
+    request.fields['clinic_name'] = clinicName;
+    if (veterinarian != null && veterinarian.isNotEmpty) {
+      request.fields['veterinarian'] = veterinarian;
+    }
+    if (notes != null && notes.isNotEmpty) {
+      request.fields['notes'] = notes;
+    }
+
+    request.files.add(
+      await http.MultipartFile.fromPath('proof_photo', proofPhoto.path),
+    );
+
+    final streamedResponse = await request.send().timeout(ApiConfig.uploadTimeout);
+    final response = await http.Response.fromStream(streamedResponse);
+    final data = jsonDecode(response.body) as Map<String, dynamic>;
+
+    if ((response.statusCode == 200 || response.statusCode == 201) && data['success'] == true) {
+      return data;
+    }
+
+    throw Exception(data['message']?.toString() ?? 'Failed to submit external vaccination record.');
   }
 }

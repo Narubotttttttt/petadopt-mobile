@@ -1424,12 +1424,6 @@ class _HomeTabState extends State<_HomeTab> {
                       children: [
                         const SizedBox(height: 8),
 
-                        // Urgent Health Alert Banner (if any due reminders)
-                        if (_vaccineReminders.isNotEmpty) ...[
-                          _buildUrgentAlertBanner(context),
-                          const SizedBox(height: 10),
-                        ],
-
                         // 1. Companion Hero Section (Dog & Kitten Photo + Title + Desc + Button)
                         _buildCompanionHeroSection(context, imageHeight: heroImageHeight),
                         SizedBox(height: sectionGap),
@@ -1796,100 +1790,7 @@ class _HomeTabState extends State<_HomeTab> {
 
 
 
-  // Urgent Alert Banner
-  Widget _buildUrgentAlertBanner(BuildContext context) {
-    final topReminder = _vaccineReminders.first;
-    final petName = topReminder['pet_name'] as String? ?? 'Your adopted companion';
-    final category = topReminder['category'] as String? ?? 'Vaccine / Check-in';
-    final days = topReminder['days_until_due'] as int? ?? 999;
-    final petId = topReminder['pet_id'] as int?;
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFFFFFBEB), Color(0xFFFEF3C7)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFFDE68A), width: 1.2),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFFD97706).withValues(alpha: 0.08),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(9),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFFDE68A)),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFFD97706).withValues(alpha: 0.12),
-                  blurRadius: 4,
-                  offset: const Offset(0, 1),
-                ),
-              ],
-            ),
-            child: const Icon(Icons.vaccines_rounded, color: Color(0xFFD97706), size: 20),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '$petName • $category Due in $days d',
-                  style: GoogleFonts.poppins(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF92400E),
-                  ),
-                ),
-                Text(
-                  'Keep veterinary schedule active to fulfill adoption agreement.',
-                  style: GoogleFonts.poppins(fontSize: 10.5, color: const Color(0xFF78350F), height: 1.25),
-                ),
-              ],
-            ),
-          ),
-          if (petId != null)
-            TextButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => PetMedicalCardScreen(petId: petId, petName: petName),
-                  ),
-                );
-              },
-              style: TextButton.styleFrom(
-                backgroundColor: Colors.white.withValues(alpha: 0.8),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  side: const BorderSide(color: Color(0xFFFDE68A)),
-                ),
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                minimumSize: Size.zero,
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              ),
-              child: Text(
-                'Passport →',
-                style: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w700, color: const Color(0xFFD97706)),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
 }
 
 /// Auto-sliding companion hero carousel with smooth animated indicator dots.

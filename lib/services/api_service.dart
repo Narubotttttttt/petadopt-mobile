@@ -146,6 +146,28 @@ class ApiService {
   static Future<Map<String, dynamic>> getPetMedicalPassport(int petId) =>
       HealthService.getPetMedicalPassport(petId);
 
+  static Future<Map<String, dynamic>> submitExternalMedicalLog({
+    required int petId,
+    required String category,
+    required String vaccineName,
+    required String date,
+    String? nextDueDate,
+    required String clinicName,
+    String? veterinarian,
+    required File proofPhoto,
+    String? notes,
+  }) =>
+      HealthService.submitExternalMedicalLog(
+        petId: petId,
+        category: category,
+        vaccineName: vaccineName,
+        date: date,
+        nextDueDate: nextDueDate,
+        clinicName: clinicName,
+        veterinarian: veterinarian,
+        proofPhoto: proofPhoto,
+        notes: notes,
+      );
 
   // Recommendations & Quiz
   static Future<List<Map<String, dynamic>>> getRecommendations({

@@ -509,142 +509,110 @@ class _MyAdoptedPetsScreenState extends State<MyAdoptedPetsScreen> {
                       ),
                     ),
                   ),
+                ] else if (widget.isHealthCardMode) ...[
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => PetMedicalCardScreen(
+                              petId: (pet['pet_id'] ?? pet['petId'] ?? pet['pet']?['id'] ?? pet['shelterPetId']) as int? ?? 0,
+                              applicationId: appId,
+                              petName: petName,
+                              petImage: petImage,
+                            ),
+                          ),
+                        ).then((_) => _fetchAdoptedPets());
+                      },
+                      icon: const Icon(Icons.medical_services_rounded, size: 16, color: Colors.white),
+                      label: Text(
+                        'Health Card History',
+                        style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.white),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF0284C7),
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(vertical: 11),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                    ),
+                  ),
                 ] else ...[
                   Row(
                     children: [
                       Expanded(
-                        child: widget.isHealthCardMode
-                            ? ElevatedButton.icon(
-                                onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => PetMedicalCardScreen(
-                                        petId: (pet['pet_id'] ?? pet['petId'] ?? pet['pet']?['id'] ?? pet['shelterPetId']) as int? ?? 0,
-                                        applicationId: appId,
-                                        petName: petName,
-                                        petImage: petImage,
-                                      ),
-                                    ),
-                                  ).then((_) => _fetchAdoptedPets());
-                                },
-                                icon: const Icon(Icons.medical_services_rounded, size: 15, color: Colors.white),
-                                label: Text(
-                                  'Health Card History',
-                                  style: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w700, color: Colors.white),
-                                ),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF0284C7),
-                                  foregroundColor: Colors.white,
-                                  elevation: 0,
-                                  padding: const EdgeInsets.symmetric(vertical: 9),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                ),
-                              )
-                            : OutlinedButton.icon(
-                                onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => PetMedicalCardScreen(
-                                        petId: (pet['pet_id'] ?? pet['petId'] ?? pet['pet']?['id'] ?? pet['shelterPetId']) as int? ?? 0,
-                                        applicationId: appId,
-                                        petName: petName,
-                                        petImage: petImage,
-                                      ),
-                                    ),
-                                  ).then((_) => _fetchAdoptedPets());
-                                },
-                                icon: const Icon(Icons.medical_services_outlined, size: 15, color: AppTheme.primary),
-                                label: Text(
-                                  'Health Card History',
-                                  style: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w600, color: AppTheme.primary),
-                                ),
-                                style: OutlinedButton.styleFrom(
-                                  side: const BorderSide(color: Color(0xFFCBD5E1)),
-                                  padding: const EdgeInsets.symmetric(vertical: 9),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        child: OutlinedButton.icon(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => PetMedicalCardScreen(
+                                  petId: (pet['pet_id'] ?? pet['petId'] ?? pet['pet']?['id'] ?? pet['shelterPetId']) as int? ?? 0,
+                                  applicationId: appId,
+                                  petName: petName,
+                                  petImage: petImage,
                                 ),
                               ),
+                            ).then((_) => _fetchAdoptedPets());
+                          },
+                          icon: const Icon(Icons.medical_services_outlined, size: 15, color: AppTheme.primary),
+                          label: Text(
+                            'Health Card History',
+                            style: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w600, color: AppTheme.primary),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Color(0xFFCBD5E1)),
+                            padding: const EdgeInsets.symmetric(vertical: 9),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          ),
+                        ),
                       ),
                       const SizedBox(width: 10),
                       Expanded(
-                        child: widget.isHealthCardMode
-                            ? OutlinedButton.icon(
-                                onPressed: isDeceased
-                                    ? null
-                                    : () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (_) => SubmitHealthCheckinScreen(
-                                              applicationId: appId,
-                                              petName: petName,
-                                              petImage: petImage,
-                                            ),
-                                          ),
-                                        ).then((_) => _fetchAdoptedPets());
-                                      },
-                                icon: Icon(
-                                  isDeceased ? Icons.favorite_rounded : Icons.assignment_turned_in_rounded,
-                                  size: 15,
-                                  color: isDeceased ? const Color(0xFF94A3B8) : AppTheme.primary,
-                                ),
-                                label: Text(
-                                  isDeceased ? 'In Memory' : 'Submit Report',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 11.5,
-                                    fontWeight: isDeceased ? FontWeight.w600 : FontWeight.w600,
-                                    color: isDeceased ? const Color(0xFF94A3B8) : AppTheme.primary,
-                                  ),
-                                ),
-                                style: OutlinedButton.styleFrom(
-                                  side: BorderSide(color: isDeceased ? const Color(0xFFE2E8F0) : AppTheme.cardBorder),
-                                  padding: const EdgeInsets.symmetric(vertical: 9),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                ),
-                              )
-                            : ElevatedButton.icon(
-                                onPressed: isDeceased
-                                    ? null
-                                    : () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (_) => SubmitHealthCheckinScreen(
-                                              applicationId: appId,
-                                              petName: petName,
-                                              petImage: petImage,
-                                            ),
-                                          ),
-                                        ).then((_) => _fetchAdoptedPets());
-                                      },
-                                icon: Icon(
-                                  isDeceased ? Icons.favorite_rounded : Icons.assignment_turned_in_rounded,
-                                  size: 15,
-                                  color: isDeceased ? const Color(0xFF94A3B8) : Colors.white,
-                                ),
-                                label: Text(
-                                  isDeceased ? 'In Memory' : 'Submit Report',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 11.5,
-                                    fontWeight: isDeceased ? FontWeight.w600 : FontWeight.w700,
-                                    color: isDeceased ? const Color(0xFF94A3B8) : Colors.white,
-                                  ),
-                                ),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFFBE185D),
-                                  foregroundColor: Colors.white,
-                                  disabledBackgroundColor: const Color(0xFFF1F5F9),
-                                  disabledForegroundColor: const Color(0xFF94A3B8),
-                                  elevation: 0,
-                                  padding: const EdgeInsets.symmetric(vertical: 9),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                    side: isDeceased ? const BorderSide(color: Color(0xFFE2E8F0)) : BorderSide.none,
-                                  ),
-                                ),
-                              ),
+                        child: ElevatedButton.icon(
+                          onPressed: isDeceased
+                              ? null
+                              : () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => SubmitHealthCheckinScreen(
+                                        applicationId: appId,
+                                        petName: petName,
+                                        petImage: petImage,
+                                      ),
+                                    ),
+                                  ).then((_) => _fetchAdoptedPets());
+                                },
+                          icon: Icon(
+                            isDeceased ? Icons.favorite_rounded : Icons.assignment_turned_in_rounded,
+                            size: 15,
+                            color: isDeceased ? const Color(0xFF94A3B8) : Colors.white,
+                          ),
+                          label: Text(
+                            isDeceased ? 'In Memory' : 'Submit Report',
+                            style: GoogleFonts.poppins(
+                              fontSize: 11.5,
+                              fontWeight: isDeceased ? FontWeight.w600 : FontWeight.w700,
+                              color: isDeceased ? const Color(0xFF94A3B8) : Colors.white,
+                            ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFBE185D),
+                            foregroundColor: Colors.white,
+                            disabledBackgroundColor: const Color(0xFFF1F5F9),
+                            disabledForegroundColor: const Color(0xFF94A3B8),
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(vertical: 9),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              side: isDeceased ? const BorderSide(color: Color(0xFFE2E8F0)) : BorderSide.none,
+                            ),
+                          ),
+                        ),
                       ),
                     ],
                   ),
