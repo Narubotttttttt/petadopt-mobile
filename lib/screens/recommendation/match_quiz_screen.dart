@@ -45,16 +45,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
   bool? _specialCareCapacity;
   final Set<String> _desiredTemperaments = {};
 
-  final List<String> _allTemperaments = [
-    'Friendly',
-    'Calm',
-    'Energetic',
-    'Playful',
-    'Affectionate',
-    'Independent',
-    'Protective',
-    'Shy',
-  ];
+// Temperaments are now predicted by the Random Forest model
 
   bool get _hasAnySelection =>
       _preferredSpecies != null ||
@@ -64,8 +55,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
       _hasChildren != null ||
       _hasOtherPets != null ||
       _hoursAlone != null ||
-      _specialCareCapacity != null ||
-      _desiredTemperaments.isNotEmpty;
+      _specialCareCapacity != null;
 
   void _resetQuiz() {
     if (_isLocked) return;
@@ -642,10 +632,6 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
         _showValidationError('Please indicate your special care capacity.');
         return;
       }
-      if (_desiredTemperaments.isEmpty) {
-        _showValidationError('Please select at least one desired pet temperament.');
-        return;
-      }
     }
 
     if (_currentStep < 4) {
@@ -881,14 +867,14 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
     );
   }
 
-  // STEP 4: Capacity to Care & Temperament Traits
+  // STEP 4: Daily Schedule & Care Availability
   Widget _buildStep4() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Care Capacity & Traits', style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
+        Text('Schedule & Care Capacity', style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
         const SizedBox(height: 4),
-        Text('Matches pets based on your daily schedule and desired personality', style: GoogleFonts.poppins(fontSize: 13, color: AppTheme.textSecondary)),
+        Text('Matches pets based on your daily work hours and care availability', style: GoogleFonts.poppins(fontSize: 13, color: AppTheme.textSecondary)),
         const SizedBox(height: 24),
         _buildSectionTitle('Hours pet will be left alone daily'),
         _buildRadioGroup(
@@ -909,45 +895,6 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
           ],
           selected: _specialCareCapacity == null ? null : (_specialCareCapacity! ? 'yes' : 'no'),
           onSelected: (val) => setState(() => _specialCareCapacity = val == 'yes'),
-        ),
-        const SizedBox(height: 20),
-        _buildSectionTitle('Desired Pet Temperaments (Select traits)'),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: _allTemperaments.map((tag) {
-            final isSelected = _desiredTemperaments.contains(tag);
-            return FilterChip(
-              label: Text(
-                tag,
-                style: GoogleFonts.poppins(
-                  fontSize: 12,
-                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                  color: isSelected ? AppTheme.primaryDark : AppTheme.textPrimary,
-                ),
-              ),
-              selected: isSelected,
-              selectedColor: AppTheme.primaryLight,
-              checkmarkColor: AppTheme.primaryDark,
-              backgroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-                side: BorderSide(
-                  color: isSelected ? AppTheme.primary : Colors.grey.shade300,
-                  width: isSelected ? 1.5 : 1,
-                ),
-              ),
-              onSelected: (selected) {
-                setState(() {
-                  if (selected) {
-                    _desiredTemperaments.add(tag);
-                  } else {
-                    _desiredTemperaments.remove(tag);
-                  }
-                });
-              },
-            );
-          }).toList(),
         ),
       ],
     );
@@ -1056,47 +1003,14 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
           ],
         ),
 
-        // Section 4: Care Capacity & Temperaments Summary
+        // Section 4: Schedule & Care Capacity Summary
         _buildReviewSectionCard(
-          title: 'Care Capacity & Temperament',
+          title: 'Schedule & Care Capacity',
           stepIndex: 3,
           rows: [
             {'label': 'Hours Alone Daily', 'val': _getHoursAloneLabel()},
             {'label': 'Special Care Needs', 'val': _specialCareCapacity == true ? 'Open to special care / medical' : 'Standard care only'},
           ],
-          extraWidget: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 10),
-              Text(
-                'Desired Temperament Traits:',
-                style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.textPrimary),
-              ),
-              const SizedBox(height: 6),
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                children: _desiredTemperaments.map((trait) {
-                  return Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: AppTheme.primaryLight,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: AppTheme.primary.withValues(alpha: 0.3)),
-                    ),
-                    child: Text(
-                      trait,
-                      style: GoogleFonts.poppins(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: AppTheme.primaryDark,
-                      ),
-                    ),
-                  );
-                }).toList(),
-              ),
-            ],
-          ),
         ),
       ],
     );
