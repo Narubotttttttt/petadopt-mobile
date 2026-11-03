@@ -796,6 +796,117 @@ class _AdoptedPetHubScreenState extends State<AdoptedPetHubScreen> {
               ],
             ),
           ],
+          const SizedBox(height: 12),
+          Builder(
+            builder: (context) {
+              final decision = deceasedUpdate?['review_decision']?.toString();
+              final staffRemarks = deceasedUpdate?['staff_remarks']?.toString();
+              final isCleared = decision == 'cleared_accidental' || decision == 'cleared_natural';
+              final isNeglect = decision == 'neglect_confirmed';
+
+              if (isCleared) {
+                return Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFECFDF5),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFA7F3D0)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.verified_rounded, size: 16, color: Color(0xFF059669)),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Shelter Verified: Accidental / Natural Passing',
+                              style: GoogleFonts.poppins(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFF065F46),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Your household active companion count has been reduced by 1. Adoption capacity has been restored.',
+                        style: GoogleFonts.poppins(
+                          fontSize: 11,
+                          color: const Color(0xFF047857),
+                          height: 1.4,
+                        ),
+                      ),
+                      if (staffRemarks != null && staffRemarks.trim().isNotEmpty) ...[
+                        const SizedBox(height: 6),
+                        Text(
+                          'Shelter Note: $staffRemarks',
+                          style: GoogleFonts.poppins(
+                            fontSize: 10.5,
+                            fontStyle: FontStyle.italic,
+                            color: const Color(0xFF065F46),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                );
+              } else if (isNeglect) {
+                return Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFEF2F2),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFFECACA)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.warning_amber_rounded, size: 16, color: Color(0xFFDC2626)),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Shelter Finding: Case closed with administrative restriction.',
+                          style: GoogleFonts.poppins(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF991B1B),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              } else {
+                return Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFFBEB),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFFDE68A)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.hourglass_top_rounded, size: 16, color: Color(0xFFD97706)),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Shelter Review In Progress: Awaiting administrative verification of this life event report.',
+                          style: GoogleFonts.poppins(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF92400E),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }
+            },
+          ),
         ],
       ),
     );
