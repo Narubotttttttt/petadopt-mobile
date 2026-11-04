@@ -9,13 +9,16 @@ import 'package:mobile_petadopt/screens/profile/edit_address_screen.dart';
 import 'package:mobile_petadopt/screens/profile/profile_screen.dart';
 import 'package:mobile_petadopt/screens/recommendation/match_quiz_screen.dart';
 import 'package:mobile_petadopt/screens/splash/splash_screen.dart';
+import 'package:mobile_petadopt/services/network_service.dart';
 import 'package:mobile_petadopt/services/notification_service.dart';
 import 'package:mobile_petadopt/theme/app_theme.dart';
+import 'package:mobile_petadopt/widgets/connectivity_banner.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await NetworkService.instance.initialize();
   await NotificationService.initialize(navigatorKey: navigatorKey);
   await NotificationService.setupFirebaseFCM(navigatorKey: navigatorKey);
   runApp(const PetAdoptApp());
@@ -31,6 +34,11 @@ class PetAdoptApp extends StatelessWidget {
       title: 'CAWS PetAdopt',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
+      builder: (context, child) {
+        return NetworkAwareWrapper(
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
       initialRoute: '/splash',
       routes: {
         '/splash': (context) => const SplashScreen(),

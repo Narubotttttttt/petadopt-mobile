@@ -208,7 +208,7 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(e.toString().replaceFirst('Exception: ', ''), style: GoogleFonts.poppins(fontSize: 13)),
+            content: Text(ApiClient.formatUserErrorMessage(e), style: GoogleFonts.poppins(fontSize: 13)),
             backgroundColor: AppTheme.errorColor,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -2076,7 +2076,7 @@ class _DigitalSignatureSheetState extends State<_DigitalSignatureSheet> {
         setState(() => _isSaving = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(e.toString().replaceFirst('Exception: ', '')),
+            content: Text(ApiClient.formatUserErrorMessage(e)),
             backgroundColor: AppTheme.errorColor,
           ),
         );

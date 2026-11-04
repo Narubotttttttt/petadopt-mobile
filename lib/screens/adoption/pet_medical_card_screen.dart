@@ -51,7 +51,7 @@ class _PetMedicalCardScreenState extends State<PetMedicalCardScreen> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _errorMessage = e.toString().replaceFirst('Exception: ', '');
+          _errorMessage = ApiClient.formatUserErrorMessage(e);
           _isLoading = false;
         });
       }
@@ -1287,7 +1287,7 @@ class _RecordVetVaccineModalState extends State<_RecordVetVaccineModal> {
       if (mounted) {
         setState(() {
           _isSubmitting = false;
-          _errorMessage = e.toString().replaceFirst('Exception: ', '');
+          _errorMessage = ApiClient.formatUserErrorMessage(e);
         });
       }
     }

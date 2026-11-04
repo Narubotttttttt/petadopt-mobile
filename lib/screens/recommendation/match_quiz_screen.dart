@@ -6,6 +6,7 @@ import 'package:mobile_petadopt/services/api_service.dart';
 import 'package:mobile_petadopt/theme/app_theme.dart';
 import 'package:mobile_petadopt/widgets/ai_recommendation_hero.dart';
 import 'package:mobile_petadopt/widgets/app_confirmation_dialog.dart';
+import 'package:mobile_petadopt/widgets/connectivity_banner.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class MatchQuizScreen extends StatefulWidget {
@@ -596,6 +597,16 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
+        if (ApiClient.isNetworkError(e)) {
+          NetworkErrorHelper.showConnectionLostDialog(
+            context,
+            title: 'Connection Lost',
+            message:
+                'Unable to evaluate pet matches because your internet connection was lost. Please check your network and tap Retry.',
+            onRetry: () => _submitQuiz(),
+          );
+          return;
+        }
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(e.toString().replaceFirst('Exception: ', '')),

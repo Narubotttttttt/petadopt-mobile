@@ -8,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:mobile_petadopt/screens/adoption/my_applications_screen.dart';
 import 'package:mobile_petadopt/services/api_service.dart';
 import 'package:mobile_petadopt/services/phone_auth_service.dart';
+import 'package:mobile_petadopt/widgets/connectivity_banner.dart';
 import 'package:mobile_petadopt/theme/app_theme.dart';
 import 'package:mobile_petadopt/widgets/app_confirmation_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -31,15 +32,11 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
   final _phoneController = TextEditingController();
   final _secondaryPhoneController = TextEditingController();
   final _addressController = TextEditingController();
-  final _otherPetsDetailsController = TextEditingController();
   final _proposedPetNameController = TextEditingController();
   final _landlordNameController = TextEditingController();
   final _landlordPhoneController = TextEditingController();
 
-  String? _homeType;
-  String? _homeOwnership;
-  bool _hasOtherPets = false;
-  bool _hasExperience = false;
+  String _homeOwnership = 'owned';
   String? _adopterId;
 
   // ignore: unused_field
@@ -111,7 +108,6 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
   }
 
   final ImagePicker _picker = ImagePicker();
-  final List<String> _homeTypes = ['House', 'Apartment', 'Condo', 'Farm'];
 
   @override
   void initState() {
@@ -146,7 +142,6 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
     _phoneController.dispose();
     _secondaryPhoneController.dispose();
     _addressController.dispose();
-    _otherPetsDetailsController.dispose();
     _proposedPetNameController.dispose();
     _landlordNameController.dispose();
     _landlordPhoneController.dispose();
@@ -177,44 +172,7 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
       }
     }
 
-    String? resolvedHomeType;
-    bool? resolvedHasOtherPets;
-    bool? resolvedHasExperience;
-
-    if (prefill != null) {
-      final rawLiving = (prefill['living_environment'] ?? prefill['home_type'])?.toString().toLowerCase() ?? '';
-      if (rawLiving.contains('apartment')) {
-        resolvedHomeType = 'Apartment';
-      } else if (rawLiving.contains('condo')) {
-        resolvedHomeType = 'Condo';
-      } else if (rawLiving.contains('house')) {
-        resolvedHomeType = 'House';
-      } else if (rawLiving.contains('farm')) {
-        resolvedHomeType = 'Farm';
-      } else if (_homeTypes.contains(prefill['home_type'])) {
-        resolvedHomeType = prefill['home_type'].toString();
-      }
-
-      if (prefill['has_other_pets'] != null) {
-        resolvedHasOtherPets = prefill['has_other_pets'] is bool
-            ? prefill['has_other_pets'] as bool
-            : prefill['has_other_pets'].toString() == '1' || prefill['has_other_pets'].toString() == 'true';
-      }
-
-      if (prefill['has_experience'] != null) {
-        resolvedHasExperience = prefill['has_experience'] is bool
-            ? prefill['has_experience'] as bool
-            : ['1', 'true', 'yes', 'experienced'].contains(prefill['has_experience'].toString().toLowerCase().trim()) ||
-                prefill['has_experience'].toString().toLowerCase().contains('experienc');
-      } else if (prefill['pet_experience'] != null) {
-        final expStr = prefill['pet_experience'].toString().toLowerCase().trim();
-        resolvedHasExperience = expStr == 'experienced' || expStr.contains('experienc') || expStr == 'yes' || expStr == 'true';
-      }
-
-      if (resolvedHasOtherPets == true) {
-        resolvedHasExperience = true;
-      }
-    }
+    // Housing & lifestyle answers are safely preserved in the adopter's Compatibility Quiz profile
 
     if (mounted) {
       setState(() {
@@ -248,14 +206,11 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
           _addressController.text = prefill['address'].toString();
         }
 
-        if (resolvedHomeType != null && _homeType == null) {
-          _homeType = resolvedHomeType;
-        }
         if (prefill != null && prefill['home_ownership'] != null) {
           final own = prefill['home_ownership'].toString().toLowerCase().trim();
-          if (own == 'rented' || own == 'rent') {
+          if (own == 'rented' || own == 'rent' || own == 'tenant') {
             _homeOwnership = 'rented';
-          } else if (own == 'owned' || own == 'own') {
+          } else if (own == 'owned' || own == 'own' || own == 'owner') {
             _homeOwnership = 'owned';
           }
         }
@@ -264,15 +219,6 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
         }
         if (prefill != null && prefill['landlord_phone'] != null && prefill['landlord_phone'].toString().isNotEmpty) {
           _landlordPhoneController.text = prefill['landlord_phone'].toString();
-        }
-        if (resolvedHasOtherPets != null) {
-          _hasOtherPets = resolvedHasOtherPets;
-        }
-        if (resolvedHasExperience != null) {
-          _hasExperience = resolvedHasExperience;
-        }
-        if (_hasOtherPets) {
-          _hasExperience = true;
         }
       });
     }
@@ -656,7 +602,7 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
                               if (modalCtx.mounted) {
                                 ScaffoldMessenger.of(modalCtx).showSnackBar(
                                   SnackBar(
-                                    content: Text(e.toString().replaceFirst('Exception: ', ''), style: GoogleFonts.poppins(fontSize: 13)),
+                                    content: Text(ApiClient.formatUserErrorMessage(e), style: GoogleFonts.poppins(fontSize: 13)),
                                     backgroundColor: AppTheme.errorColor,
                                   ),
                                 );
@@ -719,11 +665,11 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
   }
 
   Future<void> _submitForm() async {
-    if (_homeType == null || _homeType!.isEmpty) {
+    if (_selectedIdType == null || _selectedIdType!.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Please select your Type of Home',
+            'Please select a valid Government ID type',
             style: GoogleFonts.poppins(fontSize: 13),
           ),
           backgroundColor: AppTheme.warningColor,
@@ -735,12 +681,11 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
       );
       return;
     }
-
-    if (_homeOwnership == null || _homeOwnership!.isEmpty) {
+    if (_validIdImage == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Please select whether you own or rent your home',
+            'Please upload the front of your valid ID',
             style: GoogleFonts.poppins(fontSize: 13),
           ),
           backgroundColor: AppTheme.warningColor,
@@ -752,57 +697,21 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
       );
       return;
     }
-
-    if (_homeOwnership == 'rented') {
-      if (_landlordNameController.text.trim().isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Please provide your landlord or building administrator name',
-              style: GoogleFonts.poppins(fontSize: 13),
-            ),
-            backgroundColor: AppTheme.warningColor,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
+    if (_certificateImage == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Please upload your Barangay Certificate of Residency',
+            style: GoogleFonts.poppins(fontSize: 13),
           ),
-        );
-        return;
-      }
-      if (_landlordPhoneController.text.trim().isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Please provide your landlord or building contact phone number',
-              style: GoogleFonts.poppins(fontSize: 13),
-            ),
-            backgroundColor: AppTheme.warningColor,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
+          backgroundColor: AppTheme.warningColor,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
           ),
-        );
-        return;
-      }
-      final landlordPhoneErr = PhoneAuthService.validatePhilippineNumber(_landlordPhoneController.text.trim());
-      if (landlordPhoneErr != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Landlord phone: $landlordPhoneErr',
-              style: GoogleFonts.poppins(fontSize: 13),
-            ),
-            backgroundColor: AppTheme.warningColor,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-          ),
-        );
-        return;
-      }
+        ),
+      );
+      return;
     }
 
     showDialog(
@@ -845,13 +754,9 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
         'address': _addressController.text.trim(),
         'city': city,
         'barangay': barangay,
-        'home_type': _homeType,
         'home_ownership': _homeOwnership,
         'landlord_name': _homeOwnership == 'rented' ? _landlordNameController.text.trim() : null,
         'landlord_phone': _homeOwnership == 'rented' ? _landlordPhoneController.text.trim() : null,
-        'has_other_pets': _hasOtherPets,
-        'other_pets_details': _hasOtherPets ? _otherPetsDetailsController.text.trim() : null,
-        'has_experience': _hasOtherPets ? true : _hasExperience,
         'proposed_pet_name': _proposedPetNameController.text.trim(),
         'application_source': appSource,
       };
@@ -893,6 +798,16 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
     } catch (e) {
       if (mounted) {
         Navigator.pop(context);
+        if (ApiClient.isNetworkError(e)) {
+          NetworkErrorHelper.showConnectionLostDialog(
+            context,
+            title: 'Connection Lost',
+            message:
+                'Unable to submit your adoption application because the server could not be reached. Please check your internet connection and tap Retry.',
+            onRetry: () => _submitForm(),
+          );
+          return;
+        }
         final errorMsg = e.toString().replaceFirst('Exception: ', '');
         AppConfirmationDialog.show(
           context,
@@ -938,7 +853,6 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
                 children: [
                   if (_currentStep == 0) _buildStep1(),
                   if (_currentStep == 1) _buildStep2(),
-                  if (_currentStep == 2) _buildStep3(),
                   const SizedBox(height: 28),
                   _buildBottomNavButtons(),
                 ],
@@ -952,9 +866,8 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
 
   Widget _buildCompactHeader() {
     const stepTitles = [
-      'Personal Information',
+      'Applicant Details',
       'Document Verification',
-      'Lifestyle & Housing',
     ];
 
     return Container(
@@ -1139,51 +1052,6 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
     );
   }
 
-  Widget _buildSegmentedSelector<T>({
-    required List<T> options,
-    required T? selected,
-    required String Function(T) getLabel,
-    required ValueChanged<T> onSelected,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(3),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppTheme.cardBorder),
-      ),
-      child: Row(
-        children: options.map((opt) {
-          final isSelected = selected == opt;
-          return Expanded(
-            child: GestureDetector(
-              onTap: () => onSelected(opt),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: isSelected ? AppTheme.primary : Colors.transparent,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  getLabel(opt),
-                  style: GoogleFonts.poppins(
-                    fontSize: 11.5,
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                    color: isSelected ? Colors.white : AppTheme.textSecondary,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
-
   Widget _buildStep1() {
     return Form(
       key: _personalFormKey,
@@ -1316,6 +1184,137 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
                     value == null || value.trim().isEmpty ? 'Please enter your address' : null,
               ),
             ],
+          ),
+          const SizedBox(height: 18),
+          _buildSectionHeader('Residence Ownership', subtitle: 'Shelter tenancy verification policy'),
+          const SizedBox(height: 10),
+          _buildCardContainer(
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildInteractiveChoiceCard(
+                      isSelected: _homeOwnership == 'owned',
+                      onTap: () => setState(() => _homeOwnership = 'owned'),
+                      title: 'Own Property',
+                      subtitle: 'Owner / family home',
+                      icon: Icons.home_work_outlined,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _buildInteractiveChoiceCard(
+                      isSelected: _homeOwnership == 'rented',
+                      onTap: () => setState(() => _homeOwnership = 'rented'),
+                      title: 'Renting / Tenant',
+                      subtitle: 'Leased unit or rental',
+                      icon: Icons.apartment_outlined,
+                    ),
+                  ),
+                ],
+              ),
+              if (_homeOwnership == 'rented') ...[
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: AppTheme.cardBorder),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.info_outline_rounded, size: 16, color: AppTheme.primary),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Landlord or Building Admin Info',
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.textPrimary,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      TextFormField(
+                        controller: _landlordNameController,
+                        textCapitalization: TextCapitalization.words,
+                        decoration: _minimalInputDecoration(
+                          label: 'Landlord / Admin Name *',
+                          hint: 'e.g. Maria Santos',
+                          icon: Icons.person_outline_rounded,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      TextFormField(
+                        controller: _landlordPhoneController,
+                        keyboardType: TextInputType.phone,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                          LengthLimitingTextInputFormatter(11),
+                        ],
+                        decoration: _minimalInputDecoration(
+                          label: 'Landlord Contact Phone (11 digits) *',
+                          hint: '09123456789',
+                          icon: Icons.phone_outlined,
+                        ),
+                        validator: (value) {
+                          if (_homeOwnership == 'rented') {
+                            return PhoneAuthService.validatePhilippineNumber(value);
+                          }
+                          return null;
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: 18),
+          _buildSectionHeader('Adoption Details', subtitle: 'Proposed pet name for shelter records (Optional)'),
+          const SizedBox(height: 10),
+          _buildCardContainer(
+            children: [
+              TextFormField(
+                controller: _proposedPetNameController,
+                decoration: _minimalInputDecoration(
+                  label: 'Proposed Pet Name (Optional)',
+                  hint: 'e.g. Max, Milo, Bella',
+                  icon: Icons.label_outline_rounded,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF0FDF4),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFBBF7D0)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.check_circle_rounded, color: Color(0xFF16A34A), size: 20),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Compatibility Quiz Connected: Your living space, schedule, other pets, and experience from your quiz will be attached automatically.',
+                    style: GoogleFonts.poppins(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      color: const Color(0xFF166534),
+                      height: 1.35,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -1485,272 +1484,6 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
     );
   }
 
-  Widget _buildStep3() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildSectionHeader('Residence & Housing', subtitle: 'Helps match pet size and shelter home policies'),
-        const SizedBox(height: 10),
-        _buildCardContainer(
-          children: [
-            Text(
-              'Type of Home *',
-              style: GoogleFonts.poppins(
-                fontSize: 12.5,
-                fontWeight: FontWeight.w600,
-                color: AppTheme.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 8),
-            _buildSegmentedSelector<String>(
-              options: _homeTypes,
-              selected: _homeType,
-              getLabel: (t) => t,
-              onSelected: (val) => setState(() => _homeType = val),
-            ),
-            const SizedBox(height: 14),
-            Text(
-              'Home Ownership *',
-              style: GoogleFonts.poppins(
-                fontSize: 12.5,
-                fontWeight: FontWeight.w600,
-                color: AppTheme.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildInteractiveChoiceCard(
-                    isSelected: _homeOwnership == 'owned',
-                    onTap: () => setState(() => _homeOwnership = 'owned'),
-                    title: 'Own Property',
-                    subtitle: 'Owner / family home',
-                    icon: Icons.home_work_outlined,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _buildInteractiveChoiceCard(
-                    isSelected: _homeOwnership == 'rented',
-                    onTap: () => setState(() => _homeOwnership = 'rented'),
-                    title: 'Renting / Tenant',
-                    subtitle: 'Leased unit or rental',
-                    icon: Icons.apartment_outlined,
-                  ),
-                ),
-              ],
-            ),
-            if (_homeOwnership == 'rented') ...[
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: AppTheme.cardBorder),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Icon(Icons.info_outline_rounded, size: 16, color: AppTheme.primary),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            'Please prepare a written Landlord Consent Letter (or lease agreement copy) to bring to your meet-and-greet screening.',
-                            style: GoogleFonts.poppins(
-                              fontSize: 11,
-                              color: AppTheme.textSecondary,
-                              height: 1.4,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    TextFormField(
-                      controller: _landlordNameController,
-                      decoration: _minimalInputDecoration(
-                        label: 'Landlord / Admin Name *',
-                        hint: 'e.g. Maria Santos',
-                        icon: Icons.person_outline_rounded,
-                      ),
-                      validator: (val) {
-                        if (_homeOwnership == 'rented' && (val == null || val.trim().isEmpty)) {
-                          return 'Please enter landlord name';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 10),
-                    TextFormField(
-                      controller: _landlordPhoneController,
-                      keyboardType: TextInputType.phone,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.digitsOnly,
-                        LengthLimitingTextInputFormatter(11),
-                      ],
-                      decoration: _minimalInputDecoration(
-                        label: 'Landlord Contact Phone (11 digits) *',
-                        hint: '09123456789',
-                        icon: Icons.phone_outlined,
-                      ),
-                      validator: (val) {
-                        if (_homeOwnership == 'rented') {
-                          if (val == null || val.trim().isEmpty) {
-                            return 'Please enter landlord contact number';
-                          }
-                          return PhoneAuthService.validatePhilippineNumber(val.trim());
-                        }
-                        return null;
-                      },
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ],
-        ),
-        const SizedBox(height: 18),
-        _buildSectionHeader('Household & Experience', subtitle: 'Your pet background and current environment'),
-        const SizedBox(height: 10),
-        _buildCardContainer(
-          children: [
-            _buildChoiceCardGroup(
-              title: 'Other Pets at Home *',
-              selectedValue: _hasOtherPets,
-              onChanged: (val) {
-                setState(() {
-                  _hasOtherPets = val;
-                  if (val) {
-                    _hasExperience = true;
-                  }
-                });
-              },
-              firstTitle: 'No Other Pets',
-              firstSubtitle: 'First or solo pet',
-              firstIcon: Icons.home_outlined,
-              secondTitle: 'Yes, Have Pets',
-              secondSubtitle: 'Dogs, cats, etc.',
-              secondIcon: Icons.pets_rounded,
-            ),
-            if (_hasOtherPets) ...[
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _otherPetsDetailsController,
-                decoration: _minimalInputDecoration(
-                  label: 'Details of Other Pets *',
-                  hint: 'e.g. 1 Aspin dog, 1 Persian cat',
-                  icon: Icons.pets_rounded,
-                ),
-                validator: (val) {
-                  if (_hasOtherPets && (val == null || val.trim().isEmpty)) {
-                    return 'Please specify other pets';
-                  }
-                  return null;
-                },
-              ),
-            ],
-            const SizedBox(height: 16),
-            _buildChoiceCardGroup(
-              title: 'Pet Care Experience *',
-              selectedValue: _hasExperience,
-              onChanged: (val) {
-                setState(() {
-                  _hasExperience = val;
-                  if (!val && _hasOtherPets) {
-                    _hasOtherPets = false;
-                    _otherPetsDetailsController.clear();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('First-time owner selected: "Other Pets" reset to No.'),
-                        duration: Duration(seconds: 2),
-                      ),
-                    );
-                  }
-                });
-              },
-              firstTitle: 'First-time Owner',
-              firstSubtitle: 'New to pet parenting',
-              firstIcon: Icons.favorite_border_rounded,
-              secondTitle: 'Experienced Owner',
-              secondSubtitle: _hasOtherPets ? 'Active pet owner' : 'Cared for pets before',
-              secondIcon: Icons.verified_outlined,
-            ),
-          ],
-        ),
-        const SizedBox(height: 18),
-        _buildSectionHeader('Adoption Details', subtitle: 'Proposed pet name for CAWS shelter records (Optional)'),
-        const SizedBox(height: 10),
-        _buildCardContainer(
-          children: [
-            TextFormField(
-              controller: _proposedPetNameController,
-              decoration: _minimalInputDecoration(
-                label: 'Proposed Pet Name (Optional)',
-                hint: 'e.g. Max, Milo, Bella',
-                icon: Icons.label_outline_rounded,
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildChoiceCardGroup({
-    required String title,
-    required bool selectedValue,
-    required ValueChanged<bool> onChanged,
-    required String firstTitle,
-    required String firstSubtitle,
-    required IconData firstIcon,
-    required String secondTitle,
-    required String secondSubtitle,
-    required IconData secondIcon,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: GoogleFonts.poppins(
-            fontSize: 12.5,
-            fontWeight: FontWeight.w600,
-            color: AppTheme.textPrimary,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-              child: _buildInteractiveChoiceCard(
-                isSelected: !selectedValue,
-                onTap: () => onChanged(false),
-                title: firstTitle,
-                subtitle: firstSubtitle,
-                icon: firstIcon,
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: _buildInteractiveChoiceCard(
-                isSelected: selectedValue,
-                onTap: () => onChanged(true),
-                title: secondTitle,
-                subtitle: secondSubtitle,
-                icon: secondIcon,
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
   Widget _buildInteractiveChoiceCard({
     required bool isSelected,
     required VoidCallback onTap,
@@ -1881,7 +1614,7 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
         Expanded(
           flex: 2,
           child: ElevatedButton(
-            onPressed: _currentStep == 2 ? _submitForm : _nextStep,
+            onPressed: _currentStep == 1 ? _submitForm : _nextStep,
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.primary,
               foregroundColor: Colors.white,
@@ -1892,7 +1625,7 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
               ),
             ),
             child: Text(
-              _currentStep == 2 ? 'Submit Application' : 'Continue',
+              _currentStep == 1 ? 'Submit Application' : 'Continue to Documents',
               style: GoogleFonts.poppins(
                 color: Colors.white,
                 fontWeight: FontWeight.w600,

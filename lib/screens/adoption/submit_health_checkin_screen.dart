@@ -213,7 +213,7 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              e.toString().replaceFirst('Exception: ', ''),
+              ApiClient.formatUserErrorMessage(e),
               style: GoogleFonts.poppins(fontSize: 13),
             ),
             backgroundColor: AppTheme.errorColor,

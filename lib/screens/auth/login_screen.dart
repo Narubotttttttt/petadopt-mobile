@@ -49,7 +49,7 @@ class _LoginScreenState extends State<LoginScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                e.toString().replaceFirst('Exception: ', ''),
+                ApiClient.formatUserErrorMessage(e),
                 style: GoogleFonts.poppins(fontSize: 13),
               ),
               backgroundColor: AppTheme.errorColor,
@@ -232,7 +232,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
                                         content: Text(
-                                          e.toString().replaceFirst('Exception: ', ''),
+                                          ApiClient.formatUserErrorMessage(e),
                                           style: GoogleFonts.poppins(fontSize: 13),
                                         ),
                                         backgroundColor: AppTheme.errorColor,

@@ -92,7 +92,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         setState(() => _isSendingEmailOtp = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(e.toString().replaceFirst('Exception: ', ''), style: GoogleFonts.poppins(fontSize: 13)),
+            content: Text(ApiClient.formatUserErrorMessage(e), style: GoogleFonts.poppins(fontSize: 13)),
             backgroundColor: AppTheme.errorColor,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -154,7 +154,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         setState(() => _isVerifyingEmailOtp = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(e.toString().replaceFirst('Exception: ', ''), style: GoogleFonts.poppins(fontSize: 13)),
+            content: Text(ApiClient.formatUserErrorMessage(e), style: GoogleFonts.poppins(fontSize: 13)),
             backgroundColor: AppTheme.errorColor,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -306,7 +306,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         setState(() => _isVerifyingPhoneOtp = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(e.toString().replaceFirst('Exception: ', ''), style: GoogleFonts.poppins(fontSize: 13)),
+            content: Text(ApiClient.formatUserErrorMessage(e), style: GoogleFonts.poppins(fontSize: 13)),
             backgroundColor: AppTheme.errorColor,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -358,7 +358,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(e.toString().replaceFirst('Exception: ', ''), style: GoogleFonts.poppins(fontSize: 13)),
+            content: Text(ApiClient.formatUserErrorMessage(e), style: GoogleFonts.poppins(fontSize: 13)),
             backgroundColor: AppTheme.errorColor,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile_petadopt/services/api_service.dart';
 import 'package:mobile_petadopt/theme/app_theme.dart';
+import 'package:mobile_petadopt/widgets/connectivity_banner.dart';
 
 class SignContractDialog extends StatefulWidget {
   final Map<String, dynamic> application;
@@ -209,6 +210,14 @@ class _SignContractDialogState extends State<SignContractDialog> {
     } catch (e) {
       if (mounted) {
         setState(() => _isSubmitting = false);
+        if (ApiClient.isNetworkError(e)) {
+          NetworkErrorHelper.showConnectionLostSnackBar(
+            context,
+            message: 'Connection lost while submitting contract. Please check your network.',
+            onRetry: () => _submitSignature(),
+          );
+          return;
+        }
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(e.toString().replaceFirst('Exception: ', '')),
