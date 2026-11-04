@@ -3,7 +3,7 @@ class ApiConfig {
   static const String serverPort = '8000';
 
   // Set to true when building for production Vercel
-  static const bool isProduction = false;
+  static const bool isProduction = true;
 
   static const String host = isProduction
       ? 'https://caws-petadoption.vercel.app'

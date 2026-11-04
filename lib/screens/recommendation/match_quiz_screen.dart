@@ -28,6 +28,8 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
   bool _isLocked = false;
   bool _isLoadingRecommendations = false;
   List<Map<String, dynamic>> _recommendations = [];
+  int _selectedMatchIndex = 0;
+  bool _showAllInList = false;
   int _adoptedCount = 0;
   bool _canRetake = true;
   String _retakeStatus = 'none';
@@ -231,6 +233,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
       if (mounted) {
         setState(() {
           _recommendations = availableRecs;
+          _selectedMatchIndex = 0;
           _adoptedCount = RecommendationService.adoptedCount;
           // CRITICAL: DO NOT auto-set _showResults = true here!
           // The screen must stay on the locked profile review until the adopter taps 'View Recommended Pets'.
@@ -468,6 +471,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
         setState(() {
           _isLocked = true;
           _recommendations = availableRecs;
+          _selectedMatchIndex = 0;
           _showResults = true;
           _isLoading = false;
           _canRetake = false;
@@ -1585,414 +1589,731 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
       );
     }
 
+    final safeIndex = _selectedMatchIndex.clamp(0, _recommendations.isEmpty ? 0 : _recommendations.length - 1);
     final hasBottomAction = _isLocked;
-    final totalItems = _recommendations.length + 1 + (hasBottomAction ? 1 : 0);
 
-    return ListView.builder(
-      padding: EdgeInsets.fromLTRB(16, 16, 16, bottomInset),
-      itemCount: totalItems,
-      itemBuilder: (context, index) {
-        if (index == 0) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildHouseholdCapacityCard(),
-              Container(
-                margin: const EdgeInsets.only(bottom: 16),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(colors: [AppTheme.primaryDark, AppTheme.primary]),
-                  borderRadius: BorderRadius.circular(16),
+    return SingleChildScrollView(
+      padding: EdgeInsets.fromLTRB(16, 12, 16, bottomInset),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildAiHeaderBanner(),
+          if (!_showAllInList && _recommendations.length > 1) ...[
+            _buildRankTabs(),
+            _buildMatchNavigatorHeader(safeIndex),
+            const SizedBox(height: 8),
+          ],
+          if (_showAllInList) ...[
+            ...List.generate(_recommendations.length, (idx) {
+              return _buildSinglePetCard(_recommendations[idx], idx + 1);
+            }),
+          ] else ...[
+            GestureDetector(
+              onHorizontalDragEnd: (details) {
+                if (details.primaryVelocity != null) {
+                  if (details.primaryVelocity! < -180 && _selectedMatchIndex < _recommendations.length - 1) {
+                    setState(() => _selectedMatchIndex++);
+                  } else if (details.primaryVelocity! > 180 && _selectedMatchIndex > 0) {
+                    setState(() => _selectedMatchIndex--);
+                  }
+                }
+              },
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 220),
+                transitionBuilder: (child, animation) {
+                  return FadeTransition(
+                    opacity: animation,
+                    child: SlideTransition(
+                      position: Tween<Offset>(
+                        begin: const Offset(0.04, 0),
+                        end: Offset.zero,
+                      ).animate(animation),
+                      child: child,
+                    ),
+                  );
+                },
+                child: KeyedSubtree(
+                  key: ValueKey<int>(safeIndex),
+                  child: _buildSinglePetCard(_recommendations[safeIndex], safeIndex + 1),
                 ),
-            child: Row(
+              ),
+            ),
+          ],
+          if (_recommendations.length > 1) ...[
+            Padding(
+              padding: const EdgeInsets.only(top: 2, bottom: 8),
+              child: Center(
+                child: TextButton.icon(
+                  onPressed: () => setState(() => _showAllInList = !_showAllInList),
+                  icon: Icon(
+                    _showAllInList ? Icons.tab_rounded : Icons.view_agenda_outlined,
+                    size: 15,
+                    color: AppTheme.primary,
+                  ),
+                  label: Text(
+                    _showAllInList ? 'Switch to Focused Match Tabs' : 'View All 3 as Stacked List',
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.primary,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+          const SizedBox(height: 8),
+          _buildHouseholdCapacityCard(isCompact: true),
+          const SizedBox(height: 4),
+          if (hasBottomAction)
+            Padding(
+              padding: const EdgeInsets.only(top: 4, bottom: 20),
+              child: Center(
+                child: OutlinedButton.icon(
+                  onPressed: () => setState(() => _showResults = false),
+                  icon: const Icon(Icons.assignment_outlined, size: 16),
+                  label: Text(
+                    'View Saved Preferences Summary',
+                    style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: AppTheme.primary.withValues(alpha: 0.5)),
+                    foregroundColor: AppTheme.primary,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAiHeaderBanner() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(colors: [AppTheme.primaryDark, AppTheme.primary]),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.12),
+                  blurRadius: 4,
+                  offset: const Offset(0, 1),
+                ),
+              ],
+            ),
+            child: const Center(
+              child: LuminousAiOrb(size: 26),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 46,
-                  height: 46,
-                  decoration: BoxDecoration(
+                Text(
+                  'Top 3 Matched Companions',
+                  style: GoogleFonts.poppins(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(14),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.12),
-                        blurRadius: 6,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: const Center(
-                    child: LuminousAiOrb(size: 34),
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Top 3 Matched Companions', style: GoogleFonts.poppins(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
-                      const SizedBox(height: 2),
-                      Text('Evaluated by Predictive Compatibility Engine',
-                          style: GoogleFonts.poppins(color: Colors.white.withValues(alpha: 0.85), fontSize: 11)),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.auto_awesome_rounded, size: 13, color: Colors.white),
-                      const SizedBox(width: 4),
-                      Text(
-                        'AI Matched',
-                        style: GoogleFonts.poppins(
-                          color: Colors.white,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
+                Text(
+                  'Evaluated by Predictive Compatibility Engine',
+                  style: GoogleFonts.poppins(
+                    color: Colors.white.withValues(alpha: 0.85),
+                    fontSize: 10,
                   ),
                 ),
               ],
             ),
           ),
-          ],
-        );
-      }
-
-        if (hasBottomAction && index > _recommendations.length) {
-          return Padding(
-            padding: const EdgeInsets.only(top: 8, bottom: 20),
-            child: Center(
-              child: OutlinedButton.icon(
-                onPressed: () => setState(() => _showResults = false),
-                icon: const Icon(Icons.assignment_outlined, size: 16),
-                label: Text(
-                  'View Saved Preferences Summary',
-                  style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.auto_awesome_rounded, size: 11, color: Colors.white),
+                const SizedBox(width: 3),
+                Text(
+                  'AI Matched',
+                  style: GoogleFonts.poppins(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-                style: OutlinedButton.styleFrom(
-                  side: BorderSide(color: AppTheme.primary.withValues(alpha: 0.5)),
-                  foregroundColor: AppTheme.primary,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRankTabs() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: List.generate(_recommendations.length, (i) {
+          final isSelected = _selectedMatchIndex == i;
+          final pet = _recommendations[i];
+          final rawPct = pet['match_percentage'] ?? pet['match_score'];
+          final double rawDouble = (rawPct is num
+              ? rawPct.toDouble()
+              : (double.tryParse(rawPct.toString().replaceAll('%', '').trim()) ?? 80.0));
+          final String matchPctStr = rawDouble.truncateToDouble() == rawDouble
+              ? '${rawDouble.toInt()}%'
+              : '${rawDouble.toStringAsFixed(1)}%';
+
+          return Expanded(
+            child: Padding(
+              padding: EdgeInsets.only(
+                left: i == 0 ? 0 : 3.5,
+                right: i == _recommendations.length - 1 ? 0 : 3.5,
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {
+                    setState(() {
+                      _selectedMatchIndex = i;
+                    });
+                  },
+                  borderRadius: BorderRadius.circular(12),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                    decoration: BoxDecoration(
+                      color: isSelected ? AppTheme.primary : Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isSelected ? AppTheme.primary : const Color(0xFFE2E8F0),
+                        width: isSelected ? 1.5 : 1,
+                      ),
+                      boxShadow: isSelected
+                          ? [
+                              BoxShadow(
+                                color: AppTheme.primary.withValues(alpha: 0.25),
+                                blurRadius: 6,
+                                offset: const Offset(0, 2),
+                              ),
+                            ]
+                          : [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.02),
+                                blurRadius: 3,
+                                offset: const Offset(0, 1),
+                              ),
+                            ],
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            if (i == 0) ...[
+                              Icon(
+                                Icons.star_rounded,
+                                size: 13,
+                                color: isSelected ? Colors.amberAccent : const Color(0xFFF59E0B),
+                              ),
+                              const SizedBox(width: 2),
+                            ],
+                            Flexible(
+                              child: Text(
+                                i == 0 ? 'Rank #1' : 'Rank #${i + 1}',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 11,
+                                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                                  color: isSelected ? Colors.white : const Color(0xFF334155),
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          '$matchPctStr Match',
+                          style: GoogleFonts.poppins(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: isSelected
+                                ? Colors.white.withValues(alpha: 0.95)
+                                : AppTheme.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ),
           );
-        }
+        }),
+      ),
+    );
+  }
 
-        if (index - 1 < 0 || index - 1 >= _recommendations.length) {
-          return const SizedBox.shrink();
-        }
-
-        final pet = _recommendations[index - 1];
-        final rawPct = pet['match_percentage'] ?? pet['match_score'];
-        final double matchPct = rawPct is num
-            ? rawPct.toDouble()
-            : (double.tryParse(rawPct.toString().replaceAll('%', '').trim()) ?? 80.0);
-        final rawReasons = pet['match_reasons'] ?? pet['reasons'];
-        final reasons = (rawReasons as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [];
-        final careTip = pet['care_tip']?.toString() ?? pet['consideration']?.toString();
-        final petData = {
-          ...pet,
-          'id': pet['pet_id'] ?? pet['id'],
-          'name': pet['name'] ?? 'Pet no. ${pet['pet_id']}',
-          'breed': pet['breed'] ?? 'Mixed Breed',
-          'size': pet['size'] ?? 'Medium',
-          'age': pet['age'] ?? 'Adult',
-          'gender': pet['gender'] ?? 'male',
-          'type': pet['type'] ?? 'cat',
-          'image': pet['photo_url'] ??
-              (pet['photo_path'] != null
-                  ? ApiService.normalizeImageUrl(pet['photo_path'])
-                  : 'https://images.unsplash.com/photo-1543466835-00a7907e9de1'),
-          'match_percentage': matchPct,
-          'compatibility_score': matchPct,
-          'isRecommended': true,
-          'application_source': 'recommendation',
-          'match_reasons': reasons,
-          'reasons': reasons,
-          'care_tip': careTip,
-        };
-
-        return Card(
-          margin: const EdgeInsets.only(bottom: 14),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          elevation: 1,
-          child: InkWell(
-            borderRadius: BorderRadius.circular(16),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => PetDetailScreen(pet: petData),
+  Widget _buildMatchNavigatorHeader(int currentIndex) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              Text(
+                'Match ${currentIndex + 1} of ${_recommendations.length}',
+                style: GoogleFonts.poppins(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF64748B),
                 ),
-              );
-            },
-            child: Padding(
-              padding: const EdgeInsets.all(14),
-              child: Column(
+              ),
+            ],
+          ),
+          Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.arrow_back_ios_rounded),
+                iconSize: 13,
+                padding: const EdgeInsets.all(4),
+                constraints: const BoxConstraints(),
+                color: currentIndex > 0 ? AppTheme.primary : const Color(0xFFCBD5E1),
+                onPressed: currentIndex > 0
+                    ? () => setState(() => _selectedMatchIndex--)
+                    : null,
+              ),
+              const SizedBox(width: 4),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: List.generate(_recommendations.length, (dotIdx) {
+                  final isActive = dotIdx == currentIndex;
+                  return AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    margin: const EdgeInsets.symmetric(horizontal: 2),
+                    width: isActive ? 14 : 5,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: isActive ? AppTheme.primary : const Color(0xFFCBD5E1),
+                      borderRadius: BorderRadius.circular(3),
+                    ),
+                  );
+                }),
+              ),
+              const SizedBox(width: 4),
+              IconButton(
+                icon: const Icon(Icons.arrow_forward_ios_rounded),
+                iconSize: 13,
+                padding: const EdgeInsets.all(4),
+                constraints: const BoxConstraints(),
+                color: currentIndex < _recommendations.length - 1
+                    ? AppTheme.primary
+                    : const Color(0xFFCBD5E1),
+                onPressed: currentIndex < _recommendations.length - 1
+                    ? () => setState(() => _selectedMatchIndex++)
+                    : null,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSinglePetCard(Map<String, dynamic> pet, int rankIndex) {
+    final rawPct = pet['match_percentage'] ?? pet['match_score'];
+    final double matchPct = rawPct is num
+        ? rawPct.toDouble()
+        : (double.tryParse(rawPct.toString().replaceAll('%', '').trim()) ?? 80.0);
+    final rawReasons = pet['match_reasons'] ?? pet['reasons'];
+    final reasons = (rawReasons as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [];
+    final careTip = pet['care_tip']?.toString() ?? pet['consideration']?.toString();
+    final petData = {
+      ...pet,
+      'id': pet['pet_id'] ?? pet['id'],
+      'name': pet['name'] ?? 'Pet no. ${pet['pet_id']}',
+      'breed': pet['breed'] ?? 'Mixed Breed',
+      'size': pet['size'] ?? 'Medium',
+      'age': pet['age'] ?? 'Adult',
+      'gender': pet['gender'] ?? 'male',
+      'type': pet['type'] ?? 'cat',
+      'image': pet['photo_url'] ??
+          (pet['photo_path'] != null
+              ? ApiService.normalizeImageUrl(pet['photo_path'])
+              : 'https://images.unsplash.com/photo-1543466835-00a7907e9de1'),
+      'match_percentage': matchPct,
+      'compatibility_score': matchPct,
+      'isRecommended': true,
+      'application_source': 'recommendation',
+      'match_reasons': reasons,
+      'reasons': reasons,
+      'care_tip': careTip,
+    };
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 14),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      elevation: 1,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => PetDetailScreen(pet: petData),
+            ),
+          );
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Container(
-                          width: 80,
-                          height: 80,
-                          color: Colors.grey.shade200,
-                          child: pet['photo_url'] != null || pet['photo_path'] != null
-                              ? Image.network(
-                                  pet['photo_url'] ?? ApiService.normalizeImageUrl(pet['photo_path']),
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (_, _, _) => const Icon(Icons.pets, color: Colors.grey),
-                                )
-                              : const Icon(Icons.pets, color: Colors.grey),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      width: 80,
+                      height: 80,
+                      color: Colors.grey.shade200,
+                      child: pet['photo_url'] != null || pet['photo_path'] != null
+                          ? Image.network(
+                              pet['photo_url'] ?? ApiService.normalizeImageUrl(pet['photo_path']),
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, _, _) => const Icon(Icons.pets, color: Colors.grey),
+                            )
+                          : const Icon(Icons.pets, color: Colors.grey),
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          margin: const EdgeInsets.only(bottom: 4),
+                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: rankIndex == 1
+                                ? const Color(0xFFE0F2FE)
+                                : const Color(0xFFF1F5F9),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(
+                              color: rankIndex == 1
+                                  ? const Color(0xFFBAE6FD)
+                                  : const Color(0xFFE2E8F0),
+                            ),
+                          ),
+                          child: Text(
+                            rankIndex == 1 ? 'Rank #1 • Best Match' : 'Rank #$rankIndex Match',
+                            style: GoogleFonts.poppins(
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.w700,
+                              color: rankIndex == 1
+                                  ? AppTheme.primaryDark
+                                  : const Color(0xFF475569),
+                            ),
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
+                            Expanded(
+                              child: Text(
+                                pet['name'] ?? 'Unnamed Pet',
+                                style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w700, color: AppTheme.textPrimary),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
                             Container(
-                              margin: const EdgeInsets.only(bottom: 4),
-                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(
-                                color: index == 1
-                                    ? const Color(0xFFE0F2FE)
-                                    : const Color(0xFFF1F5F9),
+                                color: matchPct >= 90
+                                    ? AppTheme.successColor.withValues(alpha: 0.12)
+                                    : AppTheme.primaryLight,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              matchPct.truncateToDouble() == matchPct
+                                  ? '${matchPct.toInt()}% Match'
+                                  : '${matchPct.toStringAsFixed(1)}% Match',
+                              style: GoogleFonts.poppins(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: matchPct >= 90 ? AppTheme.successColor : AppTheme.primaryDark,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '${pet['size'] != null ? pet['size'].toString() : 'Medium'} • ${pet['type'] != null ? (pet['type'].toString().toUpperCase()) : 'PET'} • ${pet['age'] ?? 'Adult'}',
+                        style: GoogleFonts.poppins(fontSize: 12, color: AppTheme.textSecondary),
+                      ),
+                      const SizedBox(height: 6),
+                      if (pet['temperaments'] != null && (pet['temperaments'] as List).isNotEmpty)
+                        Wrap(
+                          spacing: 4,
+                          runSpacing: 4,
+                          children: (pet['temperaments'] as List).take(3).map((tag) {
+                            return Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade100,
                                 borderRadius: BorderRadius.circular(6),
-                                border: Border.all(
-                                  color: index == 1
-                                      ? const Color(0xFFBAE6FD)
-                                      : const Color(0xFFE2E8F0),
-                                ),
                               ),
                               child: Text(
-                                index == 1 ? 'Rank #1 • Best Match' : 'Rank #$index Match',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 9.5,
-                                  fontWeight: FontWeight.w700,
-                                  color: index == 1
-                                      ? AppTheme.primaryDark
-                                      : const Color(0xFF475569),
-                                ),
+                                tag.toString(),
+                                style: GoogleFonts.poppins(fontSize: 10, color: AppTheme.textSecondary, fontWeight: FontWeight.w500),
                               ),
-                            ),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    pet['name'] ?? 'Unnamed Pet',
-                                    style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w700, color: AppTheme.textPrimary),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: matchPct >= 90
-                                        ? AppTheme.successColor.withValues(alpha: 0.12)
-                                        : AppTheme.primaryLight,
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Text(
-                                    '${matchPct.toInt()}% Match',
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w700,
-                                      color: matchPct >= 90 ? AppTheme.successColor : AppTheme.primaryDark,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              '${pet['size'] != null ? pet['size'].toString() : 'Medium'} • ${pet['type'] != null ? (pet['type'].toString().toUpperCase()) : 'PET'} • ${pet['age'] ?? 'Adult'}',
-                              style: GoogleFonts.poppins(fontSize: 12, color: AppTheme.textSecondary),
-                            ),
-                            const SizedBox(height: 6),
-                            if (pet['temperaments'] != null && (pet['temperaments'] as List).isNotEmpty)
-                              Wrap(
-                                spacing: 4,
-                                runSpacing: 4,
-                                children: (pet['temperaments'] as List).take(3).map((tag) {
-                                  return Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: Colors.grey.shade100,
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: Text(
-                                      tag.toString(),
-                                      style: GoogleFonts.poppins(fontSize: 10, color: AppTheme.textSecondary, fontWeight: FontWeight.w500),
-                                    ),
-                                  );
-                                }).toList(),
-                              ),
-                          ],
+                            );
+                          }).toList(),
                         ),
-                      ),
                     ],
                   ),
-                  if (pet['compatibility_breakdown'] != null || pet['breakdown'] != null)
-                    _buildCompatibilityBreakdown(
-                      (pet['compatibility_breakdown'] ?? pet['breakdown']) as Map<String, dynamic>?,
-                      pet['name']?.toString(),
-                    ),
-                  if (reasons.isNotEmpty) ...[
-                    const Divider(height: 18),
-                    Column(
+                ),
+              ],
+            ),
+            if (pet['compatibility_breakdown'] != null || pet['breakdown'] != null)
+              _buildCompatibilityBreakdown(
+                (pet['compatibility_breakdown'] ?? pet['breakdown']) as Map<String, dynamic>?,
+                pet['name']?.toString(),
+              ),
+            if (reasons.isNotEmpty) ...[
+              const Divider(height: 18),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: reasons.map((r) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 2),
+                    child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: reasons.map((r) {
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 2),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.check_circle_rounded, size: 14, color: AppTheme.primary),
-                              const SizedBox(width: 6),
-                              Expanded(
-                                child: Text(
-                                  r,
-                                  style: GoogleFonts.poppins(fontSize: 11, color: AppTheme.textPrimary, fontWeight: FontWeight.w500),
-                                ),
-                              ),
-                            ],
+                      children: [
+                        const Padding(
+                          padding: EdgeInsets.only(top: 2),
+                          child: Icon(Icons.check_circle_rounded, size: 14, color: AppTheme.primary),
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            r,
+                            style: GoogleFonts.poppins(fontSize: 11, color: AppTheme.textPrimary, fontWeight: FontWeight.w500),
                           ),
-                        );
-                      }).toList(),
+                        ),
+                      ],
                     ),
-                  ],
-                  if (careTip != null && careTip.trim().isNotEmpty) ...[
-                    const SizedBox(height: 10),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFEF3C7).withValues(alpha: 0.5),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: const Color(0xFFFDE68A)),
-                      ),
-                      child: Row(
+                  );
+                }).toList(),
+              ),
+            ],
+            if (careTip != null && careTip.trim().isNotEmpty) ...[
+              const SizedBox(height: 10),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFEF3C7).withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFFFDE68A)),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.lightbulb_outline_rounded, size: 15, color: Color(0xFFD97706)),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(Icons.lightbulb_outline_rounded, size: 15, color: Color(0xFFD97706)),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Care Consideration',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 10.5,
-                                    fontWeight: FontWeight.w700,
-                                    color: const Color(0xFFB45309),
-                                  ),
-                                ),
-                                const SizedBox(height: 1),
-                                Text(
-                                  careTip,
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 11,
-                                    color: const Color(0xFF78350F),
-                                    height: 1.3,
-                                  ),
-                                ),
-                              ],
+                          Text(
+                            'Care Consideration',
+                            style: GoogleFonts.poppins(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFFB45309),
+                            ),
+                          ),
+                          const SizedBox(height: 1),
+                          Text(
+                            careTip,
+                            style: GoogleFonts.poppins(
+                              fontSize: 11,
+                              color: const Color(0xFF78350F),
+                              height: 1.3,
                             ),
                           ),
                         ],
                       ),
                     ),
                   ],
-                  const SizedBox(height: 14),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => PetDetailScreen(pet: petData),
-                              ),
-                            );
-                          },
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-                            side: const BorderSide(color: Color(0xFFCBD5E1)),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          ),
-                          child: FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: Text(
-                              'View Profile',
-                              style: GoogleFonts.poppins(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: const Color(0xFF475569),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () => _handleApplyDirect(petData),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.primary,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          ),
-                          child: FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(Icons.assignment_turned_in_rounded, size: 16),
-                                const SizedBox(width: 6),
-                                Text(
-                                  'Apply to Adopt',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+                ),
               ),
+            ],
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => PetDetailScreen(pet: petData),
+                        ),
+                      );
+                    },
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+                      side: const BorderSide(color: Color(0xFFCBD5E1)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        'View Profile',
+                        style: GoogleFonts.poppins(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF475569),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () => _handleApplyDirect(petData),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.assignment_turned_in_rounded, size: 16),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Apply to Adopt',
+                            style: GoogleFonts.poppins(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ),
-        );
-      },
-    );
+          ],
+        ),
+      ),
+    ),
+  );
   }
 
-  Widget _buildHouseholdCapacityCard() {
+  Widget _buildHouseholdCapacityCard({bool isCompact = false}) {
     final count = _adoptedCount.clamp(0, 3);
     final remaining = (3 - count).clamp(0, 3);
     final isFull = count >= 3;
+
+    if (isCompact) {
+      return Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: isFull ? const Color(0xFFFFFBEB) : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isFull ? const Color(0xFFFDE68A) : const Color(0xFFE2E8F0),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 4,
+              offset: const Offset(0, 1),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(5),
+              decoration: BoxDecoration(
+                color: isFull
+                    ? const Color(0xFFFEF3C7)
+                    : AppTheme.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                Icons.pets_rounded,
+                size: 14,
+                color: isFull ? const Color(0xFFD97706) : AppTheme.primary,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Household Capacity: $count/3 Active Pets',
+                style: GoogleFonts.poppins(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF1E293B),
+                ),
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
+              decoration: BoxDecoration(
+                color: isFull ? const Color(0xFFFEF3C7) : AppTheme.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                isFull ? 'Limit Reached' : '$remaining slots open',
+                style: GoogleFonts.poppins(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  color: isFull ? const Color(0xFFB45309) : AppTheme.primary,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
