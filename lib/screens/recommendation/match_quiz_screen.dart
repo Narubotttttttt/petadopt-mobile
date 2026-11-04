@@ -25,6 +25,7 @@ class MatchQuizScreen extends StatefulWidget {
 class _MatchQuizScreenState extends State<MatchQuizScreen> {
   int _currentStep = 0;
   bool _isLoading = false;
+  bool _isCheckingStatus = true;
   bool _showResults = false;
   bool _isLocked = false;
   bool _isLoadingRecommendations = false;
@@ -94,7 +95,6 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
   void initState() {
     super.initState();
     _checkBanStanding();
-    _checkCachedLockState();
     _loadSavedPreferences();
   }
 
@@ -112,121 +112,61 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
     return null;
   }
 
-  Future<void> _checkCachedLockState() async {
-    try {
-      final lockKey = await _getUserQuizLockKey();
-      if (lockKey == null) {
-        if (mounted) {
-          setState(() {
-            _isLocked = false;
-          });
-        }
-        return;
-      }
-      final prefs = await SharedPreferences.getInstance();
-      final isLockedCached = prefs.getBool(lockKey) ?? false;
-      final canRetakeCached = prefs.getBool('${lockKey}_can_retake');
-      final revisionCountCached = prefs.getInt('${lockKey}_revision_count');
-      final daysRemainingCached = prefs.getInt('${lockKey}_days_remaining');
-      final nextRetakeDateCached = prefs.getString('${lockKey}_next_retake_date');
-      final retakeStatusCached = prefs.getString('${lockKey}_retake_status');
-      final savedPrefsJson = prefs.getString('${lockKey}_saved_prefs_json');
-
-      if (mounted) {
-        setState(() {
-          _isLocked = isLockedCached;
-          if (!isLockedCached) {
-            _canRetake = false;
-            _revisionCount = 0;
-            _daysRemaining = 0;
-            _nextRetakeDate = null;
-            _retakeStatus = 'none';
-            _preferredSpecies = null;
-            _livingEnvironment = null;
-            _yardType = null;
-            _hasYard = null;
-            _activityLevel = null;
-            _petExperience = null;
-            _hasChildren = null;
-            _hasOtherPets = null;
-            _hoursAlone = null;
-            _specialCareCapacity = null;
-            _desiredTemperaments.clear();
-            return;
-          }
-          if (canRetakeCached != null) {
-            _canRetake = canRetakeCached;
-          } else if (isLockedCached) {
-            _canRetake = false;
-          }
-          if (revisionCountCached != null) {
-            _revisionCount = revisionCountCached;
-          } else if (isLockedCached) {
-            _revisionCount = 1;
-          }
-          if (daysRemainingCached != null) {
-            _daysRemaining = daysRemainingCached;
-          } else if (isLockedCached) {
-            _daysRemaining = 30;
-          }
-          if (nextRetakeDateCached != null) {
-            _nextRetakeDate = nextRetakeDateCached;
-          }
-          if (retakeStatusCached != null) {
-            _retakeStatus = retakeStatusCached;
-          }
-
-          if (savedPrefsJson != null && savedPrefsJson.isNotEmpty) {
-            try {
-              final cachedMap = jsonDecode(savedPrefsJson);
-              if (cachedMap is Map<String, dynamic>) {
-                _preferredSpecies = cachedMap['preferred_species']?.toString();
-                _livingEnvironment = cachedMap['living_environment']?.toString();
-                final hy = cachedMap['has_yard'];
-                if (hy != null) {
-                  _hasYard = hy == true || hy == 1 || hy.toString() == '1' || hy.toString().toLowerCase() == 'true';
-                }
-                _yardType = cachedMap['yard_type']?.toString();
-                _activityLevel = cachedMap['activity_level']?.toString();
-                _petExperience = cachedMap['pet_experience']?.toString();
-                final hc = cachedMap['has_children'];
-                if (hc != null) {
-                  _hasChildren = hc == true || hc == 1 || hc.toString() == '1' || hc.toString().toLowerCase() == 'true';
-                }
-                final hp = cachedMap['has_other_pets'];
-                if (hp != null) {
-                  _hasOtherPets = hp == true || hp == 1 || hp.toString() == '1' || hp.toString().toLowerCase() == 'true';
-                  if (_hasOtherPets == true) {
-                    _petExperience = 'experienced';
-                  }
-                }
-                _hoursAlone = cachedMap['hours_alone']?.toString();
-                final sc = cachedMap['special_care_capacity'];
-                if (sc != null) {
-                  _specialCareCapacity = sc == true || sc == 1 || sc.toString() == '1' || sc.toString().toLowerCase() == 'true';
-                }
-                if (cachedMap['desired_temperaments'] is List) {
-                  _desiredTemperaments.clear();
-                  for (final t in cachedMap['desired_temperaments']) {
-                    _desiredTemperaments.add(t.toString());
-                  }
-                }
-              }
-            } catch (_) {}
-          }
-        });
-      }
-    } catch (_) {}
-  }
 
   Future<void> _loadSavedPreferences() async {
     try {
       final lockKey = await _getUserQuizLockKey();
       final prefs = await SharedPreferences.getInstance();
-      final saved = await ApiService.getSavedPreferences();
 
       // Clean up legacy device-wide lock key if present
       await prefs.remove('quiz_locked');
+
+      // 1. Check user-scoped cache immediately to set seamless pre-warm state
+      if (lockKey != null) {
+        final isLockedCached = prefs.getBool(lockKey) ?? false;
+        final savedPrefsJson = prefs.getString('${lockKey}_saved_prefs_json');
+        if (isLockedCached && savedPrefsJson != null && savedPrefsJson.isNotEmpty) {
+          try {
+            final cachedMap = jsonDecode(savedPrefsJson);
+            if (cachedMap is Map<String, dynamic>) {
+              _isLocked = true;
+              _preferredSpecies = cachedMap['preferred_species']?.toString();
+              _livingEnvironment = cachedMap['living_environment']?.toString();
+              final hy = cachedMap['has_yard'];
+              if (hy != null) {
+                _hasYard = hy == true || hy == 1 || hy.toString() == '1' || hy.toString().toLowerCase() == 'true';
+              }
+              _yardType = cachedMap['yard_type']?.toString();
+              _activityLevel = cachedMap['activity_level']?.toString();
+              _petExperience = cachedMap['pet_experience']?.toString();
+              final hc = cachedMap['has_children'];
+              if (hc != null) {
+                _hasChildren = hc == true || hc == 1 || hc.toString() == '1' || hc.toString().toLowerCase() == 'true';
+              }
+              final hp = cachedMap['has_other_pets'];
+              if (hp != null) {
+                _hasOtherPets = hp == true || hp == 1 || hp.toString() == '1' || hp.toString().toLowerCase() == 'true';
+              }
+              _hoursAlone = cachedMap['hours_alone']?.toString();
+              final sc = cachedMap['special_care_capacity'];
+              if (sc != null) {
+                _specialCareCapacity = sc == true || sc == 1 || sc.toString() == '1' || sc.toString().toLowerCase() == 'true';
+              }
+              if (cachedMap['desired_temperaments'] is List) {
+                _desiredTemperaments.clear();
+                for (final t in cachedMap['desired_temperaments']) {
+                  _desiredTemperaments.add(t.toString());
+                }
+              }
+            }
+          } catch (_) {}
+        } else if (!isLockedCached) {
+          _isLocked = false;
+        }
+      }
+
+      // 2. Fetch authoritative status from server
+      final saved = await ApiService.getSavedPreferences();
 
       final prefMap = (saved?['compatibility_profile'] ?? saved?['preferences']) as Map<String, dynamic>?;
       final bool hasSavedProfile = saved != null &&
@@ -249,6 +189,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
 
         setState(() {
           _isLocked = true;
+          _isCheckingStatus = false;
           _adoptedCount = RecommendationService.adoptedCount;
           _canRetake = saved['can_retake'] == true;
           _retakeStatus = saved['retake_status']?.toString() ?? 'none';
@@ -311,8 +252,13 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
 
         setState(() {
           _isLocked = false;
+          _isCheckingStatus = false;
           _showResults = false;
           _currentStep = 0;
+          _canRetake = false;
+          _daysRemaining = 0;
+          _nextRetakeDate = null;
+          _revisionCount = 0;
           _recommendations = [];
           _preferredSpecies = null;
           _livingEnvironment = null;
@@ -332,6 +278,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
 
     if (mounted) {
       setState(() {
+        _isCheckingStatus = false;
       });
     }
   }
@@ -673,9 +620,11 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
                   },
                 ),
           title: Text(
-            _showResults
-                ? 'Recommended Pet Matches'
-                : (_isLocked ? 'Compatibility Profile' : 'Compatibility Assessment'),
+            _isCheckingStatus
+                ? 'Compatibility Assessment'
+                : (_showResults
+                    ? 'Recommended Pet Matches'
+                    : (_isLocked ? 'Compatibility Profile' : 'Compatibility Assessment')),
             style: GoogleFonts.poppins(fontSize: 17, fontWeight: FontWeight.w600),
           ),
           actions: [
@@ -718,15 +667,44 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
               ),
           ],
         ),
-        body: _isLoading
-            ? _buildLoadingState()
-            : _showResults
-                ? _buildResultsView()
-                : (_isLocked ? _buildLockedProfileView() : _buildQuizView()),
+        body: _isCheckingStatus
+            ? _buildCheckingStatusView()
+            : (_isLoading
+                ? _buildLoadingState()
+                : _showResults
+                    ? _buildResultsView()
+                    : (_isLocked ? _buildLockedProfileView() : _buildQuizView())),
       ),
     );
   }
 
+
+  Widget _buildCheckingStatusView() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const SizedBox(
+            width: 32,
+            height: 32,
+            child: CircularProgressIndicator(
+              strokeWidth: 2.8,
+              color: AppTheme.primary,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Checking compatibility profile...',
+            style: GoogleFonts.poppins(
+              fontSize: 12.5,
+              fontWeight: FontWeight.w500,
+              color: AppTheme.textSecondary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildLoadingState() {
     return Center(
