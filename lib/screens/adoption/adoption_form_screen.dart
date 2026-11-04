@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -15,14 +16,26 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class AdoptionFormScreen extends StatefulWidget {
   final Map<String, dynamic> pet;
+  final List<Map<String, dynamic>>? selectedPets;
 
-  const AdoptionFormScreen({super.key, required this.pet});
+  const AdoptionFormScreen({
+    super.key,
+    required this.pet,
+    this.selectedPets,
+  });
 
   @override
   State<AdoptionFormScreen> createState() => _AdoptionFormScreenState();
 }
 
 class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
+  List<Map<String, dynamic>> get _effectiveSelectedPets {
+    if (widget.selectedPets != null && widget.selectedPets!.isNotEmpty) {
+      return widget.selectedPets!;
+    }
+    return [widget.pet];
+  }
+
   int _currentStep = 0;
   final _personalFormKey = GlobalKey<FormState>();
 
@@ -764,6 +777,26 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
         submitData['compatibility_score'] = compScore;
       }
 
+      if (_effectiveSelectedPets.length > 1) {
+        final petIds = _effectiveSelectedPets
+            .map((p) => p['pet_id'] ?? p['id'])
+            .where((id) => id != null)
+            .toList();
+        submitData['pet_ids'] = jsonEncode(petIds);
+
+        final scoresMap = <String, dynamic>{};
+        for (final p in _effectiveSelectedPets) {
+          final pid = (p['pet_id'] ?? p['id'])?.toString();
+          final rawSc = p['match_percentage'] ?? p['compatibility_score'];
+          if (pid != null && rawSc != null) {
+            scoresMap[pid] = rawSc;
+          }
+        }
+        if (scoresMap.isNotEmpty) {
+          submitData['compatibility_scores'] = jsonEncode(scoresMap);
+        }
+      }
+
       await ApiService.submitAdoptionApplication(
         data: submitData,
         validIdPath: _validIdImage?.path,
@@ -778,9 +811,12 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
           icon: Icons.pets_rounded,
           iconColor: AppTheme.primary,
           iconBackgroundColor: AppTheme.primaryLight,
-          title: 'Adoption Request Submitted',
-          message:
-              'Your adoption request for $_petDisplayName has been submitted! Please wait for approval as CAWS is verifying your documents and information.',
+          title: _effectiveSelectedPets.length > 1
+              ? 'Adoption Applications Submitted'
+              : 'Adoption Request Submitted',
+          message: _effectiveSelectedPets.length > 1
+              ? 'Your adoption applications for ${_effectiveSelectedPets.map((p) => p['name'] ?? 'Pet').join(', ')} have been submitted! Please wait for approval as CAWS is verifying your documents.'
+              : 'Your adoption request for $_petDisplayName has been submitted! Please wait for approval as CAWS is verifying your documents and information.',
           cancelText: 'Home',
           confirmText: 'My Applications',
           onCancel: () {
@@ -911,7 +947,9 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Applying for $_petDisplayName',
+                      _effectiveSelectedPets.length > 1
+                          ? 'Applying for ${_effectiveSelectedPets.length} Companions'
+                          : 'Applying for $_petDisplayName',
                       style: GoogleFonts.poppins(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -1052,12 +1090,75 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
     );
   }
 
+  Widget _buildSelectedPetsSummaryCard() {
+    if (_effectiveSelectedPets.length <= 1) return const SizedBox.shrink();
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppTheme.primaryLight.withValues(alpha: 0.6),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppTheme.primary.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.pets_rounded, size: 16, color: AppTheme.primary),
+              const SizedBox(width: 8),
+              Text(
+                'Applying for ${_effectiveSelectedPets.length} Companions (Unified Form)',
+                style: GoogleFonts.poppins(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.primaryDark,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Your identity documents and verified profile information will be automatically attached to each companion application.',
+            style: GoogleFonts.poppins(fontSize: 11, color: AppTheme.textSecondary),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            children: _effectiveSelectedPets.map((p) {
+              final name = p['name']?.toString() ?? 'Pet';
+              final score = p['match_percentage'] ?? p['compatibility_score'];
+              return Chip(
+                backgroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                avatar: const CircleAvatar(
+                  backgroundColor: AppTheme.primaryLight,
+                  child: Icon(Icons.pets, size: 12, color: AppTheme.primary),
+                ),
+                label: Text(
+                  score != null ? '$name ($score%)' : name,
+                  style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w600),
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  side: BorderSide(color: Colors.grey.shade300),
+                ),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildStep1() {
     return Form(
       key: _personalFormKey,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          _buildSelectedPetsSummaryCard(),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [

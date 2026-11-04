@@ -7,6 +7,7 @@ import 'package:mobile_petadopt/theme/app_theme.dart';
 import 'package:mobile_petadopt/widgets/ai_recommendation_hero.dart';
 import 'package:mobile_petadopt/widgets/app_confirmation_dialog.dart';
 import 'package:mobile_petadopt/widgets/connectivity_banner.dart';
+import 'package:mobile_petadopt/widgets/pet_comparison_sheet.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class MatchQuizScreen extends StatefulWidget {
@@ -1737,6 +1738,32 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildAiHeaderBanner(),
+          if (_recommendations.length > 1) ...[
+            Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: _openPetComparisonSheet,
+                icon: const Icon(Icons.auto_awesome, size: 16, color: Color(0xFF0D9488)),
+                label: Text(
+                  'Compare Matches & Gemini AI Synthesis',
+                  style: GoogleFonts.poppins(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF0F766E),
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFF0FDFA),
+                  foregroundColor: const Color(0xFF0F766E),
+                  padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 14),
+                  elevation: 0,
+                  side: const BorderSide(color: Color(0xFF99F6E4), width: 1.2),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ),
+          ],
           if (!_showAllInList && _recommendations.length > 1) ...[
             _buildRankTabs(),
             _buildMatchNavigatorHeader(safeIndex),
@@ -2741,6 +2768,26 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
     );
   }
 
+  void _openPetComparisonSheet() {
+    if (_recommendations.isEmpty) return;
+    PetComparisonSheet.show(
+      context: context,
+      pets: _recommendations,
+      comparativeAnalysis: RecommendationService.comparativeAnalysis,
+      onApply: (selectedPets) {
+        if (selectedPets.length == 1) {
+          _handleApplyDirect(selectedPets.first);
+        } else {
+          final payload = <String, dynamic>{
+            'pet': selectedPets.first,
+            'selected_pets': selectedPets,
+          };
+          _handleApplyDirect(payload);
+        }
+      },
+    );
+  }
+
   Future<void> _handleApplyDirect(Map<String, dynamic> petData) async {
     final token = await AuthService.getToken();
     if (token == null || token.isEmpty) {
@@ -2843,10 +2890,19 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
       arguments: petData,
     );
     if (mounted) {
-      final petIdStr = (petData['pet_id'] ?? petData['id'])?.toString();
-      if (petIdStr != null) {
+      final appliedIds = <String>{};
+      if (petData['selected_pets'] is List) {
+        for (final p in (petData['selected_pets'] as List)) {
+          final idStr = (p['pet_id'] ?? p['id'])?.toString();
+          if (idStr != null) appliedIds.add(idStr);
+        }
+      } else {
+        final idStr = (petData['pet_id'] ?? petData['id'])?.toString();
+        if (idStr != null) appliedIds.add(idStr);
+      }
+      if (appliedIds.isNotEmpty) {
         setState(() {
-          _recommendations.removeWhere((p) => (p['pet_id'] ?? p['id'])?.toString() == petIdStr);
+          _recommendations.removeWhere((p) => appliedIds.contains((p['pet_id'] ?? p['id'])?.toString()));
           if (_selectedMatchIndex >= _recommendations.length) {
             _selectedMatchIndex = 0;
           }

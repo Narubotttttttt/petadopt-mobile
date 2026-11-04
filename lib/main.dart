@@ -58,10 +58,21 @@ class PetAdoptApp extends StatelessWidget {
           );
         }
         if (settings.name == '/adoption-form') {
-          final pet = settings.arguments as Map<String, dynamic>;
-          return MaterialPageRoute(
-            builder: (context) => AdoptionFormScreen(pet: pet),
-          );
+          final args = settings.arguments;
+          if (args is Map<String, dynamic>) {
+            final pet = (args['pet'] is Map)
+                ? Map<String, dynamic>.from(args['pet'] as Map)
+                : args;
+            final selected = (args['selected_pets'] is List)
+                ? (args['selected_pets'] as List)
+                    .map((e) => Map<String, dynamic>.from(e as Map))
+                    .toList()
+                : null;
+            return MaterialPageRoute(
+              builder: (context) =>
+                  AdoptionFormScreen(pet: pet, selectedPets: selected),
+            );
+          }
         }
         return null;
       },
