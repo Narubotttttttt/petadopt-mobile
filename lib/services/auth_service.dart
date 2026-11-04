@@ -1,3 +1,4 @@
+import 'recommendation_service.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -265,6 +266,11 @@ class AuthService {
     await prefs.remove('user_city');
     await prefs.remove('user_barangay');
     await prefs.remove('quiz_locked');
+
+    RecommendationService.adoptedCount = 0;
+    RecommendationService.maxPetsAllowed = 3;
+    RecommendationService.maxLimitReached = false;
+    RecommendationService.comparativeAnalysis = null;
 
     // Purge any user-scoped or quiz-related local cache
     try {

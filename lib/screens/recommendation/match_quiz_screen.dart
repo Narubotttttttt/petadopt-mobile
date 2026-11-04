@@ -100,7 +100,10 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
 
   Future<String?> _getUserQuizLockKey() async {
     try {
-      final user = await ApiService.getUser();
+      var user = await ApiService.getUser();
+      if (user == null || user['id'] == null) {
+        user = await ApiService.getProfile();
+      }
       final userId = user?['id'];
       if (userId != null) {
         return 'quiz_locked_user_$userId';
@@ -132,6 +135,25 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
       if (mounted) {
         setState(() {
           _isLocked = isLockedCached;
+          if (!isLockedCached) {
+            _canRetake = false;
+            _revisionCount = 0;
+            _daysRemaining = 0;
+            _nextRetakeDate = null;
+            _retakeStatus = 'none';
+            _preferredSpecies = null;
+            _livingEnvironment = null;
+            _yardType = null;
+            _hasYard = null;
+            _activityLevel = null;
+            _petExperience = null;
+            _hasChildren = null;
+            _hasOtherPets = null;
+            _hoursAlone = null;
+            _specialCareCapacity = null;
+            _desiredTemperaments.clear();
+            return;
+          }
           if (canRetakeCached != null) {
             _canRetake = canRetakeCached;
           } else if (isLockedCached) {
@@ -206,7 +228,13 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
       // Clean up legacy device-wide lock key if present
       await prefs.remove('quiz_locked');
 
-      if (saved != null && mounted) {
+      final prefMap = (saved?['compatibility_profile'] ?? saved?['preferences']) as Map<String, dynamic>?;
+      final bool hasSavedProfile = saved != null &&
+          saved['is_locked'] == true &&
+          prefMap != null &&
+          prefMap.isNotEmpty;
+
+      if (hasSavedProfile && mounted) {
         if (lockKey != null) {
           await prefs.setBool(lockKey, true);
           await prefs.setBool('${lockKey}_can_retake', saved['can_retake'] == true);
@@ -216,7 +244,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
             await prefs.setString('${lockKey}_next_retake_date', saved['next_retake_date'].toString());
           }
           await prefs.setString('${lockKey}_retake_status', saved['retake_status']?.toString() ?? 'none');
-          await prefs.setString('${lockKey}_saved_prefs_json', jsonEncode(saved));
+          await prefs.setString('${lockKey}_saved_prefs_json', jsonEncode(prefMap));
         }
 
         setState(() {
@@ -227,40 +255,40 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
           _daysRemaining = (saved['days_remaining'] as num?)?.toInt() ?? 0;
           _nextRetakeDate = saved['next_retake_date']?.toString();
           _revisionCount = (saved['revision_count'] as num?)?.toInt() ?? 0;
-          _preferredSpecies = saved['preferred_species']?.toString();
-          _livingEnvironment = saved['living_environment']?.toString();
-          if (saved['has_yard'] != null) {
-            _hasYard = saved['has_yard'] is bool
-                ? saved['has_yard']
-                : saved['has_yard'].toString() == '1' || saved['has_yard'].toString() == 'true';
+          _preferredSpecies = prefMap['preferred_species']?.toString();
+          _livingEnvironment = prefMap['living_environment']?.toString();
+          if (prefMap['has_yard'] != null) {
+            _hasYard = prefMap['has_yard'] is bool
+                ? prefMap['has_yard']
+                : prefMap['has_yard'].toString() == '1' || prefMap['has_yard'].toString() == 'true';
           } else {
             _hasYard = _livingEnvironment == 'house_with_yard';
           }
-          _yardType = saved['yard_type']?.toString() ?? (_hasYard == true ? 'fenced' : (_livingEnvironment == 'apartment' ? 'none' : 'unfenced'));
-          _activityLevel = saved['activity_level']?.toString();
-          _petExperience = saved['pet_experience']?.toString();
-          if (saved['has_children'] != null) {
-            _hasChildren = saved['has_children'] is bool
-                ? saved['has_children']
-                : saved['has_children'].toString() == '1' || saved['has_children'].toString() == 'true';
+          _yardType = prefMap['yard_type']?.toString() ?? (_hasYard == true ? 'fenced' : (_livingEnvironment == 'apartment' ? 'none' : 'unfenced'));
+          _activityLevel = prefMap['activity_level']?.toString();
+          _petExperience = prefMap['pet_experience']?.toString();
+          if (prefMap['has_children'] != null) {
+            _hasChildren = prefMap['has_children'] is bool
+                ? prefMap['has_children']
+                : prefMap['has_children'].toString() == '1' || prefMap['has_children'].toString() == 'true';
           }
-          if (saved['has_other_pets'] != null) {
-            _hasOtherPets = saved['has_other_pets'] is bool
-                ? saved['has_other_pets']
-                : saved['has_other_pets'].toString() == '1' || saved['has_other_pets'].toString() == 'true';
+          if (prefMap['has_other_pets'] != null) {
+            _hasOtherPets = prefMap['has_other_pets'] is bool
+                ? prefMap['has_other_pets']
+                : prefMap['has_other_pets'].toString() == '1' || prefMap['has_other_pets'].toString() == 'true';
             if (_hasOtherPets == true) {
               _petExperience = 'experienced';
             }
           }
-          _hoursAlone = saved['hours_alone']?.toString();
-          if (saved['special_care_capacity'] != null) {
-            _specialCareCapacity = saved['special_care_capacity'] is bool
-                ? saved['special_care_capacity']
-                : saved['special_care_capacity'].toString() == '1' || saved['special_care_capacity'].toString() == 'true';
+          _hoursAlone = prefMap['hours_alone']?.toString();
+          if (prefMap['special_care_capacity'] != null) {
+            _specialCareCapacity = prefMap['special_care_capacity'] is bool
+                ? prefMap['special_care_capacity']
+                : prefMap['special_care_capacity'].toString() == '1' || prefMap['special_care_capacity'].toString() == 'true';
           }
-          if (saved['desired_temperaments'] is List) {
+          if (prefMap['desired_temperaments'] is List) {
             _desiredTemperaments.clear();
-            for (final t in saved['desired_temperaments']) {
+            for (final t in prefMap['desired_temperaments']) {
               _desiredTemperaments.add(t.toString());
             }
           }

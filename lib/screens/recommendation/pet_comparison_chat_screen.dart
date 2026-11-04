@@ -802,3 +802,4 @@ class _PetComparisonChatScreenState extends State<PetComparisonChatScreen> {
     );
   }
 }
+
