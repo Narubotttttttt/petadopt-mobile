@@ -21,7 +21,7 @@ class RecommendationService {
           headers: ApiClient.headersWithToken(token),
           body: jsonEncode(profile ?? {}),
         )
-        .timeout(ApiConfig.defaultTimeout);
+        .timeout(const Duration(seconds: 25));
 
     if (response.statusCode == 200) {
       final json = jsonDecode(response.body) as Map<String, dynamic>;

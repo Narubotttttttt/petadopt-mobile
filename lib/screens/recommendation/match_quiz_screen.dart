@@ -325,7 +325,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
         final status = pet['status']?.toString().trim().toLowerCase();
         final petId = (pet['pet_id'] ?? pet['id'])?.toString();
         final alreadyApplied = petId != null && appliedPetIds.contains(petId);
-        return status == 'available' && !alreadyApplied;
+        return (status == null || status.isEmpty || status == 'available') && !alreadyApplied;
       }).take(3).toList();
       if (mounted) {
         setState(() {
@@ -561,7 +561,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
         final status = pet['status']?.toString().trim().toLowerCase();
         final petId = (pet['pet_id'] ?? pet['id'])?.toString();
         final alreadyApplied = petId != null && appliedPetIds.contains(petId);
-        return status == 'available' && !alreadyApplied;
+        return (status == null || status.isEmpty || status == 'available') && !alreadyApplied;
       }).take(3).toList();
 
       // Ensure the full animated recommendation evaluation cycle finishes naturally (~3.4s total)
