@@ -27,6 +27,9 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
   String? _savedPhone;
   String? _savedSecondaryPhone;
   bool _isUploadingAvatar = false;
+  int _applicationCount = 0;
+  int _approvedCount = 0;
+  int _adoptedPetsCount = 0;
 
   static const List<Map<String, dynamic>> _menuItems = [
     {
@@ -35,34 +38,14 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
       'subtitle': 'Health check-ins & care hub',
     },
     {
-      'icon': Icons.person_outline_rounded,
-      'label': 'Edit Profile',
-      'subtitle': 'Update your personal information',
-    },
-    {
-      'icon': Icons.description_outlined,
-      'label': 'My Applications',
-      'subtitle': 'View all adoption requests',
-    },
-    {
       'icon': Icons.draw_rounded,
       'label': 'Digital Signature',
       'subtitle': 'Official on-record e-signature',
     },
     {
-      'icon': Icons.favorite_border_rounded,
-      'label': 'Saved Pets',
-      'subtitle': 'Your favorited animals',
-    },
-    {
-      'icon': Icons.notifications_none_rounded,
-      'label': 'Notifications',
-      'subtitle': 'Manage your alerts',
-    },
-    {
       'icon': Icons.help_outline_rounded,
       'label': 'Help & Support',
-      'subtitle': 'FAQs and contact us',
+      'subtitle': 'FAQs, shelter hotline & assistance',
     },
     {
       'icon': Icons.info_outline_rounded,
@@ -104,12 +87,31 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
     if (phone != null && phone.trim().isNotEmpty && userId != 'guest') {
       await prefs.setString('user_${userId}_phone', phone.trim());
     }
+    int appCount = 0;
+    int approvedCount = 0;
+    int adoptedCount = 0;
+    try {
+      final apps = await ApiService.getMyApplications();
+      appCount = apps.length;
+      approvedCount = apps.where((a) {
+        final st = (a['status'] as String? ?? '').toLowerCase();
+        return st == 'approved';
+      }).length;
+      adoptedCount = apps.where((a) {
+        final st = (a['status'] as String? ?? '').toLowerCase();
+        return st == 'completed' || st == 'adopted';
+      }).length;
+    } catch (_) {}
+
     if (mounted) {
       setState(() {
         _user = user;
         _savedAddress = address;
         _savedPhone = phone;
         _savedSecondaryPhone = secondaryPhone;
+        _applicationCount = appCount;
+        _approvedCount = approvedCount;
+        _adoptedPetsCount = adoptedCount;
       });
     }
   }
@@ -1261,45 +1263,90 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         children: [
-          _statCard('4', 'Applications', Icons.description_outlined),
+          _statCard(
+            value: _applicationCount.toString(),
+            label: 'Applications',
+            icon: Icons.description_outlined,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const MyApplicationsScreen(initialFilter: 'all')),
+              );
+            },
+          ),
           const SizedBox(width: 10),
-          _statCard('1', 'Approved', Icons.check_circle_outline_rounded),
+          _statCard(
+            value: _approvedCount.toString(),
+            label: 'Approved',
+            icon: Icons.check_circle_outline_rounded,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const MyApplicationsScreen(initialFilter: 'approved')),
+              );
+            },
+          ),
           const SizedBox(width: 10),
-          _statCard('6', 'Saved Pets', Icons.favorite_border_rounded),
+          _statCard(
+            value: _adoptedPetsCount.toString(),
+            label: 'Adopted Pets',
+            icon: Icons.pets_rounded,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const MyAdoptedPetsScreen()),
+              );
+            },
+          ),
         ],
       ),
     );
   }
 
-  Widget _statCard(String value, String label, IconData icon) {
+  Widget _statCard({
+    required String value,
+    required String label,
+    required IconData icon,
+    VoidCallback? onTap,
+  }) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 14),
         decoration: BoxDecoration(
           color: AppTheme.background,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: AppTheme.cardBorder),
         ),
-        child: Column(
-          children: [
-            Icon(icon, color: AppTheme.primary, size: 20),
-            const SizedBox(height: 6),
-            Text(
-              value,
-              style: GoogleFonts.poppins(
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-                color: AppTheme.textPrimary,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(14),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              child: Column(
+                children: [
+                  Icon(icon, color: AppTheme.primary, size: 20),
+                  const SizedBox(height: 6),
+                  Text(
+                    value,
+                    style: GoogleFonts.poppins(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      color: AppTheme.textPrimary,
+                    ),
+                  ),
+                  Text(
+                    label,
+                    style: GoogleFonts.poppins(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w500,
+                      color: AppTheme.textSecondary,
+                    ),
+                  ),
+                ],
               ),
             ),
-            Text(
-              label,
-              style: GoogleFonts.poppins(
-                fontSize: 10,
-                color: AppTheme.textSecondary,
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -1321,27 +1368,17 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
             children: [
               InkWell(
                 onTap: () {
-                  if (item['label'] == 'Edit Profile') {
-                    _showEditNameDialog(context);
-                  } else if (item['label'] == 'My Adopted Pets') {
+                  if (item['label'] == 'My Adopted Pets') {
                     Navigator.push(
                       context,
                       MaterialPageRoute(builder: (_) => const MyAdoptedPetsScreen()),
                     );
-                  } else if (item['label'] == 'My Applications') {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const MyApplicationsScreen()),
-                    );
                   } else if (item['label'] == 'Digital Signature') {
                     _showDigitalSignatureModal(context);
-                  } else if (item['label'] == 'Saved Pets') {
-                    Navigator.pushNamed(context, '/favorites');
-                  } else if (item['label'] == 'Notifications' || item['label'] == 'Settings') {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const SettingsScreen()),
-                    );
+                  } else if (item['label'] == 'Help & Support') {
+                    _showHelpAndSupportModal(context);
+                  } else if (item['label'] == 'About CAWS') {
+                    _showAboutCawsModal(context);
                   }
                 },
                 borderRadius: BorderRadius.circular(16),
@@ -1481,6 +1518,400 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
   }
 }
 
+
+
+  void _showHelpAndSupportModal(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => DraggableScrollableSheet(
+        initialChildSize: 0.8,
+        minChildSize: 0.5,
+        maxChildSize: 0.92,
+        builder: (_, scrollController) => Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            children: [
+              Container(
+                margin: const EdgeInsets.only(top: 12, bottom: 8),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 14),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: AppTheme.primaryLight,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.help_outline_rounded, color: AppTheme.primary, size: 22),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Help & Support',
+                            style: GoogleFonts.poppins(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w700,
+                              color: AppTheme.textPrimary,
+                            ),
+                          ),
+                          Text(
+                            'Adoption FAQs, Shelter Contact & Hours',
+                            style: GoogleFonts.poppins(
+                              fontSize: 11,
+                              color: AppTheme.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+              Expanded(
+                child: ListView(
+                  controller: scrollController,
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+                  children: [
+                    Text(
+                      'Shelter Contact Channels',
+                      style: GoogleFonts.poppins(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF1E293B),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                      ),
+                      child: Column(
+                        children: [
+                          _buildContactRow(
+                            icon: Icons.phone_rounded,
+                            title: 'Shelter Hotline',
+                            value: '0936 556 6200',
+                            onTap: () {
+                              Clipboard.setData(const ClipboardData(text: '09365566200'));
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Hotline copied to clipboard.'),
+                                  duration: Duration(seconds: 2),
+                                ),
+                              );
+                            },
+                          ),
+                          const Divider(height: 16),
+                          _buildContactRow(
+                            icon: Icons.email_rounded,
+                            title: 'Official Email',
+                            value: 'cdoanimalrescueorg@gmail.com',
+                            onTap: () {
+                              Clipboard.setData(const ClipboardData(text: 'cdoanimalrescueorg@gmail.com'));
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Email copied to clipboard.'),
+                                  duration: Duration(seconds: 2),
+                                ),
+                              );
+                            },
+                          ),
+                          const Divider(height: 16),
+                          _buildContactRow(
+                            icon: Icons.location_on_rounded,
+                            title: 'Shelter Location',
+                            value: 'Cagayan de Oro City, Misamis Oriental, PH',
+                            subtitle: 'Mon - Sat: 9:00 AM - 5:00 PM',
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Text(
+                      'Frequently Asked Questions',
+                      style: GoogleFonts.poppins(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF1E293B),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    _buildFaqItem(
+                      question: 'How long does application review take?',
+                      answer: 'Our adoption committee typically reviews applications within 24 to 48 business hours. You can monitor progress under the Applications tab.',
+                    ),
+                    _buildFaqItem(
+                      question: 'Can I adopt more than one pet?',
+                      answer: 'Shelter welfare policy permits up to 3 adopted pets per verified household to ensure optimal individual care and living space.',
+                    ),
+                    _buildFaqItem(
+                      question: 'What are the required qualifications?',
+                      answer: 'Applicants must be at least 18 years old, submit a verified government ID, sign an e-signature agreement, and pass the lifestyle compatibility quiz.',
+                    ),
+                    _buildFaqItem(
+                      question: 'How do health check-ins work?',
+                      answer: 'Adoptive parents submit regular photo and wellness updates under My Adopted Pets > Health Check-in to track vaccine status and post-adoption care.',
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildContactRow({
+    required IconData icon,
+    required String title,
+    required String value,
+    String? subtitle,
+    VoidCallback? onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(7),
+              decoration: BoxDecoration(
+                color: AppTheme.primaryLight,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(icon, color: AppTheme.primary, size: 16),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: GoogleFonts.poppins(fontSize: 11, color: const Color(0xFF64748B), fontWeight: FontWeight.w500),
+                  ),
+                  Text(
+                    value,
+                    style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600, color: const Color(0xFF1E293B)),
+                  ),
+                  if (subtitle != null)
+                    Text(
+                      subtitle,
+                      style: GoogleFonts.poppins(fontSize: 10.5, color: const Color(0xFF94A3B8)),
+                    ),
+                ],
+              ),
+            ),
+            if (onTap != null)
+              const Icon(Icons.copy_rounded, size: 14, color: Color(0xFF94A3B8)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFaqItem({required String question, required String answer}) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: ExpansionTile(
+        tilePadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 0),
+        childrenPadding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
+        title: Text(
+          question,
+          style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600, color: const Color(0xFF1E293B)),
+        ),
+        children: [
+          Text(
+            answer,
+            style: GoogleFonts.poppins(fontSize: 11.5, color: const Color(0xFF475569), height: 1.4),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAboutCawsModal(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryLight,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.pets_rounded, color: AppTheme.primary, size: 24),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'About CAWS',
+                        style: GoogleFonts.poppins(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w700,
+                          color: AppTheme.textPrimary,
+                        ),
+                      ),
+                      Text(
+                        'CDO Animal Welfare Society Inc.',
+                        style: GoogleFonts.poppins(
+                          fontSize: 11,
+                          color: AppTheme.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF0FDFA),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFCCFBF1)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Our Mission',
+                    style: GoogleFonts.poppins(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF0F766E),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Rescuing, rehabilitating, and rehoming abandoned and neglected animals across Cagayan de Oro City while advocating for humane treatment and spay/neuter awareness.',
+                    style: GoogleFonts.poppins(
+                      fontSize: 11.5,
+                      color: const Color(0xFF134E4A),
+                      height: 1.4,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: Column(
+                children: [
+                  _buildAboutInfoRow('Organization Type', 'Certified Non-Profit NGO'),
+                  const Divider(height: 12),
+                  _buildAboutInfoRow('Location', 'Cagayan de Oro City, Misamis Oriental'),
+                  const Divider(height: 12),
+                  _buildAboutInfoRow('Official Email', 'cdoanimalrescueorg@gmail.com'),
+                  const Divider(height: 12),
+                  _buildAboutInfoRow('Application Version', 'CAWS PetAdopt v1.0.0'),
+                ],
+              ),
+            ),
+            const SizedBox(height: 18),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => Navigator.pop(ctx),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primary,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: Text(
+                  'Close',
+                  style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAboutInfoRow(String label, String value) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: GoogleFonts.poppins(fontSize: 11, color: const Color(0xFF64748B), fontWeight: FontWeight.w500),
+        ),
+        Text(
+          value,
+          style: GoogleFonts.poppins(fontSize: 11.5, color: const Color(0xFF1E293B), fontWeight: FontWeight.w600),
+        ),
+      ],
+    );
+  }
 
 class _DigitalSignatureSheet extends StatefulWidget {
   final String? initialSignatureUrl;

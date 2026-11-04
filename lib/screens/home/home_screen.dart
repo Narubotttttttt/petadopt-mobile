@@ -349,6 +349,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   int _petListEntranceTrigger = 0;
+  int _applicationsEntranceTrigger = 0;
   final GlobalKey<_HomeTabState> _homeTabKey = GlobalKey<_HomeTabState>();
 
   List<Widget> get _tabs => [
@@ -366,7 +367,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           _selectedIndex = 1;
         });
       },
-      onViewApplicationsPressed: () => setState(() => _selectedIndex = 2),
+      onViewApplicationsPressed: () {
+        setState(() {
+          _applicationsEntranceTrigger++;
+          _selectedIndex = 2;
+        });
+      },
       onViewProfilePressed: () => setState(() => _selectedIndex = 3),
       onLifestyleFilter: (_) {
         setState(() {
@@ -385,7 +391,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       key: ValueKey('pet_list_$_petListEntranceTrigger'),
       entranceTrigger: _petListEntranceTrigger,
     ),
-    const MyApplicationsScreen(),
+    MyApplicationsScreen(
+      key: ValueKey('my_applications_$_applicationsEntranceTrigger'),
+      initialFilter: 'all',
+    ),
     const ProfileScreen(),
   ];
 
@@ -511,6 +520,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           setState(() {
             if (index == 1) {
               _petListEntranceTrigger++;
+            }
+            if (index == 2) {
+              _applicationsEntranceTrigger++;
             }
             _selectedIndex = index;
           });

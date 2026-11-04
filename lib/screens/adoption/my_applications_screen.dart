@@ -7,7 +7,8 @@ import 'package:mobile_petadopt/widgets/sign_contract_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class MyApplicationsScreen extends StatefulWidget {
-  const MyApplicationsScreen({super.key});
+  final String? initialFilter;
+  const MyApplicationsScreen({super.key, this.initialFilter});
 
   @override
   State<MyApplicationsScreen> createState() => _MyApplicationsScreenState();
@@ -16,11 +17,12 @@ class MyApplicationsScreen extends StatefulWidget {
 class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
   List<Map<String, dynamic>> _applications = [];
   bool _isLoading = true;
-  String _selectedFilter = 'approved';
+  late String _selectedFilter;
 
   @override
   void initState() {
     super.initState();
+    _selectedFilter = widget.initialFilter ?? 'all';
     _fetchApplications();
   }
 
@@ -39,17 +41,6 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
         setState(() {
           _applications = list;
           _isLoading = false;
-          final hasApproved = list.any((app) {
-            final status = (app['status'] as String? ?? '').toLowerCase();
-            return status == 'approved' || status == 'adopted';
-          });
-          final hasPending = list.any((app) {
-            final status = (app['status'] as String? ?? '').toLowerCase();
-            return status == 'pending' || status == 'under_review';
-          });
-          if (!hasApproved && hasPending && _selectedFilter == 'approved') {
-            _selectedFilter = 'pending';
-          }
         });
       }
     } catch (_) {
@@ -120,9 +111,11 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
                       physics: const BouncingScrollPhysics(),
                       child: Row(
                         children: [
-                          _buildFilterChip('approved', 'Pre-Approved', _countForFilter('approved')),
+                          _buildFilterChip('all', 'All', _countForFilter('all')),
                           const SizedBox(width: 8),
                           _buildFilterChip('pending', 'Pending', _countForFilter('pending')),
+                          const SizedBox(width: 8),
+                          _buildFilterChip('approved', 'Pre-Approved', _countForFilter('approved')),
                           const SizedBox(width: 8),
                           _buildFilterChip('declined', 'Declined', _countForFilter('declined')),
                         ],
@@ -227,6 +220,9 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
   }
 
   List<Map<String, dynamic>> get _filteredApplications {
+    if (_selectedFilter == 'all') {
+      return _applications;
+    }
     if (_selectedFilter == 'approved') {
       return _applications.where((app) {
         final status = (app['status'] as String? ?? '').toLowerCase();
@@ -250,6 +246,7 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
   }
 
   int _countForFilter(String filter) {
+    if (filter == 'all') return _applications.length;
     if (filter == 'approved') {
       return _applications.where((app) {
         final status = (app['status'] as String? ?? '').toLowerCase();
@@ -281,6 +278,12 @@ class _ApplicationCard extends StatelessWidget {
     required this.application,
     required this.onRefresh,
   });
+
+  static String _formatMatchPercentage(dynamic raw) {
+    if (raw == null) return '';
+    final d = raw is num ? raw.toDouble() : (double.tryParse(raw.toString().replaceAll('%', '').trim()) ?? 0.0);
+    return d.truncateToDouble() == d ? '${d.toInt()}%' : '${d.toStringAsFixed(1)}%';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -405,7 +408,7 @@ class _ApplicationCard extends StatelessWidget {
                               ),
                               child: Text(
                                 (application['compatibility_score'] ?? application['compatibilityScore']) != null
-                                    ? 'Quiz Match ${((application['compatibility_score'] ?? application['compatibilityScore']) as num).toInt()}%'
+                                    ? 'Quiz Match ${_formatMatchPercentage(application['compatibility_score'] ?? application['compatibilityScore'])}'
                                     : 'Quiz Match',
                                 style: GoogleFonts.poppins(
                                   fontSize: 10,

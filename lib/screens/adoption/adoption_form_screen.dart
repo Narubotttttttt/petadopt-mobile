@@ -31,7 +31,6 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
   final _phoneController = TextEditingController();
   final _secondaryPhoneController = TextEditingController();
   final _addressController = TextEditingController();
-  final _reasonController = TextEditingController();
   final _otherPetsDetailsController = TextEditingController();
   final _proposedPetNameController = TextEditingController();
   final _landlordNameController = TextEditingController();
@@ -147,7 +146,6 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
     _phoneController.dispose();
     _secondaryPhoneController.dispose();
     _addressController.dispose();
-    _reasonController.dispose();
     _otherPetsDetailsController.dispose();
     _proposedPetNameController.dispose();
     _landlordNameController.dispose();
@@ -212,6 +210,10 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
         final expStr = prefill['pet_experience'].toString().toLowerCase().trim();
         resolvedHasExperience = expStr == 'experienced' || expStr.contains('experienc') || expStr == 'yes' || expStr == 'true';
       }
+
+      if (resolvedHasOtherPets == true) {
+        resolvedHasExperience = true;
+      }
     }
 
     if (mounted) {
@@ -268,6 +270,9 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
         }
         if (resolvedHasExperience != null) {
           _hasExperience = resolvedHasExperience;
+        }
+        if (_hasOtherPets) {
+          _hasExperience = true;
         }
       });
     }
@@ -781,6 +786,23 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
         );
         return;
       }
+      final landlordPhoneErr = PhoneAuthService.validatePhilippineNumber(_landlordPhoneController.text.trim());
+      if (landlordPhoneErr != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Landlord phone: $landlordPhoneErr',
+              style: GoogleFonts.poppins(fontSize: 13),
+            ),
+            backgroundColor: AppTheme.warningColor,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
+        return;
+      }
     }
 
     showDialog(
@@ -829,9 +851,8 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
         'landlord_phone': _homeOwnership == 'rented' ? _landlordPhoneController.text.trim() : null,
         'has_other_pets': _hasOtherPets,
         'other_pets_details': _hasOtherPets ? _otherPetsDetailsController.text.trim() : null,
-        'has_experience': _hasExperience,
+        'has_experience': _hasOtherPets ? true : _hasExperience,
         'proposed_pet_name': _proposedPetNameController.text.trim(),
-        'reason': _reasonController.text.trim(),
         'application_source': appSource,
       };
       if (compScore != null) {
@@ -864,7 +885,7 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
             Navigator.popUntil(context, ModalRoute.withName('/home'));
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const MyApplicationsScreen()),
+              MaterialPageRoute(builder: (_) => const MyApplicationsScreen(initialFilter: 'all')),
             );
           },
         );
@@ -1006,7 +1027,7 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
                     border: Border.all(color: AppTheme.primary.withValues(alpha: 0.2)),
                   ),
                   child: Text(
-                    '${_compatibilityScore!.toInt()}% Match',
+                    '${_compatibilityScore!.truncateToDouble() == _compatibilityScore! ? _compatibilityScore!.toInt() : _compatibilityScore!.toStringAsFixed(1)}% Match',
                     style: GoogleFonts.poppins(
                       fontSize: 10.5,
                       fontWeight: FontWeight.w700,
@@ -1568,14 +1589,21 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
                     TextFormField(
                       controller: _landlordPhoneController,
                       keyboardType: TextInputType.phone,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(11),
+                      ],
                       decoration: _minimalInputDecoration(
-                        label: 'Landlord Contact Phone *',
-                        hint: 'e.g. 0917 123 4567',
+                        label: 'Landlord Contact Phone (11 digits) *',
+                        hint: '09123456789',
                         icon: Icons.phone_outlined,
                       ),
                       validator: (val) {
-                        if (_homeOwnership == 'rented' && (val == null || val.trim().isEmpty)) {
-                          return 'Please enter landlord contact number';
+                        if (_homeOwnership == 'rented') {
+                          if (val == null || val.trim().isEmpty) {
+                            return 'Please enter landlord contact number';
+                          }
+                          return PhoneAuthService.validatePhilippineNumber(val.trim());
                         }
                         return null;
                       },
@@ -1594,7 +1622,14 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
             _buildChoiceCardGroup(
               title: 'Other Pets at Home *',
               selectedValue: _hasOtherPets,
-              onChanged: (val) => setState(() => _hasOtherPets = val),
+              onChanged: (val) {
+                setState(() {
+                  _hasOtherPets = val;
+                  if (val) {
+                    _hasExperience = true;
+                  }
+                });
+              },
               firstTitle: 'No Other Pets',
               firstSubtitle: 'First or solo pet',
               firstIcon: Icons.home_outlined,
@@ -1623,18 +1658,32 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
             _buildChoiceCardGroup(
               title: 'Pet Care Experience *',
               selectedValue: _hasExperience,
-              onChanged: (val) => setState(() => _hasExperience = val),
+              onChanged: (val) {
+                setState(() {
+                  _hasExperience = val;
+                  if (!val && _hasOtherPets) {
+                    _hasOtherPets = false;
+                    _otherPetsDetailsController.clear();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('First-time owner selected: "Other Pets" reset to No.'),
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
+                  }
+                });
+              },
               firstTitle: 'First-time Owner',
               firstSubtitle: 'New to pet parenting',
               firstIcon: Icons.favorite_border_rounded,
               secondTitle: 'Experienced Owner',
-              secondSubtitle: 'Cared for pets before',
+              secondSubtitle: _hasOtherPets ? 'Active pet owner' : 'Cared for pets before',
               secondIcon: Icons.verified_outlined,
             ),
           ],
         ),
         const SizedBox(height: 18),
-        _buildSectionHeader('Adoption Intent', subtitle: 'Proposed pet name and message for CAWS shelter'),
+        _buildSectionHeader('Adoption Details', subtitle: 'Proposed pet name for CAWS shelter records (Optional)'),
         const SizedBox(height: 10),
         _buildCardContainer(
           children: [
@@ -1644,15 +1693,6 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
                 label: 'Proposed Pet Name (Optional)',
                 hint: 'e.g. Max, Milo, Bella',
                 icon: Icons.label_outline_rounded,
-              ),
-            ),
-            const SizedBox(height: 10),
-            TextFormField(
-              controller: _reasonController,
-              maxLines: 3,
-              decoration: _minimalInputDecoration(
-                label: 'Why do you want to adopt $_petDisplayName?',
-                hint: 'Tell us why you are the right fit...',
               ),
             ),
           ],

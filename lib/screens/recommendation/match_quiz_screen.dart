@@ -1,9 +1,8 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile_petadopt/screens/pets/pet_detail_screen.dart';
 import 'package:mobile_petadopt/services/api_service.dart';
-import 'package:mobile_petadopt/services/recommendation_service.dart';
-import 'package:mobile_petadopt/services/auth_service.dart';
 import 'package:mobile_petadopt/theme/app_theme.dart';
 import 'package:mobile_petadopt/widgets/ai_recommendation_hero.dart';
 import 'package:mobile_petadopt/widgets/app_confirmation_dialog.dart';
@@ -31,11 +30,11 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
   int _selectedMatchIndex = 0;
   bool _showAllInList = false;
   int _adoptedCount = 0;
-  bool _canRetake = true;
+  bool _canRetake = false;
   String _retakeStatus = 'none';
-  int _daysRemaining = 0;
+  int _daysRemaining = 30;
   String? _nextRetakeDate;
-  int _revisionCount = 0;
+  int _revisionCount = 1;
   String _loadingStatus = 'Analyzing your living environment and lifestyle compatibility...';
   int _loadingStep = 1;
 
@@ -121,9 +120,76 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
       }
       final prefs = await SharedPreferences.getInstance();
       final isLockedCached = prefs.getBool(lockKey) ?? false;
+      final canRetakeCached = prefs.getBool('${lockKey}_can_retake');
+      final revisionCountCached = prefs.getInt('${lockKey}_revision_count');
+      final daysRemainingCached = prefs.getInt('${lockKey}_days_remaining');
+      final nextRetakeDateCached = prefs.getString('${lockKey}_next_retake_date');
+      final retakeStatusCached = prefs.getString('${lockKey}_retake_status');
+      final savedPrefsJson = prefs.getString('${lockKey}_saved_prefs_json');
+
       if (mounted) {
         setState(() {
           _isLocked = isLockedCached;
+          if (canRetakeCached != null) {
+            _canRetake = canRetakeCached;
+          } else if (isLockedCached) {
+            _canRetake = false;
+          }
+          if (revisionCountCached != null) {
+            _revisionCount = revisionCountCached;
+          } else if (isLockedCached) {
+            _revisionCount = 1;
+          }
+          if (daysRemainingCached != null) {
+            _daysRemaining = daysRemainingCached;
+          } else if (isLockedCached) {
+            _daysRemaining = 30;
+          }
+          if (nextRetakeDateCached != null) {
+            _nextRetakeDate = nextRetakeDateCached;
+          }
+          if (retakeStatusCached != null) {
+            _retakeStatus = retakeStatusCached;
+          }
+
+          if (savedPrefsJson != null && savedPrefsJson.isNotEmpty) {
+            try {
+              final cachedMap = jsonDecode(savedPrefsJson);
+              if (cachedMap is Map<String, dynamic>) {
+                _preferredSpecies = cachedMap['preferred_species']?.toString();
+                _livingEnvironment = cachedMap['living_environment']?.toString();
+                final hy = cachedMap['has_yard'];
+                if (hy != null) {
+                  _hasYard = hy == true || hy == 1 || hy.toString() == '1' || hy.toString().toLowerCase() == 'true';
+                }
+                _yardType = cachedMap['yard_type']?.toString();
+                _activityLevel = cachedMap['activity_level']?.toString();
+                _petExperience = cachedMap['pet_experience']?.toString();
+                final hc = cachedMap['has_children'];
+                if (hc != null) {
+                  _hasChildren = hc == true || hc == 1 || hc.toString() == '1' || hc.toString().toLowerCase() == 'true';
+                }
+                final hp = cachedMap['has_other_pets'];
+                if (hp != null) {
+                  _hasOtherPets = hp == true || hp == 1 || hp.toString() == '1' || hp.toString().toLowerCase() == 'true';
+                  if (_hasOtherPets == true) {
+                    _petExperience = 'experienced';
+                  }
+                }
+                _hoursAlone = cachedMap['hours_alone']?.toString();
+                final sc = cachedMap['special_care_capacity'];
+                if (sc != null) {
+                  _specialCareCapacity = sc == true || sc == 1 || sc.toString() == '1' || sc.toString().toLowerCase() == 'true';
+                }
+                if (cachedMap['desired_temperaments'] is List) {
+                  _desiredTemperaments.clear();
+                  for (final t in cachedMap['desired_temperaments']) {
+                    _desiredTemperaments.add(t.toString());
+                  }
+                }
+              }
+            } catch (_) {}
+          }
         });
       }
     } catch (_) {}
@@ -141,6 +207,14 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
       if (saved != null && mounted) {
         if (lockKey != null) {
           await prefs.setBool(lockKey, true);
+          await prefs.setBool('${lockKey}_can_retake', saved['can_retake'] == true);
+          await prefs.setInt('${lockKey}_revision_count', (saved['revision_count'] as num?)?.toInt() ?? 0);
+          await prefs.setInt('${lockKey}_days_remaining', (saved['days_remaining'] as num?)?.toInt() ?? 0);
+          if (saved['next_retake_date'] != null) {
+            await prefs.setString('${lockKey}_next_retake_date', saved['next_retake_date'].toString());
+          }
+          await prefs.setString('${lockKey}_retake_status', saved['retake_status']?.toString() ?? 'none');
+          await prefs.setString('${lockKey}_saved_prefs_json', jsonEncode(saved));
         }
 
         setState(() {
@@ -172,6 +246,9 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
             _hasOtherPets = saved['has_other_pets'] is bool
                 ? saved['has_other_pets']
                 : saved['has_other_pets'].toString() == '1' || saved['has_other_pets'].toString() == 'true';
+            if (_hasOtherPets == true) {
+              _petExperience = 'experienced';
+            }
           }
           _hoursAlone = saved['hours_alone']?.toString();
           if (saved['special_care_capacity'] != null) {
@@ -194,6 +271,12 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
         // Fresh user or account with no submitted quiz
         if (lockKey != null) {
           await prefs.setBool(lockKey, false);
+          await prefs.remove('${lockKey}_can_retake');
+          await prefs.remove('${lockKey}_revision_count');
+          await prefs.remove('${lockKey}_days_remaining');
+          await prefs.remove('${lockKey}_next_retake_date');
+          await prefs.remove('${lockKey}_retake_status');
+          await prefs.remove('${lockKey}_saved_prefs_json');
         }
 
         setState(() {
@@ -226,14 +309,28 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
   Future<void> _fetchSavedRecommendations() async {
     try {
       final recs = await ApiService.getRecommendations();
+      final applications = await ApiService.getMyApplications();
+      final appliedPetIds = applications
+          .where((app) {
+            final st = (app['status']?.toString() ?? '').toLowerCase();
+            return ['pending', 'under_review', 'approved', 'adopted'].contains(st);
+          })
+          .map((app) => (app['pet_id'] ?? app['petId'])?.toString())
+          .where((id) => id != null)
+          .toSet();
+
       final availableRecs = recs.where((pet) {
         final status = pet['status']?.toString().trim().toLowerCase();
-        return status == 'available';
+        final petId = (pet['pet_id'] ?? pet['id'])?.toString();
+        final alreadyApplied = petId != null && appliedPetIds.contains(petId);
+        return status == 'available' && !alreadyApplied;
       }).take(3).toList();
       if (mounted) {
         setState(() {
           _recommendations = availableRecs;
-          _selectedMatchIndex = 0;
+          if (_selectedMatchIndex >= _recommendations.length) {
+            _selectedMatchIndex = 0;
+          }
           _adoptedCount = RecommendationService.adoptedCount;
           // CRITICAL: DO NOT auto-set _showResults = true here!
           // The screen must stay on the locked profile review until the adopter taps 'View Recommended Pets'.
@@ -448,9 +545,21 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
       }
 
       final recs = await recsFuture;
+      final applications = await ApiService.getMyApplications();
+      final appliedPetIds = applications
+          .where((app) {
+            final st = (app['status']?.toString() ?? '').toLowerCase();
+            return ['pending', 'under_review', 'approved', 'adopted'].contains(st);
+          })
+          .map((app) => (app['pet_id'] ?? app['petId'])?.toString())
+          .where((id) => id != null)
+          .toSet();
+
       final availableRecs = recs.where((pet) {
         final status = pet['status']?.toString().trim().toLowerCase();
-        return status == 'available';
+        final petId = (pet['pet_id'] ?? pet['id'])?.toString();
+        final alreadyApplied = petId != null && appliedPetIds.contains(petId);
+        return status == 'available' && !alreadyApplied;
       }).take(3).toList();
 
       // Ensure the full animated recommendation evaluation cycle finishes naturally (~3.4s total)
@@ -465,6 +574,10 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
           final prefs = await SharedPreferences.getInstance();
           if (lockKey != null) {
             await prefs.setBool(lockKey, true);
+            await prefs.setBool('${lockKey}_can_retake', false);
+            await prefs.setInt('${lockKey}_revision_count', _revisionCount + 1);
+            await prefs.setInt('${lockKey}_days_remaining', 30);
+            await prefs.setString('${lockKey}_retake_status', 'cooldown');
           }
           await prefs.remove('quiz_locked');
         } catch (_) {}
@@ -910,8 +1023,15 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
             {'val': 'first_time', 'label': 'First-time Pet Owner'},
             {'val': 'experienced', 'label': 'Experienced Pet Owner'},
           ],
-          selected: _petExperience,
-          onSelected: (val) => setState(() => _petExperience = val),
+          selected: _hasOtherPets == true ? 'experienced' : _petExperience,
+          onSelected: (val) {
+            setState(() {
+              _petExperience = val;
+              if (val == 'first_time' && _hasOtherPets == true) {
+                _hasOtherPets = false;
+              }
+            });
+          },
         ),
         const SizedBox(height: 20),
         _buildSectionTitle('Children in Household'),
@@ -931,7 +1051,14 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
             {'val': 'no', 'label': 'No other pets in home'},
           ],
           selected: _hasOtherPets == null ? null : (_hasOtherPets! ? 'yes' : 'no'),
-          onSelected: (val) => setState(() => _hasOtherPets = val == 'yes'),
+          onSelected: (val) {
+            setState(() {
+              _hasOtherPets = val == 'yes';
+              if (_hasOtherPets == true) {
+                _petExperience = 'experienced';
+              }
+            });
+          },
         ),
       ],
     );
@@ -1464,6 +1591,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
   }
 
   String _getExperienceLabel() {
+    if (_hasOtherPets == true) return 'Experienced Pet Owner';
     if (_petExperience == 'first_time') return 'First-time Pet Owner';
     if (_petExperience == 'experienced') return 'Experienced Pet Owner';
     return 'Standard';
@@ -1593,7 +1721,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
     final hasBottomAction = _isLocked;
 
     return SingleChildScrollView(
-      padding: EdgeInsets.fromLTRB(16, 12, 16, bottomInset),
+      padding: EdgeInsets.fromLTRB(14, 4, 14, widget.isEmbeddedInTab ? bottomInset : 12.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1601,7 +1729,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
           if (!_showAllInList && _recommendations.length > 1) ...[
             _buildRankTabs(),
             _buildMatchNavigatorHeader(safeIndex),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
           ],
           if (_showAllInList) ...[
             ...List.generate(_recommendations.length, (idx) {
@@ -1692,7 +1820,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
 
   Widget _buildAiHeaderBanner() {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         gradient: const LinearGradient(colors: [AppTheme.primaryDark, AppTheme.primary]),
@@ -1701,21 +1829,21 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
       child: Row(
         children: [
           Container(
-            width: 36,
-            height: 36,
+            width: 34,
+            height: 34,
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(9),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.12),
+                  color: Colors.black.withValues(alpha: 0.1),
                   blurRadius: 4,
                   offset: const Offset(0, 1),
                 ),
               ],
             ),
             child: const Center(
-              child: LuminousAiOrb(size: 26),
+              child: LuminousAiOrb(size: 24),
             ),
           ),
           const SizedBox(width: 10),
@@ -1727,7 +1855,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
                   'Top 3 Matched Companions',
                   style: GoogleFonts.poppins(
                     color: Colors.white,
-                    fontSize: 14.5,
+                    fontSize: 14,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -1769,8 +1897,14 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
   }
 
   Widget _buildRankTabs() {
+    if (_recommendations.isEmpty) return const SizedBox.shrink();
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
+      margin: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF1F5F9),
+        borderRadius: BorderRadius.circular(11),
+      ),
       child: Row(
         children: List.generate(_recommendations.length, (i) {
           final isSelected = _selectedMatchIndex == i;
@@ -1784,88 +1918,59 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
               : '${rawDouble.toStringAsFixed(1)}%';
 
           return Expanded(
-            child: Padding(
-              padding: EdgeInsets.only(
-                left: i == 0 ? 0 : 3.5,
-                right: i == _recommendations.length - 1 ? 0 : 3.5,
-              ),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () {
-                    setState(() {
-                      _selectedMatchIndex = i;
-                    });
-                  },
-                  borderRadius: BorderRadius.circular(12),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-                    decoration: BoxDecoration(
-                      color: isSelected ? AppTheme.primary : Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: isSelected ? AppTheme.primary : const Color(0xFFE2E8F0),
-                        width: isSelected ? 1.5 : 1,
-                      ),
-                      boxShadow: isSelected
-                          ? [
-                              BoxShadow(
-                                color: AppTheme.primary.withValues(alpha: 0.25),
-                                blurRadius: 6,
-                                offset: const Offset(0, 2),
-                              ),
-                            ]
-                          : [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.02),
-                                blurRadius: 3,
-                                offset: const Offset(0, 1),
-                              ),
-                            ],
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            if (i == 0) ...[
-                              Icon(
-                                Icons.star_rounded,
-                                size: 13,
-                                color: isSelected ? Colors.amberAccent : const Color(0xFFF59E0B),
-                              ),
-                              const SizedBox(width: 2),
-                            ],
-                            Flexible(
-                              child: Text(
-                                i == 0 ? 'Rank #1' : 'Rank #${i + 1}',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 11,
-                                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
-                                  color: isSelected ? Colors.white : const Color(0xFF334155),
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          '$matchPctStr Match',
-                          style: GoogleFonts.poppins(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            color: isSelected
-                                ? Colors.white.withValues(alpha: 0.95)
-                                : AppTheme.primary,
+            child: GestureDetector(
+              onTap: () {
+                setState(() {
+                  _selectedMatchIndex = i;
+                });
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                padding: const EdgeInsets.symmetric(vertical: 7),
+                decoration: BoxDecoration(
+                  color: isSelected ? Colors.white : Colors.transparent,
+                  borderRadius: BorderRadius.circular(8),
+                  boxShadow: isSelected
+                      ? [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.05),
+                            blurRadius: 3,
+                            offset: const Offset(0, 1),
                           ),
-                        ),
-                      ],
+                        ]
+                      : null,
+                ),
+                alignment: Alignment.center,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (i == 0) ...[
+                      Icon(
+                        Icons.star_rounded,
+                        size: 12,
+                        color: isSelected ? const Color(0xFFF59E0B) : const Color(0xFF94A3B8),
+                      ),
+                      const SizedBox(width: 2.5),
+                    ],
+                    Text(
+                      'Rank ${i + 1}',
+                      style: GoogleFonts.poppins(
+                        fontSize: 10.5,
+                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                        color: isSelected ? const Color(0xFF0F766E) : const Color(0xFF64748B),
+                      ),
                     ),
-                  ),
+                    const SizedBox(width: 3.5),
+                    Text(
+                      matchPctStr,
+                      style: GoogleFonts.poppins(
+                        fontSize: 10,
+                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                        color: isSelected ? AppTheme.primary : const Color(0xFF94A3B8),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -1877,63 +1982,58 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
 
   Widget _buildMatchNavigatorHeader(int currentIndex) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              Text(
-                'Match ${currentIndex + 1} of ${_recommendations.length}',
-                style: GoogleFonts.poppins(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: const Color(0xFF64748B),
-                ),
-              ),
-            ],
+          Text(
+            'Match ${currentIndex + 1} of ${_recommendations.length}',
+            style: GoogleFonts.poppins(
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF64748B),
+            ),
           ),
           Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              IconButton(
-                icon: const Icon(Icons.arrow_back_ios_rounded),
-                iconSize: 13,
-                padding: const EdgeInsets.all(4),
-                constraints: const BoxConstraints(),
-                color: currentIndex > 0 ? AppTheme.primary : const Color(0xFFCBD5E1),
-                onPressed: currentIndex > 0
-                    ? () => setState(() => _selectedMatchIndex--)
-                    : null,
+              GestureDetector(
+                onTap: currentIndex > 0 ? () => setState(() => _selectedMatchIndex--) : null,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                  child: Icon(
+                    Icons.arrow_back_ios_rounded,
+                    size: 11,
+                    color: currentIndex > 0 ? AppTheme.primary : const Color(0xFFCBD5E1),
+                  ),
+                ),
               ),
-              const SizedBox(width: 4),
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: List.generate(_recommendations.length, (dotIdx) {
                   final isActive = dotIdx == currentIndex;
                   return AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
-                    margin: const EdgeInsets.symmetric(horizontal: 2),
-                    width: isActive ? 14 : 5,
-                    height: 5,
+                    margin: const EdgeInsets.symmetric(horizontal: 1.5),
+                    width: isActive ? 10 : 4,
+                    height: 4,
                     decoration: BoxDecoration(
                       color: isActive ? AppTheme.primary : const Color(0xFFCBD5E1),
-                      borderRadius: BorderRadius.circular(3),
+                      borderRadius: BorderRadius.circular(2),
                     ),
                   );
                 }),
               ),
-              const SizedBox(width: 4),
-              IconButton(
-                icon: const Icon(Icons.arrow_forward_ios_rounded),
-                iconSize: 13,
-                padding: const EdgeInsets.all(4),
-                constraints: const BoxConstraints(),
-                color: currentIndex < _recommendations.length - 1
-                    ? AppTheme.primary
-                    : const Color(0xFFCBD5E1),
-                onPressed: currentIndex < _recommendations.length - 1
-                    ? () => setState(() => _selectedMatchIndex++)
-                    : null,
+              GestureDetector(
+                onTap: currentIndex < _recommendations.length - 1 ? () => setState(() => _selectedMatchIndex++) : null,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                  child: Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    size: 11,
+                    color: currentIndex < _recommendations.length - 1 ? AppTheme.primary : const Color(0xFFCBD5E1),
+                  ),
+                ),
               ),
             ],
           ),
@@ -1972,276 +2072,245 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
       'care_tip': careTip,
     };
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 14),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      elevation: 1,
-      child: InkWell(
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => PetDetailScreen(pet: petData),
-            ),
-          );
-        },
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Column(
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: Container(
-                      width: 80,
-                      height: 80,
-                      color: Colors.grey.shade200,
-                      child: pet['photo_url'] != null || pet['photo_path'] != null
-                          ? Image.network(
-                              pet['photo_url'] ?? ApiService.normalizeImageUrl(pet['photo_path']),
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, _, _) => const Icon(Icons.pets, color: Colors.grey),
-                            )
-                          : const Icon(Icons.pets, color: Colors.grey),
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          margin: const EdgeInsets.only(bottom: 4),
-                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: rankIndex == 1
-                                ? const Color(0xFFE0F2FE)
-                                : const Color(0xFFF1F5F9),
-                            borderRadius: BorderRadius.circular(6),
-                            border: Border.all(
-                              color: rankIndex == 1
-                                  ? const Color(0xFFBAE6FD)
-                                  : const Color(0xFFE2E8F0),
-                            ),
-                          ),
-                          child: Text(
-                            rankIndex == 1 ? 'Rank #1 • Best Match' : 'Rank #$rankIndex Match',
-                            style: GoogleFonts.poppins(
-                              fontSize: 9.5,
-                              fontWeight: FontWeight.w700,
-                              color: rankIndex == 1
-                                  ? AppTheme.primaryDark
-                                  : const Color(0xFF475569),
-                            ),
-                          ),
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: Text(
-                                pet['name'] ?? 'Unnamed Pet',
-                                style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w700, color: AppTheme.textPrimary),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: matchPct >= 90
-                                    ? AppTheme.successColor.withValues(alpha: 0.12)
-                                    : AppTheme.primaryLight,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              matchPct.truncateToDouble() == matchPct
-                                  ? '${matchPct.toInt()}% Match'
-                                  : '${matchPct.toStringAsFixed(1)}% Match',
-                              style: GoogleFonts.poppins(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color: matchPct >= 90 ? AppTheme.successColor : AppTheme.primaryDark,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        '${pet['size'] != null ? pet['size'].toString() : 'Medium'} • ${pet['type'] != null ? (pet['type'].toString().toUpperCase()) : 'PET'} • ${pet['age'] ?? 'Adult'}',
-                        style: GoogleFonts.poppins(fontSize: 12, color: AppTheme.textSecondary),
-                      ),
-                      const SizedBox(height: 6),
-                      if (pet['temperaments'] != null && (pet['temperaments'] as List).isNotEmpty)
-                        Wrap(
-                          spacing: 4,
-                          runSpacing: 4,
-                          children: (pet['temperaments'] as List).take(3).map((tag) {
-                            return Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: Colors.grey.shade100,
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Text(
-                                tag.toString(),
-                                style: GoogleFonts.poppins(fontSize: 10, color: AppTheme.textSecondary, fontWeight: FontWeight.w500),
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            if (pet['compatibility_breakdown'] != null || pet['breakdown'] != null)
-              _buildCompatibilityBreakdown(
-                (pet['compatibility_breakdown'] ?? pet['breakdown']) as Map<String, dynamic>?,
-                pet['name']?.toString(),
+        border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => PetDetailScreen(pet: petData),
               ),
-            if (reasons.isNotEmpty) ...[
-              const Divider(height: 18),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: reasons.map((r) {
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 2),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Padding(
-                          padding: EdgeInsets.only(top: 2),
-                          child: Icon(Icons.check_circle_rounded, size: 14, color: AppTheme.primary),
-                        ),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            r,
-                            style: GoogleFonts.poppins(fontSize: 11, color: AppTheme.textPrimary, fontWeight: FontWeight.w500),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                }).toList(),
-              ),
-            ],
-            if (careTip != null && careTip.trim().isNotEmpty) ...[
-              const SizedBox(height: 10),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFEF3C7).withValues(alpha: 0.5),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: const Color(0xFFFDE68A)),
-                ),
-                child: Row(
+            );
+          },
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.lightbulb_outline_rounded, size: 15, color: Color(0xFFD97706)),
-                    const SizedBox(width: 8),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        width: 66,
+                        height: 66,
+                        color: const Color(0xFFF1F5F9),
+                        child: pet['photo_url'] != null || pet['photo_path'] != null
+                            ? Image.network(
+                                pet['photo_url'] ?? ApiService.normalizeImageUrl(pet['photo_path']),
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, _, _) => const Icon(Icons.pets, color: Colors.grey),
+                              )
+                            : const Icon(Icons.pets, color: Colors.grey),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Care Consideration',
+                            pet['name'] ?? 'Unnamed Pet',
                             style: GoogleFonts.poppins(
-                              fontSize: 10.5,
+                              fontSize: 15.5,
                               fontWeight: FontWeight.w700,
-                              color: const Color(0xFFB45309),
+                              color: const Color(0xFF0F172A),
                             ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                           const SizedBox(height: 1),
                           Text(
-                            careTip,
+                            '${pet['size'] != null ? pet['size'].toString() : 'Medium'} • ${pet['type'] != null ? (pet['type'].toString().toUpperCase()) : 'PET'} • ${pet['age'] ?? 'Adult'}',
                             style: GoogleFonts.poppins(
                               fontSize: 11,
-                              color: const Color(0xFF78350F),
-                              height: 1.3,
+                              color: const Color(0xFF64748B),
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
+                          const SizedBox(height: 4),
+                          if (pet['temperaments'] != null && (pet['temperaments'] as List).isNotEmpty)
+                            Wrap(
+                              spacing: 4,
+                              runSpacing: 3,
+                              children: (pet['temperaments'] as List).take(3).map((tag) {
+                                return Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF1F5F9),
+                                    borderRadius: BorderRadius.circular(5),
+                                  ),
+                                  child: Text(
+                                    tag.toString(),
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 9.5,
+                                      color: const Color(0xFF475569),
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
                         ],
                       ),
                     ),
                   ],
                 ),
-              ),
-            ],
-            const SizedBox(height: 14),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => PetDetailScreen(pet: petData),
+                if (pet['compatibility_breakdown'] != null || pet['breakdown'] != null)
+                  _buildCompatibilityBreakdown(
+                    (pet['compatibility_breakdown'] ?? pet['breakdown']) as Map<String, dynamic>?,
+                    pet['name']?.toString(),
+                  ),
+                if (reasons.isNotEmpty) ...[
+                  const Divider(height: 12, thickness: 0.8, color: Color(0xFFE2E8F0)),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: reasons.map((r) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 3.5),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              width: 4.5,
+                              height: 4.5,
+                              margin: const EdgeInsets.only(top: 5.5, right: 7),
+                              decoration: const BoxDecoration(
+                                color: Color(0xFF0D9488),
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            Expanded(
+                              child: Text(
+                                r,
+                                style: GoogleFonts.poppins(
+                                  fontSize: 10.5,
+                                  color: const Color(0xFF334155),
+                                  fontWeight: FontWeight.w400,
+                                  height: 1.25,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       );
-                    },
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-                      side: const BorderSide(color: Color(0xFFCBD5E1)),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    }).toList(),
+                  ),
+                ],
+                if (careTip != null && careTip.trim().isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  Container(
+                    padding: const EdgeInsets.fromLTRB(10, 6, 10, 6),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFFBEB),
+                      borderRadius: BorderRadius.circular(7),
+                      border: const Border(
+                        left: BorderSide(color: Color(0xFFF59E0B), width: 3),
+                      ),
                     ),
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Text(
-                        'View Profile',
-                        style: GoogleFonts.poppins(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: const Color(0xFF475569),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Care Consideration',
+                          style: GoogleFonts.poppins(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFFB45309),
+                          ),
+                        ),
+                        const SizedBox(height: 1),
+                        Text(
+                          careTip,
+                          style: GoogleFonts.poppins(
+                            fontSize: 10.5,
+                            color: const Color(0xFF78350F),
+                            height: 1.25,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => PetDetailScreen(pet: petData),
+                            ),
+                          );
+                        },
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+                          side: const BorderSide(color: Color(0xFFCBD5E1)),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            'View Profile',
+                            style: GoogleFonts.poppins(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w600,
+                              color: const Color(0xFF475569),
+                            ),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () => _handleApplyDirect(petData),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primary,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.assignment_turned_in_rounded, size: 16),
-                          const SizedBox(width: 6),
-                          Text(
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () => _handleApplyDirect(petData),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
                             'Apply to Adopt',
                             style: GoogleFonts.poppins(
-                              fontSize: 13,
+                              fontSize: 12.5,
                               fontWeight: FontWeight.w700,
                             ),
                           ),
-                        ],
+                        ),
                       ),
                     ),
-                  ),
+                  ],
                 ),
               ],
             ),
-          ],
+          ),
         ),
       ),
-    ),
-  );
+    );
   }
 
   Widget _buildHouseholdCapacityCard({bool isCompact = false}) {
@@ -2444,19 +2513,18 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
     final name = petName ?? 'this pet';
 
     return Container(
-      margin: const EdgeInsets.only(top: 10, bottom: 4),
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 7),
+      margin: const EdgeInsets.only(top: 8, bottom: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
       decoration: BoxDecoration(
         color: const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
       child: Row(
         children: [
           _buildBreakdownColumn('Space Fit', space, name),
-          Container(width: 1, height: 22, color: const Color(0xFFE2E8F0)),
+          Container(width: 1, height: 16, color: const Color(0xFFE2E8F0)),
           _buildBreakdownColumn('Routine', routine, name),
-          Container(width: 1, height: 22, color: const Color(0xFFE2E8F0)),
+          Container(width: 1, height: 16, color: const Color(0xFFE2E8F0)),
           _buildBreakdownColumn('Temperament', temperament, name),
         ],
       ),
@@ -2469,29 +2537,19 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
         borderRadius: BorderRadius.circular(8),
         onTap: () => _showPillarExplanationDialog(label, pct, petName),
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 2),
+          padding: const EdgeInsets.symmetric(vertical: 1, horizontal: 2),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Flexible(
-                    child: Text(
-                      label,
-                      style: GoogleFonts.poppins(
-                        fontSize: 10,
-                        color: const Color(0xFF64748B),
-                        fontWeight: FontWeight.w500,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  const SizedBox(width: 2),
-                  const Icon(Icons.info_outline_rounded, size: 10, color: Color(0xFF94A3B8)),
-                ],
+              Text(
+                label,
+                style: GoogleFonts.poppins(
+                  fontSize: 9.5,
+                  color: const Color(0xFF64748B),
+                  fontWeight: FontWeight.w500,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: 1),
               Text(
@@ -2768,11 +2826,23 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
     }
 
     if (!mounted) return;
-    Navigator.pushNamed(
+    await Navigator.pushNamed(
       context,
       '/adoption-form',
       arguments: petData,
     );
+    if (mounted) {
+      final petIdStr = (petData['pet_id'] ?? petData['id'])?.toString();
+      if (petIdStr != null) {
+        setState(() {
+          _recommendations.removeWhere((p) => (p['pet_id'] ?? p['id'])?.toString() == petIdStr);
+          if (_selectedMatchIndex >= _recommendations.length) {
+            _selectedMatchIndex = 0;
+          }
+        });
+      }
+      _fetchSavedRecommendations();
+    }
   }
 
 }
