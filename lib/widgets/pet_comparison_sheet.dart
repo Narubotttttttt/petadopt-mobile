@@ -438,43 +438,68 @@ class _PetComparisonSheetState extends State<PetComparisonSheet> {
                   // 2. Gemini AI Synthesis Card (Directly Below the Pictures)
                   _buildGeminiSynthesisCard(),
 
-                  const SizedBox(height: 20),
+                  // 3. Detailed Trait Comparison Carousel (Smoothly revealed once Gemini completes comparison)
+                  AnimatedSize(
+                    duration: const Duration(milliseconds: 600),
+                    curve: Curves.easeOutCubic,
+                    child: _isAnalysisComplete
+                        ? AnimatedOpacity(
+                            duration: const Duration(milliseconds: 700),
+                            curve: Curves.easeOutCubic,
+                            opacity: _isAnalysisComplete ? 1.0 : 0.0,
+                            child: AnimatedSlide(
+                              duration: const Duration(milliseconds: 700),
+                              curve: Curves.easeOutCubic,
+                              offset: _isAnalysisComplete ? Offset.zero : const Offset(0, 0.05),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const SizedBox(height: 20),
+                                  // Detailed Trait Comparison Header
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          'Detailed Trait Comparison',
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: GoogleFonts.poppins(
+                                            fontSize: 13.5,
+                                            fontWeight: FontWeight.w700,
+                                            color: AppTheme.textPrimary,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(Icons.swipe_outlined, size: 12, color: AppTheme.primary),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            'Swipe to compare',
+                                            style: GoogleFonts.poppins(
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.w500,
+                                              color: AppTheme.primary,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 10),
 
-                  // 3. Detailed Trait Comparison Header
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Detailed Trait Comparison',
-                        style: GoogleFonts.poppins(
-                          fontSize: 13.5,
-                          fontWeight: FontWeight.w700,
-                          color: AppTheme.textPrimary,
-                        ),
-                      ),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.swipe_outlined, size: 12.5, color: AppTheme.primary),
-                          const SizedBox(width: 4),
-                          Text(
-                            'Swipe cards to compare',
-                            style: GoogleFonts.poppins(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w500,
-                              color: AppTheme.primary,
+                                  // Comparison Cards Matrix (Detailed trait breakdown)
+                                  _buildComparisonCards(context),
+
+                                  const SizedBox(height: 14),
+                                ],
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ],
+                          )
+                        : const SizedBox.shrink(),
                   ),
-                  const SizedBox(height: 10),
-
-                  // 4. Comparison Cards Matrix (Detailed trait breakdown)
-                  _buildComparisonCards(context),
-
-                  const SizedBox(height: 12),
                 ],
               ),
             ),
@@ -601,84 +626,106 @@ class _PetComparisonSheetState extends State<PetComparisonSheet> {
           children: [
             // 1. Unified Top Header
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF0D9488),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.psychology_outlined, color: Colors.white, size: 13),
-                      const SizedBox(width: 4),
-                      Text(
-                        'GEMINI AI SYNTHESIS',
-                        style: GoogleFonts.poppins(
-                          color: Colors.white,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                // Live Agent Status Badge
-                if (!_isAnalysisComplete)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                Flexible(
+                  flex: 3,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFCCFBF1),
+                      color: const Color(0xFF0D9488),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const SizedBox(
-                          width: 8,
-                          height: 8,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 1.5,
-                            color: Color(0xFF0D9488),
-                          ),
-                        ),
-                        const SizedBox(width: 5),
-                        Text(
-                          _isThinking ? 'Evaluating matches...' : 'Synthesizing response...',
-                          style: GoogleFonts.poppins(
-                            fontSize: 9.5,
-                            fontWeight: FontWeight.w600,
-                            color: const Color(0xFF0F766E),
+                        const Icon(Icons.psychology_outlined, color: Colors.white, size: 13),
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
+                            'GEMINI AI SYNTHESIS',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.poppins(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.5,
+                            ),
                           ),
                         ),
                       ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                // Live Agent Status Badge
+                if (!_isAnalysisComplete)
+                  Flexible(
+                    flex: 2,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFCCFBF1),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const SizedBox(
+                            width: 8,
+                            height: 8,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 1.5,
+                              color: Color(0xFF0D9488),
+                            ),
+                          ),
+                          const SizedBox(width: 5),
+                          Flexible(
+                            child: Text(
+                              _isThinking ? 'Evaluating' : 'Synthesizing',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.poppins(
+                                fontSize: 9.5,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFF0F766E),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   )
                 else
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF0FDF4),
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: const Color(0xFFBBF7D0)),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.check_circle_rounded, size: 10, color: Color(0xFF16A34A)),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Synthesis Complete',
-                          style: GoogleFonts.poppins(
-                            fontSize: 9.5,
-                            fontWeight: FontWeight.w600,
-                            color: const Color(0xFF15803D),
+                  Flexible(
+                    flex: 2,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF0FDF4),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: const Color(0xFFBBF7D0)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.check_circle_rounded, size: 10, color: Color(0xFF16A34A)),
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              'Complete',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.poppins(
+                                fontSize: 9.5,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFF15803D),
+                              ),
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
               ],
@@ -1235,7 +1282,7 @@ class _PetComparisonSheetState extends State<PetComparisonSheet> {
     return Column(
       children: [
         SizedBox(
-          height: 385,
+          height: 415,
           child: PageView.builder(
             controller: _traitCardPageController,
             physics: const BouncingScrollPhysics(),
@@ -1350,7 +1397,7 @@ class _PetComparisonSheetState extends State<PetComparisonSheet> {
         children: [
           // Card Header: Match badge + Candidate counter (NO select button)
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
               color: isSelected
                   ? const Color(0xFFCCFBF1).withValues(alpha: 0.35)
@@ -1363,7 +1410,7 @@ class _PetComparisonSheetState extends State<PetComparisonSheet> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
                   decoration: BoxDecoration(
                     gradient: isTopMatch
                         ? const LinearGradient(
@@ -1403,7 +1450,7 @@ class _PetComparisonSheetState extends State<PetComparisonSheet> {
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(6),
@@ -1424,7 +1471,7 @@ class _PetComparisonSheetState extends State<PetComparisonSheet> {
 
           // Pet Image & Identity
           Padding(
-            padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
+            padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
             child: Center(
               child: Column(
                 children: [
@@ -1450,7 +1497,7 @@ class _PetComparisonSheetState extends State<PetComparisonSheet> {
                             child: const Icon(Icons.pets, color: Colors.grey, size: 26),
                           ),
                   ),
-                  const SizedBox(height: 7),
+                  const SizedBox(height: 6),
                   Text(
                     name,
                     maxLines: 1,
@@ -1479,17 +1526,17 @@ class _PetComparisonSheetState extends State<PetComparisonSheet> {
 
           // Trait matrix list
           Padding(
-            padding: const EdgeInsets.fromLTRB(14, 6, 14, 12),
+            padding: const EdgeInsets.fromLTRB(14, 4, 14, 10),
             child: Column(
               children: [
                 _buildTraitRow('Living Space', space, Icons.home_outlined),
-                const Divider(height: 9, thickness: 0.8, color: Color(0xFFF1F5F9)),
+                const Divider(height: 7, thickness: 0.8, color: Color(0xFFF1F5F9)),
                 _buildTraitRow('Energy Level', energy, Icons.bolt_outlined),
-                const Divider(height: 9, thickness: 0.8, color: Color(0xFFF1F5F9)),
+                const Divider(height: 7, thickness: 0.8, color: Color(0xFFF1F5F9)),
                 _buildTraitRow('Alone Tolerance', alone, Icons.access_time_outlined),
-                const Divider(height: 9, thickness: 0.8, color: Color(0xFFF1F5F9)),
+                const Divider(height: 7, thickness: 0.8, color: Color(0xFFF1F5F9)),
                 _buildTraitRow('Social Synergy', social, Icons.groups_outlined),
-                const Divider(height: 9, thickness: 0.8, color: Color(0xFFF1F5F9)),
+                const Divider(height: 7, thickness: 0.8, color: Color(0xFFF1F5F9)),
                 _buildTraitRow('Care & Grooming', grooming, Icons.spa_outlined),
               ],
             ),

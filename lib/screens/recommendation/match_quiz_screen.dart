@@ -34,7 +34,6 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
   bool _showAllInList = false;
   int _adoptedCount = 0;
   bool _canRetake = false;
-  String _retakeStatus = 'none';
   int _daysRemaining = 30;
   String? _nextRetakeDate;
   int _revisionCount = 1;
@@ -192,7 +191,6 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
           _isCheckingStatus = false;
           _adoptedCount = RecommendationService.adoptedCount;
           _canRetake = saved['can_retake'] == true;
-          _retakeStatus = saved['retake_status']?.toString() ?? 'none';
           _daysRemaining = (saved['days_remaining'] as num?)?.toInt() ?? 0;
           _nextRetakeDate = saved['next_retake_date']?.toString();
           _revisionCount = (saved['revision_count'] as num?)?.toInt() ?? 0;
@@ -1374,7 +1372,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
                           ? (isGrace
                               ? 'You have 1 chance to revise your answers if you made an initial mistake. Submitting will activate a 30-day cooldown.'
                               : 'Your monthly window is open. You may update your profile to reflect new home or routine circumstances.')
-                          : 'To maintain matching integrity, profiles can be updated once every 30 days. Next update available on ${_nextRetakeDate ?? "next month"} (${_daysRemaining} days remaining).',
+                          : 'To maintain matching integrity, profiles can be updated once every 30 days. Next update available on ${_nextRetakeDate ?? "next month"} ($_daysRemaining days remaining).',
                       style: GoogleFonts.poppins(
                         fontSize: 11.5,
                         color: const Color(0xFF64748B),

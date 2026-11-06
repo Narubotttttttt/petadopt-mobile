@@ -940,7 +940,7 @@ class _PetMedicalCardScreenState extends State<PetMedicalCardScreen> {
                 _buildDetailTile(
                   'Administered By',
                   isExternal && clinicName != null && clinicName.isNotEmpty
-                      ? '$clinicName (${administeredBy})'
+                      ? '$clinicName ($administeredBy)'
                       : administeredBy,
                 ),
                 _buildDetailTile(
