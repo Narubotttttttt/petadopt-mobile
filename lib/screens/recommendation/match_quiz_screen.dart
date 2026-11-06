@@ -2150,19 +2150,22 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: Container(
-                        width: 66,
-                        height: 66,
-                        color: const Color(0xFFF1F5F9),
-                        child: pet['photo_url'] != null || pet['photo_path'] != null
-                            ? Image.network(
-                                pet['photo_url'] ?? ApiService.normalizeImageUrl(pet['photo_path']),
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, _, _) => const Icon(Icons.pets, color: Colors.grey),
-                              )
-                            : const Icon(Icons.pets, color: Colors.grey),
+                    Hero(
+                      tag: 'pet_compare_hero_${pet['pet_id'] ?? pet['id']}',
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          width: 66,
+                          height: 66,
+                          color: const Color(0xFFF1F5F9),
+                          child: pet['photo_url'] != null || pet['photo_path'] != null
+                              ? Image.network(
+                                  pet['photo_url'] ?? ApiService.normalizeImageUrl(pet['photo_path']),
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, _, _) => const Icon(Icons.pets, color: Colors.grey),
+                                )
+                              : const Icon(Icons.pets, color: Colors.grey),
+                        ),
                       ),
                     ),
                     const SizedBox(width: 12),

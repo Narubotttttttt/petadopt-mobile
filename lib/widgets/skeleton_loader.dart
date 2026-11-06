@@ -248,3 +248,211 @@ class HomeSkeletonLoader extends StatelessWidget {
     );
   }
 }
+
+/// Skeleton loading layout tailored for the My Applications screen
+class ApplicationsSkeletonLoader extends StatelessWidget {
+  final int itemCount;
+
+  const ApplicationsSkeletonLoader({
+    super.key,
+    this.itemCount = 4,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ShimmerAnimation(
+      child: Column(
+        children: [
+          // Filter Tabs Skeleton
+          Container(
+            width: double.infinity,
+            color: Colors.white,
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              physics: const NeverScrollableScrollPhysics(),
+              child: Row(
+                children: const [
+                  SkeletonBox(width: 58, height: 28, borderRadius: 20),
+                  SizedBox(width: 8),
+                  SkeletonBox(width: 90, height: 28, borderRadius: 20),
+                  SizedBox(width: 8),
+                  SkeletonBox(width: 120, height: 28, borderRadius: 20),
+                  SizedBox(width: 8),
+                  SkeletonBox(width: 85, height: 28, borderRadius: 20),
+                ],
+              ),
+            ),
+          ),
+
+          // Application Cards Skeleton List
+          Expanded(
+            child: ListView.separated(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 105),
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: itemCount,
+              separatorBuilder: (_, _) => const SizedBox(height: 12),
+              itemBuilder: (context, index) => _buildApplicationCardSkeleton(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildApplicationCardSkeleton() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Top Row: Pet Image, Info, and Status Badge
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SkeletonBox(
+                width: 58,
+                height: 58,
+                borderRadius: 12,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: const [
+                        SkeletonBox(width: 110, height: 16, borderRadius: 4),
+                        SkeletonBox(width: 72, height: 20, borderRadius: 10),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: const [
+                        SkeletonBox(width: 75, height: 12, borderRadius: 4),
+                        SizedBox(width: 8),
+                        SkeletonBox(width: 95, height: 16, borderRadius: 6),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    const SkeletonBox(width: 110, height: 11, borderRadius: 4),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+
+          // Stepper / Tracker Bar Skeleton
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: const [
+                SkeletonBox(width: 16, height: 16, shape: BoxShape.circle),
+                Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 6),
+                    child: SkeletonBox(height: 3, borderRadius: 2),
+                  ),
+                ),
+                SkeletonBox(width: 16, height: 16, shape: BoxShape.circle),
+                Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 6),
+                    child: SkeletonBox(height: 3, borderRadius: 2),
+                  ),
+                ),
+                SkeletonBox(width: 16, height: 16, shape: BoxShape.circle),
+                Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 6),
+                    child: SkeletonBox(height: 3, borderRadius: 2),
+                  ),
+                ),
+                SkeletonBox(width: 16, height: 16, shape: BoxShape.circle),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // Bottom Action Button Skeleton
+          const SkeletonBox(
+            width: double.infinity,
+            height: 38,
+            borderRadius: 10,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Skeleton loading layout tailored for the Application Notifications Modal
+class NotificationsModalSkeletonLoader extends StatelessWidget {
+  final int itemCount;
+
+  const NotificationsModalSkeletonLoader({
+    super.key,
+    this.itemCount = 3,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ShimmerAnimation(
+      child: ListView.separated(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: itemCount,
+        separatorBuilder: (_, _) => const SizedBox(height: 8),
+        itemBuilder: (context, index) {
+          return Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+            ),
+            child: Row(
+              children: [
+                const SkeletonBox(
+                  width: 38,
+                  height: 38,
+                  borderRadius: 10,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: const [
+                      SkeletonBox(width: 140, height: 14, borderRadius: 4),
+                      SizedBox(height: 6),
+                      SkeletonBox(width: double.infinity, height: 11, borderRadius: 4),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                const SkeletonBox(
+                  width: 62,
+                  height: 20,
+                  borderRadius: 8,
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+}

@@ -91,12 +91,6 @@ class _PetListScreenState extends State<PetListScreen> {
     return 'Good evening';
   }
 
-  String _getDateSubtitle() {
-    final now = DateTime.now();
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    return 'Today • ${now.day} ${months[now.month - 1]}';
-  }
-
   Future<void> _fetchRecommendations() async {
     try {
       // Pre-warm recommendation engine and user preferences
@@ -169,23 +163,23 @@ class _PetListScreenState extends State<PetListScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    '${_getGreeting()}, $_userName',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: AppTheme.textPrimary,
-                    ),
-                  ),
-                  Text(
-                    _getDateSubtitle(),
+                    '${_getGreeting()},',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.poppins(
                       fontSize: 11,
                       fontWeight: FontWeight.w500,
                       color: AppTheme.textSecondary,
+                    ),
+                  ),
+                  Text(
+                    _userName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.poppins(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.textPrimary,
                     ),
                   ),
                 ],

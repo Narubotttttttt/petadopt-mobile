@@ -1112,9 +1112,7 @@ class _HomeTabState extends State<_HomeTab> {
                   future: ApiService.getMyApplications(),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(
-                        child: CircularProgressIndicator(color: AppTheme.primary, strokeWidth: 2.5),
-                      );
+                      return const NotificationsModalSkeletonLoader();
                     }
                     final apps = snapshot.data ?? [];
                     if (apps.isEmpty && _vaccineReminders.isEmpty) {

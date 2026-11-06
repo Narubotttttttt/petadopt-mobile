@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile_petadopt/screens/adoption/adopted_pet_hub_screen.dart';
 import 'package:mobile_petadopt/services/api_service.dart';
 import 'package:mobile_petadopt/theme/app_theme.dart';
+import 'package:mobile_petadopt/widgets/skeleton_loader.dart';
 import 'package:mobile_petadopt/widgets/sign_contract_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -97,7 +98,7 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
         ],
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppTheme.primary, strokeWidth: 2))
+          ? const ApplicationsSkeletonLoader()
           : Column(
               children: [
                 // Filter Tabs: Approved first, then Pending, then Declined (No "All")
