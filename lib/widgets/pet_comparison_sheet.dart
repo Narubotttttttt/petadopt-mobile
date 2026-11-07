@@ -392,7 +392,7 @@ class _PetComparisonSheetState extends State<PetComparisonSheet> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    'AI Companion Comparison',
+                    'Companion Comparison',
                     style: GoogleFonts.poppins(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
@@ -400,7 +400,7 @@ class _PetComparisonSheetState extends State<PetComparisonSheet> {
                     ),
                   ),
                   Text(
-                    'Side-by-side match breakdown powered by Gemini AI',
+                    'Side-by-side match breakdown',
                     style: GoogleFonts.poppins(
                       fontSize: 10.5,
                       color: AppTheme.textSecondary,
@@ -643,7 +643,7 @@ class _PetComparisonSheetState extends State<PetComparisonSheet> {
                         const SizedBox(width: 4),
                         Flexible(
                           child: Text(
-                            'GEMINI AI SYNTHESIS',
+                            'SYNTHESIS',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: GoogleFonts.poppins(

@@ -424,7 +424,7 @@ class _PetComparisonChatScreenState extends State<PetComparisonChatScreen> {
                                           const Icon(Icons.auto_awesome, color: Colors.white, size: 12),
                                           const SizedBox(width: 4),
                                           Text(
-                                            'GEMINI AI SYNTHESIS',
+                                            'SYNTHESIS',
                                             style: GoogleFonts.poppins(
                                               color: Colors.white,
                                               fontSize: 9.5,

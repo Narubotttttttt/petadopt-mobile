@@ -1009,16 +1009,34 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
     );
   }
 
-  Widget _buildSectionHeader(String title, {String? subtitle}) {
+  Widget _buildSectionHeader(String title, {String? subtitle, bool isRequired = false}) {
+    final hasAsterisk = title.endsWith('*') || isRequired;
+    final cleanTitle = title.endsWith(' *')
+        ? title.substring(0, title.length - 2)
+        : (title.endsWith('*') ? title.substring(0, title.length - 1) : title);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          title,
-          style: GoogleFonts.poppins(
-            fontSize: 14,
-            fontWeight: FontWeight.w700,
-            color: AppTheme.textPrimary,
+        Text.rich(
+          TextSpan(
+            text: cleanTitle,
+            style: GoogleFonts.poppins(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: AppTheme.textPrimary,
+            ),
+            children: hasAsterisk
+                ? const [
+                    TextSpan(
+                      text: ' *',
+                      style: TextStyle(
+                        color: Color(0xFFEF4444),
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ]
+                : const [],
           ),
         ),
         if (subtitle != null) ...[
@@ -1056,15 +1074,36 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
     required String label,
     String? hint,
     IconData? icon,
+    bool isRequired = false,
   }) {
+    final hasAsterisk = label.endsWith('*') || isRequired;
+    final cleanLabel = label.endsWith(' *')
+        ? label.substring(0, label.length - 2)
+        : (label.endsWith('*') ? label.substring(0, label.length - 1) : label);
+
     return InputDecoration(
-      labelText: label,
+      label: Text.rich(
+        TextSpan(
+          text: cleanLabel,
+          style: GoogleFonts.poppins(
+            fontSize: 12,
+            color: AppTheme.textSecondary,
+          ),
+          children: hasAsterisk
+              ? const [
+                  TextSpan(
+                    text: ' *',
+                    style: TextStyle(
+                      color: Color(0xFFEF4444),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ]
+              : const [],
+        ),
+      ),
       hintText: hint,
       alignLabelWithHint: true,
-      labelStyle: GoogleFonts.poppins(
-        fontSize: 12,
-        color: AppTheme.textSecondary,
-      ),
       hintStyle: GoogleFonts.poppins(
         fontSize: 12,
         color: AppTheme.textSecondary.withValues(alpha: 0.6),
@@ -1287,7 +1326,7 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
             ],
           ),
           const SizedBox(height: 18),
-          _buildSectionHeader('Residence Ownership', subtitle: 'Shelter tenancy verification policy'),
+          _buildSectionHeader('Residence Ownership *', subtitle: 'Shelter tenancy verification policy'),
           const SizedBox(height: 10),
           _buildCardContainer(
             children: [
@@ -1430,12 +1469,23 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
         const SizedBox(height: 12),
         _buildCardContainer(
           children: [
-            Text(
-              'Valid Government ID Type *',
-              style: GoogleFonts.poppins(
-                fontSize: 12.5,
-                fontWeight: FontWeight.w600,
-                color: AppTheme.textPrimary,
+            Text.rich(
+              TextSpan(
+                text: 'Valid Government ID Type',
+                style: GoogleFonts.poppins(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.textPrimary,
+                ),
+                children: const [
+                  TextSpan(
+                    text: ' *',
+                    style: TextStyle(
+                      color: Color(0xFFEF4444),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 6),
@@ -1504,16 +1554,30 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
     required XFile? image,
     required VoidCallback onTap,
     required VoidCallback onRemove,
+    bool isRequired = true,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          title,
-          style: GoogleFonts.poppins(
-            fontSize: 12.5,
-            fontWeight: FontWeight.w600,
-            color: AppTheme.textPrimary,
+        Text.rich(
+          TextSpan(
+            text: title,
+            style: GoogleFonts.poppins(
+              fontSize: 12.5,
+              fontWeight: FontWeight.w600,
+              color: AppTheme.textPrimary,
+            ),
+            children: isRequired
+                ? const [
+                    TextSpan(
+                      text: ' *',
+                      style: TextStyle(
+                        color: Color(0xFFEF4444),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ]
+                : const [],
           ),
         ),
         const SizedBox(height: 8),

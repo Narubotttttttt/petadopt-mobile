@@ -1620,12 +1620,32 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
     return '4 - 7 Hours';
   }
 
-  Widget _buildSectionTitle(String title) {
+  Widget _buildSectionTitle(String title, {bool isRequired = true}) {
+    final cleanTitle = title.endsWith(' *')
+        ? title.substring(0, title.length - 2)
+        : (title.endsWith('*') ? title.substring(0, title.length - 1) : title);
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: Text(
-        title,
-        style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.textPrimary),
+      child: Text.rich(
+        TextSpan(
+          text: cleanTitle,
+          style: GoogleFonts.poppins(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: AppTheme.textPrimary,
+          ),
+          children: isRequired
+              ? const [
+                  TextSpan(
+                    text: ' *',
+                    style: TextStyle(
+                      color: Color(0xFFEF4444),
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ]
+              : const [],
+        ),
       ),
     );
   }
@@ -1750,7 +1770,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
                 onPressed: _openPetComparisonSheet,
                 icon: const Icon(Icons.auto_awesome, size: 16, color: Color(0xFF0D9488)),
                 label: Text(
-                  'Compare Matches & Gemini AI Synthesis',
+                  'Compare Matches & Synthesis',
                   style: GoogleFonts.poppins(
                     fontSize: 12.5,
                     fontWeight: FontWeight.w700,
@@ -2101,10 +2121,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
       'age': pet['age'] ?? 'Adult',
       'gender': pet['gender'] ?? 'male',
       'type': pet['type'] ?? 'cat',
-      'image': pet['photo_url'] ??
-          (pet['photo_path'] != null
-              ? ApiService.normalizeImageUrl(pet['photo_path'])
-              : 'https://images.unsplash.com/photo-1543466835-00a7907e9de1'),
+      'image': ApiService.normalizeImageUrl(pet['photo_url'] ?? pet['photo_path'] ?? pet['image']),
       'match_percentage': matchPct,
       'compatibility_score': matchPct,
       'isRecommended': true,
@@ -2156,9 +2173,9 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
                           width: 66,
                           height: 66,
                           color: const Color(0xFFF1F5F9),
-                          child: pet['photo_url'] != null || pet['photo_path'] != null
+                          child: (pet['photo_url'] != null || pet['photo_path'] != null || pet['image'] != null)
                               ? Image.network(
-                                  pet['photo_url'] ?? ApiService.normalizeImageUrl(pet['photo_path']),
+                                  ApiService.normalizeImageUrl(pet['photo_url'] ?? pet['photo_path'] ?? pet['image']),
                                   fit: BoxFit.cover,
                                   errorBuilder: (_, _, _) => const Icon(Icons.pets, color: Colors.grey),
                                 )
