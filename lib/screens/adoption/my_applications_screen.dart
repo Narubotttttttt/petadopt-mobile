@@ -307,12 +307,29 @@ class _ApplicationCard extends StatelessWidget {
     final shelterId = application['shelterPetId'] ?? application['pet_id'] ?? application['petId'] ?? application['pet']?['id'];
     final shelterCode = application['shelterPetCode']?.toString() ?? (shelterId != null ? 'Pet no. $shelterId' : 'Pet');
 
-    String adoptedName = (application['adoptedPetName'] ?? application['proposedName'] ?? application['petName'])?.toString() ?? 'Adopted Pet';
+    String adoptedName = (application['adoptedPetName'] ?? application['proposedName'] ?? application['petName'])?.toString() ?? shelterCode;
     final petBreed = (application['petBreed'] ?? '').toString().trim();
-    if (adoptedName.isEmpty || (petBreed.isNotEmpty && adoptedName.toLowerCase() == petBreed.toLowerCase())) {
+    if (adoptedName.isEmpty ||
+        adoptedName.toLowerCase() == 'adopted pet' ||
+        (petBreed.isNotEmpty && adoptedName.toLowerCase() == petBreed.toLowerCase())) {
       final proposed = application['proposedName']?.toString();
-      adoptedName = (proposed != null && proposed.isNotEmpty) ? proposed : 'Adopted Pet';
+      adoptedName = (proposed != null && proposed.isNotEmpty && proposed.toLowerCase() != 'adopted pet')
+          ? proposed
+          : shelterCode;
     }
+
+    final hasCustomName = adoptedName.isNotEmpty &&
+        adoptedName.toLowerCase() != 'adopted pet' &&
+        adoptedName.toLowerCase() != 'rescued pet' &&
+        !adoptedName.toLowerCase().startsWith('pet no.') &&
+        adoptedName.toLowerCase() != shelterCode.toLowerCase();
+
+    final petType = (application['petType'] ?? '').toString().trim();
+    final breedSpecies = [petBreed, petType]
+        .where((s) => s.isNotEmpty && s.toLowerCase() != 'n/a')
+        .join(' • ');
+
+    final subtitleText = hasCustomName ? shelterCode : (breedSpecies.isNotEmpty ? breedSpecies : shelterCode);
 
     return Container(
       decoration: BoxDecoration(
@@ -386,7 +403,7 @@ class _ApplicationCard extends StatelessWidget {
                         children: [
                           Expanded(
                             child: Text(
-                              shelterCode,
+                              subtitleText,
                               style: GoogleFonts.poppins(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w500,
@@ -653,7 +670,9 @@ class _ApplicationCard extends StatelessWidget {
                 // Show 'Name Your Pet' if pet has no custom name, otherwise show Health Hub
                 final hasCustomName = adoptedName.isNotEmpty &&
                     adoptedName.toLowerCase() != 'adopted pet' &&
-                    adoptedName.toLowerCase() != 'rescued pet';
+                    adoptedName.toLowerCase() != 'rescued pet' &&
+                    !adoptedName.toLowerCase().startsWith('pet no.') &&
+                    adoptedName.toLowerCase() != shelterCode.toLowerCase();
 
                 if (!hasCustomName) {
                   return SizedBox(
@@ -743,7 +762,9 @@ class _ApplicationCard extends StatelessWidget {
     final petId = (application['shelterPetId'] ?? application['pet_id'] ?? application['petId'] ?? application['pet']?['id']) as int?;
     if (petId == null) return;
 
-    final isDefault = currentName.toLowerCase() == 'adopted pet' || currentName.toLowerCase() == 'rescued pet';
+    final isDefault = currentName.toLowerCase() == 'adopted pet' ||
+        currentName.toLowerCase() == 'rescued pet' ||
+        currentName.toLowerCase().startsWith('pet no.');
     final controller = TextEditingController(text: isDefault ? '' : currentName);
     bool isSaving = false;
 

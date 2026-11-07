@@ -2110,8 +2110,12 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
         ? rawPct.toDouble()
         : (double.tryParse(rawPct.toString().replaceAll('%', '').trim()) ?? 80.0);
     final rawReasons = pet['match_reasons'] ?? pet['reasons'];
-    final reasons = (rawReasons as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [];
-    final careTip = pet['care_tip']?.toString() ?? pet['consideration']?.toString();
+    final reasons = (rawReasons as List<dynamic>?)
+            ?.map((e) => PetComparisonSheet.cleanBracketText(e.toString()))
+            .toList() ??
+        [];
+    final rawCareTip = pet['care_tip']?.toString() ?? pet['consideration']?.toString();
+    final careTip = rawCareTip != null ? PetComparisonSheet.cleanBracketText(rawCareTip) : null;
     final petData = {
       ...pet,
       'id': pet['pet_id'] ?? pet['id'],

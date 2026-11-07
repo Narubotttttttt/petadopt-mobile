@@ -13,7 +13,12 @@ class AdoptedPetHubScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final petName = application['petName'] as String? ?? 'Adopted Pet';
+    final shelterId = application['shelterPetId'] ?? application['pet_id'] ?? application['petId'] ?? application['pet']?['id'];
+    final shelterCode = application['shelterPetCode']?.toString() ?? (shelterId != null ? 'Pet no. $shelterId' : 'Pet');
+    final rawName = application['petName']?.toString();
+    final petName = (rawName != null && rawName.isNotEmpty && rawName.toLowerCase() != 'adopted pet')
+        ? rawName
+        : shelterCode;
     final petImage = application['petImage'] as String? ?? '';
 
     final isFinalized = application['is_finalized'] == true ||

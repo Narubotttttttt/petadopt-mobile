@@ -17,6 +17,30 @@ class PetComparisonSheet extends StatefulWidget {
     required this.onApply,
   });
 
+  static String cleanBracketText(String text) {
+    if (text.isEmpty) return text;
+    var result = text
+        .replaceAll(RegExp(r'Puspin\s*\((?:Mixed|Mix)\s*Breed\)\s*Cat', caseSensitive: false), 'Puspin Cat')
+        .replaceAll(RegExp(r'Aspin\s*\((?:Mixed|Mix)\s*Breed\)\s*Dog', caseSensitive: false), 'Aspin Dog')
+        .replaceAll(RegExp(r'Puspin\s*\((?:Mixed|Mix)\s*Breed\)', caseSensitive: false), 'Puspin')
+        .replaceAll(RegExp(r'Aspin\s*\((?:Mixed|Mix)\s*Breed\)', caseSensitive: false), 'Aspin');
+
+    result = result.replaceAllMapped(
+      RegExp(r'\(([^()]*?)\s*\((?:Mixed|Mix)\s*Breed\)\s*([^()]*?)\)', caseSensitive: false),
+      (m) => '(${m[1]} ${m[2]})',
+    );
+    result = result.replaceAllMapped(
+      RegExp(r'\(\s*\(([^()]+)\)\s*\)'),
+      (m) => '(${m[1]})',
+    );
+
+    return result
+        .replaceAll(RegExp(r'\(\s+'), '(')
+        .replaceAll(RegExp(r'\s+\)'), ')')
+        .replaceAll(RegExp(r'\s{2,}'), ' ')
+        .trim();
+  }
+
   static Future<void> show({
     required BuildContext context,
     required List<Map<String, dynamic>> pets,
@@ -105,9 +129,9 @@ class _PetComparisonSheetState extends State<PetComparisonSheet> {
 
   void _initializeAgentTyping() {
     final comp = widget.comparativeAnalysis;
-    _fullSummary = comp?['summary']?.toString() ??
-        'Our Scikit-Learn Random Forest recommendation model evaluated these candidates based on your lifestyle profile, space capacity, and routine.';
-    _fullVerdict = comp?['verdict']?.toString() ?? '';
+    _fullSummary = PetComparisonSheet.cleanBracketText(comp?['summary']?.toString() ??
+        'Our Scikit-Learn Random Forest recommendation model evaluated these candidates based on your lifestyle profile, space capacity, and routine.');
+    _fullVerdict = PetComparisonSheet.cleanBracketText(comp?['verdict']?.toString() ?? '');
 
     _summaryWords = _fullSummary.split(' ').where((w) => w.isNotEmpty).toList();
     _verdictWords = _fullVerdict.split(' ').where((w) => w.isNotEmpty).toList();

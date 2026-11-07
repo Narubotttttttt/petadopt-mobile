@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile_petadopt/services/api_config.dart';
 import 'package:mobile_petadopt/theme/app_theme.dart';
+import 'package:mobile_petadopt/widgets/pet_comparison_sheet.dart';
 
 class PetComparisonChatScreen extends StatefulWidget {
   final List<Map<String, dynamic>> pets;
@@ -95,9 +96,9 @@ class _PetComparisonChatScreenState extends State<PetComparisonChatScreen> {
   @override
   Widget build(BuildContext context) {
     final comp = widget.comparativeAnalysis;
-    final summary = comp?['summary']?.toString() ??
-        'Our Scikit-Learn Random Forest recommendation model evaluated these candidates based on your lifestyle profile, space capacity, and routine.';
-    final verdict = comp?['verdict']?.toString();
+    final summary = PetComparisonSheet.cleanBracketText(comp?['summary']?.toString() ??
+        'Our Scikit-Learn Random Forest recommendation model evaluated these candidates based on your lifestyle profile, space capacity, and routine.');
+    final verdict = comp?['verdict'] != null ? PetComparisonSheet.cleanBracketText(comp!['verdict'].toString()) : null;
 
     final selectedList = widget.pets.where((p) {
       final pid = (p['pet_id'] ?? p['id'])?.toString();

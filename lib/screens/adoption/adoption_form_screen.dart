@@ -393,7 +393,7 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
         );
         return;
       }
-      setState(() => _currentStep++);
+      _submitForm();
     }
   }
 
@@ -959,7 +959,7 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
                       overflow: TextOverflow.ellipsis,
                     ),
                     Text(
-                      'Step ${_currentStep + 1} of 3 • ${stepTitles[_currentStep]}',
+                      'Step ${_currentStep + 1} of 2 • ${stepTitles[_currentStep]}',
                       style: GoogleFonts.poppins(
                         fontSize: 11,
                         color: AppTheme.textSecondary,
@@ -990,12 +990,12 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
           ),
           const SizedBox(height: 10),
           Row(
-            children: List.generate(3, (index) {
+            children: List.generate(2, (index) {
               final isDoneOrActive = index <= _currentStep;
               return Expanded(
                 child: Container(
                   height: 3.5,
-                  margin: EdgeInsets.only(right: index < 2 ? 6 : 0),
+                  margin: EdgeInsets.only(right: index < 1 ? 6 : 0),
                   decoration: BoxDecoration(
                     color: isDoneOrActive ? AppTheme.primary : AppTheme.cardBorder,
                     borderRadius: BorderRadius.circular(2),

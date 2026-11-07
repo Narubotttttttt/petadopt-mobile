@@ -262,9 +262,12 @@ class _MyAdoptedPetsScreenState extends State<MyAdoptedPetsScreen> {
   }
 
   Widget _buildPetCard(Map<String, dynamic> pet) {
-    final petName = (pet['adoptedPetName'] ?? pet['proposedName'] ?? pet['petName'])?.toString() ?? 'Adopted Pet';
     final shelterId = pet['shelterPetId'] ?? pet['pet_id'] ?? pet['petId'] ?? pet['pet']?['id'];
-    final shelterCode = pet['shelterPetCode']?.toString() ?? (shelterId != null ? 'Pet no. $shelterId' : '');
+    final shelterCode = pet['shelterPetCode']?.toString() ?? (shelterId != null ? 'Pet no. $shelterId' : 'Pet');
+    var petName = (pet['adoptedPetName'] ?? pet['proposedName'] ?? pet['petName'])?.toString() ?? shelterCode;
+    if (petName.isEmpty || petName.toLowerCase() == 'adopted pet') {
+      petName = shelterCode;
+    }
     final petBreed = pet['petBreed'] as String? ?? 'Mixed';
     final petType = pet['petType'] as String? ?? 'Pet';
     final petImage = pet['petImage'] as String? ?? '';
