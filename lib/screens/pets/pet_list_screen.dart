@@ -115,8 +115,10 @@ class _PetListScreenState extends State<PetListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = AppTheme.isDark(context);
+
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: AppTheme.getBackgroundColor(context),
       appBar: AppBar(
         automaticallyImplyLeading: false,
         backgroundColor: Colors.transparent,
@@ -124,7 +126,7 @@ class _PetListScreenState extends State<PetListScreen> {
         titleSpacing: Navigator.canPop(context) ? 4 : 16,
         leading: Navigator.canPop(context)
             ? IconButton(
-                icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppTheme.textPrimary, size: 20),
+                icon: Icon(Icons.arrow_back_ios_new_rounded, color: AppTheme.getTextPrimary(context), size: 20),
                 onPressed: () => Navigator.pop(context),
               )
             : null,
@@ -135,8 +137,11 @@ class _PetListScreenState extends State<PetListScreen> {
               height: 38,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color: const Color(0xFFBAE6FD), width: 1.5),
-                color: const Color(0xFFE0F2FE),
+                border: Border.all(
+                  color: isDark ? const Color(0xFF0284C7) : const Color(0xFFBAE6FD),
+                  width: 1.5,
+                ),
+                color: isDark ? const Color(0xFF0C4A6E) : const Color(0xFFE0F2FE),
               ),
               child: ClipOval(
                 child: _userAvatar != null && _userAvatar!.isNotEmpty
@@ -169,7 +174,7 @@ class _PetListScreenState extends State<PetListScreen> {
                     style: GoogleFonts.poppins(
                       fontSize: 11,
                       fontWeight: FontWeight.w500,
-                      color: AppTheme.textSecondary,
+                      color: AppTheme.getTextSecondary(context),
                     ),
                   ),
                   Text(
@@ -179,7 +184,7 @@ class _PetListScreenState extends State<PetListScreen> {
                     style: GoogleFonts.poppins(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
-                      color: AppTheme.textPrimary,
+                      color: AppTheme.getTextPrimary(context),
                     ),
                   ),
                 ],
@@ -193,17 +198,21 @@ class _PetListScreenState extends State<PetListScreen> {
             child: ActionChip(
               visualDensity: VisualDensity.compact,
               materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              avatar: const Icon(Icons.tune_rounded, size: 14, color: AppTheme.primaryDark),
+              avatar: Icon(
+                Icons.tune_rounded,
+                size: 14,
+                color: isDark ? Colors.white : AppTheme.primaryDark,
+              ),
               label: Text(
                 'Match Quiz',
                 style: GoogleFonts.poppins(
                   fontSize: 11.5,
                   fontWeight: FontWeight.w600,
-                  color: AppTheme.primaryDark,
+                  color: isDark ? Colors.white : AppTheme.primaryDark,
                 ),
               ),
-              backgroundColor: AppTheme.primaryLight,
-              side: BorderSide.none,
+              backgroundColor: isDark ? AppTheme.primaryDark.withValues(alpha: 0.35) : AppTheme.primaryLight,
+              side: isDark ? const BorderSide(color: Color(0xFF0E7A80)) : BorderSide.none,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               onPressed: _openQuiz,
             ),

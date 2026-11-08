@@ -12,12 +12,14 @@ import 'package:mobile_petadopt/screens/splash/splash_screen.dart';
 import 'package:mobile_petadopt/services/network_service.dart';
 import 'package:mobile_petadopt/services/notification_service.dart';
 import 'package:mobile_petadopt/theme/app_theme.dart';
+import 'package:mobile_petadopt/services/theme_service.dart';
 import 'package:mobile_petadopt/widgets/connectivity_banner.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await ThemeService.initialize();
   await NetworkService.instance.initialize();
   await NotificationService.initialize(navigatorKey: navigatorKey);
   await NotificationService.setupFirebaseFCM(navigatorKey: navigatorKey);
@@ -29,17 +31,22 @@ class PetAdoptApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      navigatorKey: navigatorKey,
-      title: 'CAWS PetAdopt',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
-      builder: (context, child) {
-        return NetworkAwareWrapper(
-          child: child ?? const SizedBox.shrink(),
-        );
-      },
-      initialRoute: '/splash',
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: ThemeService.themeModeNotifier,
+      builder: (context, themeMode, child) {
+        return MaterialApp(
+          navigatorKey: navigatorKey,
+          title: 'CAWS PetAdopt',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.lightTheme,
+          darkTheme: AppTheme.darkTheme,
+          themeMode: themeMode,
+          builder: (context, child) {
+            return NetworkAwareWrapper(
+              child: child ?? const SizedBox.shrink(),
+            );
+          },
+          initialRoute: '/splash',
       routes: {
         '/splash': (context) => const SplashScreen(),
         '/login': (context) => const LoginScreen(),
@@ -75,6 +82,8 @@ class PetAdoptApp extends StatelessWidget {
           }
         }
         return null;
+      },
+    );
       },
     );
   }

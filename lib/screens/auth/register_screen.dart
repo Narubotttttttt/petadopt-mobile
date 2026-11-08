@@ -371,7 +371,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: AppTheme.getBackgroundColor(context),
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -478,6 +478,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   // --- Step Indicator (Matches Adoption Form) ---
   Widget _buildStepIndicator() {
+    final isDark = AppTheme.isDark(context);
     final steps = ['Identity & Email', 'Google Email Code', 'Number Verify'];
     return Row(
       children: List.generate(steps.length, (index) {
@@ -498,7 +499,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             ? AppTheme.successColor
                             : isActive
                                 ? AppTheme.primary
-                                : Colors.grey.shade200,
+                                : (isDark ? const Color(0xFF1E293B) : Colors.grey.shade200),
                         shape: BoxShape.circle,
                         boxShadow: isActive
                             ? [
@@ -518,7 +519,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 style: GoogleFonts.poppins(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w700,
-                                  color: isActive ? Colors.white : AppTheme.textSecondary,
+                                  color: isActive ? Colors.white : AppTheme.getTextSecondary(context),
                                 ),
                               ),
                       ),
@@ -529,7 +530,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       style: GoogleFonts.poppins(
                         fontSize: 11,
                         fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
-                        color: isActive ? AppTheme.primary : AppTheme.textSecondary,
+                        color: isActive ? AppTheme.primary : AppTheme.getTextSecondary(context),
                       ),
                     ),
                   ],
@@ -540,7 +541,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   width: 28,
                   height: 2,
                   margin: const EdgeInsets.only(bottom: 20),
-                  color: index < _currentStep ? AppTheme.primary : Colors.grey.shade300,
+                  color: index < _currentStep
+                      ? AppTheme.primary
+                      : (isDark ? const Color(0xFF334155) : Colors.grey.shade300),
                 ),
             ],
           ),
@@ -551,6 +554,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   // --- Step 1: Credentials & Personal Info ---
   Widget _buildStep1() {
+    final isDark = AppTheme.isDark(context);
     return Form(
       key: _step1FormKey,
       child: Column(
@@ -560,9 +564,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
-              color: const Color(0xFFF0FBFB),
+              color: isDark ? const Color(0xFF132D30) : const Color(0xFFF0FBFB),
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: AppTheme.primary.withValues(alpha: 0.25)),
+              border: Border.all(
+                color: isDark ? const Color(0xFF0E7A80).withValues(alpha: 0.5) : AppTheme.primary.withValues(alpha: 0.25),
+              ),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -576,7 +582,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 0.8,
-                        color: AppTheme.primary,
+                        color: isDark ? const Color(0xFF5EEAD4) : AppTheme.primary,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -585,7 +591,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       style: GoogleFonts.poppins(
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
-                        color: AppTheme.textPrimary,
+                        color: AppTheme.getTextPrimary(context),
                       ),
                     ),
                   ],
@@ -615,7 +621,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppTheme.primaryLight,
+                  color: isDark ? AppTheme.primary.withValues(alpha: 0.2) : AppTheme.primaryLight,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(Icons.badge_outlined, color: AppTheme.primary, size: 20),
@@ -626,7 +632,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 style: GoogleFonts.poppins(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
-                  color: AppTheme.textPrimary,
+                  color: AppTheme.getTextPrimary(context),
                 ),
               ),
             ],
@@ -635,21 +641,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
-              color: const Color(0xFFEFF6FF),
+              color: isDark ? const Color(0xFF1E293B) : const Color(0xFFEFF6FF),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFBFDBFE)),
+              border: Border.all(
+                color: isDark ? const Color(0xFF2563EB).withValues(alpha: 0.4) : const Color(0xFFBFDBFE),
+              ),
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.info_outline_rounded, color: Color(0xFF2563EB), size: 18),
+                const Icon(Icons.info_outline_rounded, color: Color(0xFF3B82F6), size: 18),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     'Reminder: Please enter your real full name as it appears on your Government ID for adoption verification and contract signing.',
                     style: GoogleFonts.poppins(
                       fontSize: 11.5,
-                      color: const Color(0xFF1E40AF),
+                      color: isDark ? const Color(0xFF93C5FD) : const Color(0xFF1E40AF),
                       fontWeight: FontWeight.w500,
                       height: 1.4,
                     ),
@@ -753,6 +761,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   // --- Step 2: Email OTP ---
   Widget _buildStep2() {
     final email = _emailController.text.trim();
+    final isDark = AppTheme.isDark(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -762,8 +771,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
               Container(
                 width: 64,
                 height: 64,
-                decoration: const BoxDecoration(
-                  color: AppTheme.primaryLight,
+                decoration: BoxDecoration(
+                  color: isDark ? AppTheme.primary.withValues(alpha: 0.2) : AppTheme.primaryLight,
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.mark_email_read_rounded, color: AppTheme.primary, size: 32),
@@ -771,13 +780,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
               const SizedBox(height: 16),
               Text(
                 'Google Email Code Verification',
-                style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w700, color: AppTheme.textPrimary),
+                style: GoogleFonts.poppins(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.getTextPrimary(context),
+                ),
               ),
               const SizedBox(height: 6),
               Text(
                 'We sent a 6-digit verification code to\n$email',
                 textAlign: TextAlign.center,
-                style: GoogleFonts.poppins(fontSize: 13, color: AppTheme.textSecondary, height: 1.4),
+                style: GoogleFonts.poppins(
+                  fontSize: 13,
+                  color: AppTheme.getTextSecondary(context),
+                  height: 1.4,
+                ),
               ),
             ],
           ),
@@ -791,16 +808,34 @@ class _RegisterScreenState extends State<RegisterScreen> {
           maxLength: 6,
           textAlign: TextAlign.center,
           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-          style: GoogleFonts.poppins(fontSize: 26, letterSpacing: 10, fontWeight: FontWeight.w700, color: AppTheme.primaryDark),
+          style: GoogleFonts.poppins(
+            fontSize: 26,
+            letterSpacing: 10,
+            fontWeight: FontWeight.w700,
+            color: isDark ? const Color(0xFF5EEAD4) : AppTheme.primaryDark,
+          ),
           decoration: InputDecoration(
             counterText: '',
             hintText: '••••••',
-            hintStyle: TextStyle(letterSpacing: 10, color: Colors.grey.shade300),
-            fillColor: Colors.white,
+            hintStyle: TextStyle(
+              letterSpacing: 10,
+              color: isDark ? const Color(0xFF475569) : Colors.grey.shade300,
+            ),
+            fillColor: isDark ? const Color(0xFF1E293B) : Colors.white,
             filled: true,
             contentPadding: const EdgeInsets.symmetric(vertical: 16),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: Colors.grey.shade300)),
-            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: AppTheme.primary, width: 2)),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(color: AppTheme.getCardBorder(context)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(color: AppTheme.getCardBorder(context)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: AppTheme.primary, width: 2),
+            ),
           ),
         ),
         const SizedBox(height: 16),
@@ -811,12 +846,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
           children: [
             Text(
               _emailTimerSeconds > 0 ? 'Resend code in ${_emailTimerSeconds}s' : "Didn't receive code? ",
-              style: GoogleFonts.poppins(fontSize: 12, color: AppTheme.textSecondary),
+              style: GoogleFonts.poppins(
+                fontSize: 12,
+                color: AppTheme.getTextSecondary(context),
+              ),
             ),
             if (_emailTimerSeconds == 0)
               GestureDetector(
                 onTap: _resendEmailOtp,
-                child: Text('Resend Code', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700, color: AppTheme.primary)),
+                child: Text(
+                  'Resend Code',
+                  style: GoogleFonts.poppins(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.primary,
+                  ),
+                ),
               ),
           ],
         ),
@@ -833,10 +878,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       onPressed: () => setState(() => _currentStep = 0),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
-                        side: BorderSide(color: Colors.grey.shade300),
+                        backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                        side: BorderSide(color: AppTheme.getCardBorder(context)),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                       ),
-                      child: Text('Back', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.textPrimary)),
+                      child: Text(
+                        'Back',
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.getTextPrimary(context),
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -852,6 +905,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   // --- Step 3: Phone SMS Verification ---
   Widget _buildStep3() {
+    final isDark = AppTheme.isDark(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -861,8 +915,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
               Container(
                 width: 64,
                 height: 64,
-                decoration: const BoxDecoration(
-                  color: AppTheme.primaryLight,
+                decoration: BoxDecoration(
+                  color: isDark ? AppTheme.primary.withValues(alpha: 0.2) : AppTheme.primaryLight,
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.sms_rounded, color: AppTheme.primary, size: 32),
@@ -870,13 +924,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
               const SizedBox(height: 16),
               Text(
                 'Mobile SMS Verification',
-                style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w700, color: AppTheme.textPrimary),
+                style: GoogleFonts.poppins(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.getTextPrimary(context),
+                ),
               ),
               const SizedBox(height: 6),
               Text(
                 'Enter your 11-digit Philippine mobile number to receive an SMS verification code.',
                 textAlign: TextAlign.center,
-                style: GoogleFonts.poppins(fontSize: 13, color: AppTheme.textSecondary, height: 1.4),
+                style: GoogleFonts.poppins(
+                  fontSize: 13,
+                  color: AppTheme.getTextSecondary(context),
+                  height: 1.4,
+                ),
               ),
             ],
           ),
@@ -890,15 +952,39 @@ class _RegisterScreenState extends State<RegisterScreen> {
           maxLength: 11,
           enabled: !_isPhoneOtpSent,
           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          style: GoogleFonts.poppins(
+            fontSize: 14,
+            color: AppTheme.getTextPrimary(context),
+          ),
           decoration: InputDecoration(
             counterText: '',
             labelText: 'Primary Mobile Number *',
+            labelStyle: GoogleFonts.poppins(
+              color: AppTheme.getTextSecondary(context),
+              fontSize: 13,
+            ),
             hintText: '09XXXXXXXXX',
-            prefixIcon: const Icon(Icons.phone_iphone_rounded, color: AppTheme.textSecondary, size: 20),
+            hintStyle: GoogleFonts.poppins(
+              color: AppTheme.getTextSecondary(context).withValues(alpha: 0.6),
+              fontSize: 13,
+            ),
+            prefixIcon: Icon(Icons.phone_iphone_rounded, color: AppTheme.getTextSecondary(context), size: 20),
             filled: true,
-            fillColor: _isPhoneOtpSent ? Colors.grey.shade100 : Colors.white,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: Colors.grey.shade300)),
-            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppTheme.primary, width: 2)),
+            fillColor: _isPhoneOtpSent
+                ? (isDark ? const Color(0xFF0F172A) : Colors.grey.shade100)
+                : (isDark ? const Color(0xFF1E293B) : Colors.white),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(color: AppTheme.getCardBorder(context)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(color: AppTheme.getCardBorder(context)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: const BorderSide(color: AppTheme.primary, width: 2),
+            ),
           ),
         ),
         const SizedBox(height: 14),
@@ -930,16 +1016,34 @@ class _RegisterScreenState extends State<RegisterScreen> {
             maxLength: 6,
             textAlign: TextAlign.center,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            style: GoogleFonts.poppins(fontSize: 24, letterSpacing: 8, fontWeight: FontWeight.w700, color: AppTheme.primaryDark),
+            style: GoogleFonts.poppins(
+              fontSize: 24,
+              letterSpacing: 8,
+              fontWeight: FontWeight.w700,
+              color: isDark ? const Color(0xFF5EEAD4) : AppTheme.primaryDark,
+            ),
             decoration: InputDecoration(
               counterText: '',
               hintText: '••••••',
-              hintStyle: TextStyle(letterSpacing: 8, color: Colors.grey.shade300),
-              fillColor: Colors.white,
+              hintStyle: TextStyle(
+                letterSpacing: 8,
+                color: isDark ? const Color(0xFF475569) : Colors.grey.shade300,
+              ),
+              fillColor: isDark ? const Color(0xFF1E293B) : Colors.white,
               filled: true,
               contentPadding: const EdgeInsets.symmetric(vertical: 14),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: Colors.grey.shade300)),
-              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppTheme.primary, width: 2)),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide(color: AppTheme.getCardBorder(context)),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide(color: AppTheme.getCardBorder(context)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: const BorderSide(color: AppTheme.primary, width: 2),
+              ),
             ),
           ),
           const SizedBox(height: 12),
@@ -955,13 +1059,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     _phoneTimer?.cancel();
                   });
                 },
-                child: Text('Change Number', style: GoogleFonts.poppins(fontSize: 12, color: AppTheme.textSecondary)),
+                child: Text('Change Number', style: GoogleFonts.poppins(fontSize: 12, color: AppTheme.getTextSecondary(context))),
               ),
               Row(
                 children: [
                   Text(
                     _phoneTimerSeconds > 0 ? 'Resend in ${_phoneTimerSeconds}s' : '',
-                    style: GoogleFonts.poppins(fontSize: 12, color: AppTheme.textSecondary),
+                    style: GoogleFonts.poppins(fontSize: 12, color: AppTheme.getTextSecondary(context)),
                   ),
                   if (_phoneTimerSeconds == 0)
                     GestureDetector(
@@ -997,7 +1101,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         Center(
           child: TextButton(
             onPressed: () => setState(() => _currentStep = 1),
-            child: Text('Back to Email Verification', style: GoogleFonts.poppins(fontSize: 13, color: AppTheme.textSecondary, fontWeight: FontWeight.w500)),
+            child: Text('Back to Email Verification', style: GoogleFonts.poppins(fontSize: 13, color: AppTheme.getTextSecondary(context), fontWeight: FontWeight.w500)),
           ),
         ),
       ],
@@ -1015,26 +1119,38 @@ class _RegisterScreenState extends State<RegisterScreen> {
     Widget? suffixIcon,
     String? Function(String?)? validator,
   }) {
+    final isDark = AppTheme.isDark(context);
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
       obscureText: obscureText,
-      style: GoogleFonts.poppins(fontSize: 14),
+      style: GoogleFonts.poppins(
+        fontSize: 14,
+        color: AppTheme.getTextPrimary(context),
+      ),
       decoration: InputDecoration(
         labelText: label,
+        labelStyle: GoogleFonts.poppins(
+          color: AppTheme.getTextSecondary(context),
+          fontSize: 13,
+        ),
         hintText: hint,
-        prefixIcon: Icon(icon, color: AppTheme.textSecondary, size: 20),
+        hintStyle: GoogleFonts.poppins(
+          color: AppTheme.getTextSecondary(context).withValues(alpha: 0.6),
+          fontSize: 13,
+        ),
+        prefixIcon: Icon(icon, color: AppTheme.getTextSecondary(context), size: 20),
         suffixIcon: suffixIcon,
         filled: true,
-        fillColor: Colors.white,
+        fillColor: isDark ? const Color(0xFF1E293B) : Colors.white,
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: Colors.grey.shade300),
+          borderSide: BorderSide(color: isDark ? const Color(0xFF334155) : Colors.grey.shade300),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: Colors.grey.shade300),
+          borderSide: BorderSide(color: isDark ? const Color(0xFF334155) : Colors.grey.shade300),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),

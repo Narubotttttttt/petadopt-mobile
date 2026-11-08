@@ -105,14 +105,15 @@ class _PetComparisonChatScreenState extends State<PetComparisonChatScreen> {
       return pid != null && _selectedPetIds.contains(pid);
     }).toList();
 
+    final isDark = AppTheme.isDark(context);
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: AppTheme.getBackgroundColor(context),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppTheme.getBackgroundColor(context),
         elevation: 0,
         scrolledUnderElevation: 1,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 19, color: Color(0xFF1E293B)),
+          icon: Icon(Icons.arrow_back_ios_new_rounded, size: 19, color: AppTheme.getTextPrimary(context)),
           onPressed: () => Navigator.pop(context),
         ),
         titleSpacing: 0,
@@ -155,7 +156,7 @@ class _PetComparisonChatScreenState extends State<PetComparisonChatScreen> {
                         style: GoogleFonts.poppins(
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
-                          color: const Color(0xFF0F172A),
+                          color: AppTheme.getTextPrimary(context),
                         ),
                       ),
                       const SizedBox(width: 6),
@@ -173,7 +174,7 @@ class _PetComparisonChatScreenState extends State<PetComparisonChatScreen> {
                     'Scikit-Learn ML + Gemini 3.5 Flash',
                     style: GoogleFonts.poppins(
                       fontSize: 11,
-                      color: const Color(0xFF64748B),
+                      color: AppTheme.getTextSecondary(context),
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -339,7 +340,7 @@ class _PetComparisonChatScreenState extends State<PetComparisonChatScreen> {
                             style: GoogleFonts.poppins(
                               fontSize: 13,
                               fontWeight: FontWeight.w700,
-                              color: const Color(0xFF0F172A),
+                              color: AppTheme.getTextPrimary(context),
                             ),
                           ),
                           const Spacer(),
@@ -347,7 +348,7 @@ class _PetComparisonChatScreenState extends State<PetComparisonChatScreen> {
                             'Select up to 3 to apply',
                             style: GoogleFonts.poppins(
                               fontSize: 11,
-                              color: const Color(0xFF0D9488),
+                              color: isDark ? const Color(0xFF5EEAD4) : const Color(0xFF0D9488),
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -385,24 +386,38 @@ class _PetComparisonChatScreenState extends State<PetComparisonChatScreen> {
                           child: Container(
                             padding: const EdgeInsets.all(15),
                             decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [
-                                  Color(0xFFF0FDFA),
-                                  Color(0xFFF8FAFC),
-                                ],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
+                              gradient: isDark
+                                  ? const LinearGradient(
+                                      colors: [
+                                        Color(0xFF1E293B),
+                                        Color(0xFF0F172A),
+                                      ],
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                    )
+                                  : const LinearGradient(
+                                      colors: [
+                                        Color(0xFFF0FDFA),
+                                        Color(0xFFF8FAFC),
+                                      ],
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                    ),
                               borderRadius: const BorderRadius.only(
                                 topLeft: Radius.circular(4),
                                 topRight: Radius.circular(20),
                                 bottomLeft: Radius.circular(20),
                                 bottomRight: Radius.circular(20),
                               ),
-                              border: Border.all(color: const Color(0xFF99F6E4), width: 1.2),
+                              border: Border.all(
+                                color: isDark
+                                    ? const Color(0xFF0E7A80).withValues(alpha: 0.5)
+                                    : const Color(0xFF99F6E4),
+                                width: 1.2,
+                              ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.04),
+                                  color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
                                   blurRadius: 8,
                                   offset: const Offset(0, 3),
                                 ),
@@ -440,16 +455,16 @@ class _PetComparisonChatScreenState extends State<PetComparisonChatScreen> {
                                     Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                                       decoration: BoxDecoration(
-                                        color: Colors.white,
+                                        color: isDark ? const Color(0xFF1E293B) : Colors.white,
                                         borderRadius: BorderRadius.circular(6),
-                                        border: Border.all(color: Colors.grey.shade300),
+                                        border: Border.all(color: isDark ? const Color(0xFF334155) : Colors.grey.shade300),
                                       ),
                                       child: Text(
                                         'Random Forest ML',
                                         style: GoogleFonts.poppins(
                                           fontSize: 9.5,
                                           fontWeight: FontWeight.w500,
-                                          color: Colors.grey.shade700,
+                                          color: isDark ? const Color(0xFF94A3B8) : Colors.grey.shade700,
                                         ),
                                       ),
                                     ),
@@ -461,7 +476,7 @@ class _PetComparisonChatScreenState extends State<PetComparisonChatScreen> {
                                   style: GoogleFonts.poppins(
                                     fontSize: 12.5,
                                     height: 1.5,
-                                    color: const Color(0xFF1E293B),
+                                    color: AppTheme.getTextPrimary(context),
                                   ),
                                 ),
                                 if (verdict != null && verdict.isNotEmpty) ...[
@@ -469,9 +484,11 @@ class _PetComparisonChatScreenState extends State<PetComparisonChatScreen> {
                                   Container(
                                     padding: const EdgeInsets.all(10),
                                     decoration: BoxDecoration(
-                                      color: Colors.white,
+                                      color: isDark ? const Color(0xFF132D30) : Colors.white,
                                       borderRadius: BorderRadius.circular(10),
-                                      border: Border.all(color: const Color(0xFFCCFBF1)),
+                                      border: Border.all(
+                                        color: isDark ? const Color(0xFF0E7A80).withValues(alpha: 0.6) : const Color(0xFFCCFBF1),
+                                      ),
                                     ),
                                     child: Row(
                                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -487,7 +504,7 @@ class _PetComparisonChatScreenState extends State<PetComparisonChatScreen> {
                                             text: TextSpan(
                                               style: GoogleFonts.poppins(
                                                 fontSize: 11.5,
-                                                color: const Color(0xFF0F766E),
+                                                color: isDark ? const Color(0xFF5EEAD4) : const Color(0xFF0F766E),
                                                 height: 1.4,
                                               ),
                                               children: [
@@ -520,11 +537,11 @@ class _PetComparisonChatScreenState extends State<PetComparisonChatScreen> {
           Container(
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
             decoration: BoxDecoration(
-              color: Colors.white,
-              border: Border(top: BorderSide(color: Colors.grey.shade200)),
+              color: isDark ? const Color(0xFF1E293B) : Colors.white,
+              border: Border(top: BorderSide(color: AppTheme.getCardBorder(context))),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
+                  color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.05),
                   blurRadius: 10,
                   offset: const Offset(0, -4),
                 ),
@@ -544,7 +561,7 @@ class _PetComparisonChatScreenState extends State<PetComparisonChatScreen> {
                           style: GoogleFonts.poppins(
                             fontSize: 13,
                             fontWeight: FontWeight.w700,
-                            color: AppTheme.textPrimary,
+                            color: AppTheme.getTextPrimary(context),
                           ),
                         ),
                         Text(
@@ -553,7 +570,7 @@ class _PetComparisonChatScreenState extends State<PetComparisonChatScreen> {
                               : 'Single companion application',
                           style: GoogleFonts.poppins(
                             fontSize: 11,
-                            color: AppTheme.textSecondary,
+                            color: AppTheme.getTextSecondary(context),
                           ),
                         ),
                       ],
@@ -596,6 +613,7 @@ class _PetComparisonChatScreenState extends State<PetComparisonChatScreen> {
   }
 
   Widget _buildComparisonCardsRow(BuildContext context) {
+    final isDark = AppTheme.isDark(context);
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       physics: const BouncingScrollPhysics(),
@@ -623,17 +641,21 @@ class _PetComparisonChatScreenState extends State<PetComparisonChatScreen> {
             width: 220,
             margin: const EdgeInsets.only(right: 12),
             decoration: BoxDecoration(
-              color: isSelected ? const Color(0xFFF0FDFA) : Colors.white,
+              color: isSelected
+                  ? (isDark ? const Color(0xFF132D30) : const Color(0xFFF0FDFA))
+                  : (isDark ? const Color(0xFF1E293B) : Colors.white),
               borderRadius: BorderRadius.circular(18),
               border: Border.all(
-                color: isSelected ? const Color(0xFF0D9488) : const Color(0xFFE2E8F0),
+                color: isSelected
+                    ? (isDark ? const Color(0xFF2DD4BF) : const Color(0xFF0D9488))
+                    : AppTheme.getCardBorder(context),
                 width: isSelected ? 1.8 : 1.0,
               ),
               boxShadow: [
                 BoxShadow(
                   color: isSelected
-                      ? const Color(0xFF0D9488).withValues(alpha: 0.08)
-                      : Colors.black.withValues(alpha: 0.03),
+                      ? const Color(0xFF0D9488).withValues(alpha: isDark ? 0.2 : 0.08)
+                      : Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
                   blurRadius: 8,
                   offset: const Offset(0, 3),
                 ),
@@ -676,14 +698,18 @@ class _PetComparisonChatScreenState extends State<PetComparisonChatScreen> {
                                 style: GoogleFonts.poppins(
                                   fontSize: 10.5,
                                   fontWeight: FontWeight.w600,
-                                  color: isSelected ? const Color(0xFF0D9488) : Colors.grey.shade600,
+                                  color: isSelected
+                                      ? (isDark ? const Color(0xFF5EEAD4) : const Color(0xFF0D9488))
+                                      : AppTheme.getTextSecondary(context),
                                 ),
                               ),
                               const SizedBox(width: 3),
                               Icon(
                                 isSelected ? Icons.check_box_rounded : Icons.check_box_outline_blank_rounded,
                                 size: 16,
-                                color: isSelected ? const Color(0xFF0D9488) : Colors.grey.shade400,
+                                color: isSelected
+                                    ? (isDark ? const Color(0xFF5EEAD4) : const Color(0xFF0D9488))
+                                    : (isDark ? const Color(0xFF475569) : Colors.grey.shade400),
                               ),
                             ],
                           ),
@@ -698,7 +724,10 @@ class _PetComparisonChatScreenState extends State<PetComparisonChatScreen> {
                       height: 72,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: Colors.grey.shade200, width: 1.2),
+                        border: Border.all(
+                          color: isDark ? const Color(0xFF334155) : Colors.grey.shade200,
+                          width: 1.2,
+                        ),
                       ),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(14),
@@ -707,12 +736,12 @@ class _PetComparisonChatScreenState extends State<PetComparisonChatScreen> {
                                 imageUrl,
                                 fit: BoxFit.cover,
                                 errorBuilder: (ctx, err, stack) => Container(
-                                  color: Colors.grey.shade100,
+                                  color: isDark ? const Color(0xFF0F172A) : Colors.grey.shade100,
                                   child: const Icon(Icons.pets, color: Colors.grey, size: 28),
                                 ),
                               )
                             : Container(
-                                color: Colors.grey.shade100,
+                                color: isDark ? const Color(0xFF0F172A) : Colors.grey.shade100,
                                 child: const Icon(Icons.pets, color: Colors.grey, size: 28),
                               ),
                       ),
@@ -725,7 +754,7 @@ class _PetComparisonChatScreenState extends State<PetComparisonChatScreen> {
                       style: GoogleFonts.poppins(
                         fontSize: 13.5,
                         fontWeight: FontWeight.w700,
-                        color: AppTheme.textPrimary,
+                        color: AppTheme.getTextPrimary(context),
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -735,14 +764,14 @@ class _PetComparisonChatScreenState extends State<PetComparisonChatScreen> {
                       '$species • $breed',
                       style: GoogleFonts.poppins(
                         fontSize: 10,
-                        color: AppTheme.textSecondary,
+                        color: AppTheme.getTextSecondary(context),
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 10),
-                    Divider(height: 1, color: Colors.grey.shade200),
+                    Divider(height: 1, color: AppTheme.getCardBorder(context)),
                     const SizedBox(height: 8),
 
                     // Attribute rows matching user's picture
@@ -762,16 +791,17 @@ class _PetComparisonChatScreenState extends State<PetComparisonChatScreen> {
   }
 
   Widget _buildTraitRow(IconData icon, String label, String value, {bool isLast = false}) {
+    final isDark = AppTheme.isDark(context);
     return Container(
       margin: EdgeInsets.only(bottom: isLast ? 0 : 8),
       padding: EdgeInsets.only(bottom: isLast ? 0 : 8),
       decoration: BoxDecoration(
-        border: isLast ? null : Border(bottom: BorderSide(color: Colors.grey.shade100, width: 1)),
+        border: isLast ? null : Border(bottom: BorderSide(color: AppTheme.getCardBorder(context), width: 1)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 14, color: const Color(0xFF0D9488)),
+          Icon(icon, size: 14, color: isDark ? const Color(0xFF5EEAD4) : const Color(0xFF0D9488)),
           const SizedBox(width: 6),
           Expanded(
             child: Column(
@@ -781,7 +811,7 @@ class _PetComparisonChatScreenState extends State<PetComparisonChatScreen> {
                   label,
                   style: GoogleFonts.poppins(
                     fontSize: 9.5,
-                    color: Colors.grey.shade600,
+                    color: AppTheme.getTextSecondary(context),
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -790,7 +820,7 @@ class _PetComparisonChatScreenState extends State<PetComparisonChatScreen> {
                   style: GoogleFonts.poppins(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
-                    color: const Color(0xFF1E293B),
+                    color: AppTheme.getTextPrimary(context),
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,

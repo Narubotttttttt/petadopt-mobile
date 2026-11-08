@@ -721,24 +721,39 @@ class _AiRecommendationHeroState extends State<AiRecommendationHero>
 
   @override
   Widget build(BuildContext context) {
+    final isDark = AppTheme.isDark(context);
+
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [
-            Color(0xFFE0F7FA), // Soft luminous ice-teal
-            Color(0xFFF0FDFA), // Ultra soft white-teal
-            Color(0xFFFFFFFF), // Crisp pure white
-          ],
-          stops: [0.0, 0.45, 1.0],
+          colors: isDark
+              ? const [
+                  Color(0xFF1E293B), // Deep slate surface
+                  Color(0xFF162032), // Dark navy undertone
+                  Color(0xFF0F172A), // Grounded deep dark base
+                ]
+              : const [
+                  Color(0xFFE0F7FA), // Soft luminous ice-teal
+                  Color(0xFFF0FDFA), // Ultra soft white-teal
+                  Color(0xFFFFFFFF), // Crisp pure white
+                ],
+          stops: const [0.0, 0.45, 1.0],
         ),
         borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: const Color(0xFFB2EBF2).withValues(alpha: 0.85)),
+        border: Border.all(
+          color: isDark
+              ? const Color(0xFF0E7A80).withValues(alpha: 0.35)
+              : const Color(0xFFB2EBF2).withValues(alpha: 0.85),
+          width: 1.2,
+        ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF0E7A80).withValues(alpha: 0.08),
+            color: isDark
+                ? AppTheme.primary.withValues(alpha: 0.12)
+                : const Color(0xFF0E7A80).withValues(alpha: 0.08),
             blurRadius: 20,
             offset: const Offset(0, 6),
           ),
@@ -757,9 +772,15 @@ class _AiRecommendationHeroState extends State<AiRecommendationHero>
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.90),
+                      color: isDark
+                          ? const Color(0xFF0F172A).withValues(alpha: 0.85)
+                          : Colors.white.withValues(alpha: 0.90),
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: const Color(0xFFB2EBF2)),
+                      border: Border.all(
+                        color: isDark
+                            ? const Color(0xFF0E7A80).withValues(alpha: 0.50)
+                            : const Color(0xFFB2EBF2),
+                      ),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -772,7 +793,7 @@ class _AiRecommendationHeroState extends State<AiRecommendationHero>
                             fontSize: 10,
                             fontWeight: FontWeight.w700,
                             letterSpacing: 0.6,
-                            color: AppTheme.primaryDark,
+                            color: isDark ? const Color(0xFF5EEAD4) : AppTheme.primaryDark,
                           ),
                         ),
                       ],
@@ -798,7 +819,7 @@ class _AiRecommendationHeroState extends State<AiRecommendationHero>
                                 style: GoogleFonts.poppins(
                                   fontSize: 18,
                                   fontWeight: FontWeight.w800,
-                                  color: const Color(0xFF0F172A),
+                                  color: AppTheme.getTextPrimary(context),
                                   letterSpacing: -0.4,
                                 ),
                                 children: [
@@ -849,16 +870,24 @@ class _AiRecommendationHeroState extends State<AiRecommendationHero>
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.85),
+                    color: isDark
+                        ? const Color(0xFF0F172A).withValues(alpha: 0.65)
+                        : Colors.white.withValues(alpha: 0.85),
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: const Color(0xFFB2EBF2).withValues(alpha: 0.85)),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF0E7A80).withValues(alpha: 0.04),
-                        blurRadius: 10,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
+                    border: Border.all(
+                      color: isDark
+                          ? const Color(0xFF334155).withValues(alpha: 0.75)
+                          : const Color(0xFFB2EBF2).withValues(alpha: 0.85),
+                    ),
+                    boxShadow: isDark
+                        ? []
+                        : [
+                            BoxShadow(
+                              color: const Color(0xFF0E7A80).withValues(alpha: 0.04),
+                              blurRadius: 10,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
                   ),
                   child: Column(
                     children: [
@@ -873,7 +902,12 @@ class _AiRecommendationHeroState extends State<AiRecommendationHero>
                           ),
                         ),
                       ),
-                      const Divider(height: 18, color: Color(0xFFE2E8F0)),
+                      Divider(
+                        height: 18,
+                        color: isDark
+                            ? const Color(0xFF334155).withValues(alpha: 0.55)
+                            : AppTheme.getCardBorder(context),
+                      ),
                       FadeTransition(
                         opacity: _row2Fade,
                         child: SlideTransition(
@@ -885,7 +919,12 @@ class _AiRecommendationHeroState extends State<AiRecommendationHero>
                           ),
                         ),
                       ),
-                      const Divider(height: 18, color: Color(0xFFE2E8F0)),
+                      Divider(
+                        height: 18,
+                        color: isDark
+                            ? const Color(0xFF334155).withValues(alpha: 0.55)
+                            : AppTheme.getCardBorder(context),
+                      ),
                       FadeTransition(
                         opacity: _row3Fade,
                         child: SlideTransition(
@@ -917,16 +956,25 @@ class _AiRecommendationHeroState extends State<AiRecommendationHero>
                   borderRadius: BorderRadius.circular(28),
                   child: Ink(
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: isDark
+                          ? const Color(0xFF0F172A).withValues(alpha: 0.85)
+                          : AppTheme.getCardColor(context),
                       borderRadius: BorderRadius.circular(28),
-                      border: Border.all(color: const Color(0xFFCBD5E1), width: 1.0),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF0E7A80).withValues(alpha: 0.08),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
+                      border: Border.all(
+                        color: isDark
+                            ? const Color(0xFF334155)
+                            : AppTheme.getCardBorder(context),
+                        width: 1.0,
+                      ),
+                      boxShadow: isDark
+                          ? []
+                          : [
+                              BoxShadow(
+                                color: const Color(0xFF0E7A80).withValues(alpha: 0.08),
+                                blurRadius: 12,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
                     ),
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                     child: Row(
@@ -934,14 +982,16 @@ class _AiRecommendationHeroState extends State<AiRecommendationHero>
                         Container(
                           width: 36,
                           height: 36,
-                          decoration: const BoxDecoration(
+                          decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: AppTheme.primaryLight,
+                            color: AppTheme.isDark(context)
+                                ? AppTheme.primary.withValues(alpha: 0.2)
+                                : AppTheme.primaryLight,
                           ),
                           child: const Center(
                             child: Icon(
                               Icons.quiz_outlined,
-                              color: AppTheme.primaryDark,
+                              color: AppTheme.primary,
                               size: 19,
                             ),
                           ),
@@ -960,7 +1010,7 @@ class _AiRecommendationHeroState extends State<AiRecommendationHero>
                                   style: GoogleFonts.poppins(
                                     fontSize: 12.5,
                                     fontWeight: FontWeight.w700,
-                                    color: const Color(0xFF0F172A),
+                                    color: AppTheme.getTextPrimary(context),
                                   ),
                                 ),
                               ),
@@ -972,8 +1022,8 @@ class _AiRecommendationHeroState extends State<AiRecommendationHero>
                                   'I will find the perfect pet for you',
                                   style: GoogleFonts.poppins(
                                     fontSize: 11.5,
-                                    fontWeight: FontWeight.w600,
-                                    color: const Color(0xFF1E293B),
+                                    fontWeight: FontWeight.w500,
+                                    color: AppTheme.getTextSecondary(context),
                                   ),
                                 ),
                               ),
@@ -1028,16 +1078,17 @@ class _AiRecommendationHeroState extends State<AiRecommendationHero>
     required String title,
     required String subtitle,
   }) {
+    final isDark = AppTheme.isDark(context);
     return Row(
       children: [
         Container(
           width: 32,
           height: 32,
           decoration: BoxDecoration(
-            color: AppTheme.primaryLight,
+            color: isDark ? AppTheme.primary.withValues(alpha: 0.2) : AppTheme.primaryLight,
             borderRadius: BorderRadius.circular(10),
           ),
-          child: Icon(icon, color: AppTheme.primaryDark, size: 17),
+          child: Icon(icon, color: AppTheme.primary, size: 17),
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -1049,7 +1100,7 @@ class _AiRecommendationHeroState extends State<AiRecommendationHero>
                 style: GoogleFonts.poppins(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
-                  color: const Color(0xFF0F172A),
+                  color: AppTheme.getTextPrimary(context),
                 ),
               ),
               Text(
@@ -1057,7 +1108,7 @@ class _AiRecommendationHeroState extends State<AiRecommendationHero>
                 style: GoogleFonts.poppins(
                   fontSize: 10.5,
                   fontWeight: FontWeight.w400,
-                  color: const Color(0xFF64748B),
+                  color: AppTheme.getTextSecondary(context),
                 ),
               ),
             ],

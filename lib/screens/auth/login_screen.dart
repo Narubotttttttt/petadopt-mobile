@@ -67,6 +67,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _showForgotPasswordBottomSheet(BuildContext context) {
+    final isDark = AppTheme.isDark(context);
     final resetFormKey = GlobalKey<FormState>();
     final resetEmailController = TextEditingController(text: _emailController.text);
     final newPasswordController = TextEditingController();
@@ -89,9 +90,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 left: 24,
                 right: 24,
               ),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
               ),
               child: SingleChildScrollView(
                 child: Form(
@@ -105,7 +106,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           width: 40,
                           height: 4,
                           decoration: BoxDecoration(
-                            color: Colors.grey.shade300,
+                            color: isDark ? const Color(0xFF334155) : Colors.grey.shade300,
                             borderRadius: BorderRadius.circular(2),
                           ),
                         ),
@@ -116,7 +117,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         style: GoogleFonts.poppins(
                           fontSize: 20,
                           fontWeight: FontWeight.w700,
-                          color: AppTheme.textPrimary,
+                          color: AppTheme.getTextPrimary(context),
                         ),
                       ),
                       const SizedBox(height: 6),
@@ -124,16 +125,23 @@ class _LoginScreenState extends State<LoginScreen> {
                         'Enter your account email and new password to reset your access.',
                         style: GoogleFonts.poppins(
                           fontSize: 13,
-                          color: AppTheme.textSecondary,
+                          color: AppTheme.getTextSecondary(context),
                         ),
                       ),
                       const SizedBox(height: 20),
                       TextFormField(
                         controller: resetEmailController,
+                        style: GoogleFonts.poppins(color: AppTheme.getTextPrimary(context), fontSize: 14),
                         keyboardType: TextInputType.emailAddress,
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           labelText: 'Account Email',
-                          prefixIcon: Icon(Icons.mail_outline_rounded, color: AppTheme.textSecondary, size: 20),
+                          labelStyle: GoogleFonts.poppins(color: AppTheme.getTextSecondary(context), fontSize: 13),
+                          prefixIcon: Icon(Icons.mail_outline_rounded, color: AppTheme.getTextSecondary(context), size: 20),
+                          filled: true,
+                          fillColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF4FAFB),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppTheme.getCardBorder(context))),
+                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppTheme.getCardBorder(context))),
+                          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppTheme.primary, width: 1.5)),
                         ),
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
@@ -149,17 +157,24 @@ class _LoginScreenState extends State<LoginScreen> {
                       TextFormField(
                         controller: newPasswordController,
                         obscureText: obscureNew,
+                        style: GoogleFonts.poppins(color: AppTheme.getTextPrimary(context), fontSize: 14),
                         decoration: InputDecoration(
                           labelText: 'New Password',
-                          prefixIcon: const Icon(Icons.lock_outline_rounded, color: AppTheme.textSecondary, size: 20),
+                          labelStyle: GoogleFonts.poppins(color: AppTheme.getTextSecondary(context), fontSize: 13),
+                          prefixIcon: Icon(Icons.lock_outline_rounded, color: AppTheme.getTextSecondary(context), size: 20),
                           suffixIcon: IconButton(
                             icon: Icon(
                               obscureNew ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                              color: AppTheme.textSecondary,
+                              color: AppTheme.getTextSecondary(context),
                               size: 20,
                             ),
                             onPressed: () => setModalState(() => obscureNew = !obscureNew),
                           ),
+                          filled: true,
+                          fillColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF4FAFB),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppTheme.getCardBorder(context))),
+                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppTheme.getCardBorder(context))),
+                          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppTheme.primary, width: 1.5)),
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
@@ -175,17 +190,24 @@ class _LoginScreenState extends State<LoginScreen> {
                       TextFormField(
                         controller: confirmPasswordController,
                         obscureText: obscureConfirm,
+                        style: GoogleFonts.poppins(color: AppTheme.getTextPrimary(context), fontSize: 14),
                         decoration: InputDecoration(
                           labelText: 'Confirm New Password',
-                          prefixIcon: const Icon(Icons.lock_outline_rounded, color: AppTheme.textSecondary, size: 20),
+                          labelStyle: GoogleFonts.poppins(color: AppTheme.getTextSecondary(context), fontSize: 13),
+                          prefixIcon: Icon(Icons.lock_outline_rounded, color: AppTheme.getTextSecondary(context), size: 20),
                           suffixIcon: IconButton(
                             icon: Icon(
                               obscureConfirm ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                              color: AppTheme.textSecondary,
+                              color: AppTheme.getTextSecondary(context),
                               size: 20,
                             ),
                             onPressed: () => setModalState(() => obscureConfirm = !obscureConfirm),
                           ),
+                          filled: true,
+                          fillColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF4FAFB),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppTheme.getCardBorder(context))),
+                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppTheme.getCardBorder(context))),
+                          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppTheme.primary, width: 1.5)),
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
@@ -258,8 +280,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = AppTheme.isDark(context);
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: AppTheme.getBackgroundColor(context),
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -276,20 +299,27 @@ class _LoginScreenState extends State<LoginScreen> {
                       style: GoogleFonts.poppins(
                         fontSize: 22,
                         fontWeight: FontWeight.w700,
-                        color: AppTheme.textPrimary,
+                        color: AppTheme.getTextPrimary(context),
                       ),
                     ),
                     const SizedBox(height: 28),
                     TextFormField(
                       controller: _emailController,
+                      style: GoogleFonts.poppins(color: AppTheme.getTextPrimary(context), fontSize: 14),
                       keyboardType: TextInputType.emailAddress,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: 'Email address',
+                        labelStyle: GoogleFonts.poppins(color: AppTheme.getTextSecondary(context), fontSize: 13),
                         prefixIcon: Icon(
                           Icons.mail_outline_rounded,
-                          color: AppTheme.textSecondary,
+                          color: AppTheme.getTextSecondary(context),
                           size: 20,
                         ),
+                        filled: true,
+                        fillColor: isDark ? const Color(0xFF1E293B) : const Color(0xFFF4FAFB),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppTheme.getCardBorder(context))),
+                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppTheme.getCardBorder(context))),
+                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppTheme.primary, width: 1.5)),
                       ),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
@@ -305,11 +335,13 @@ class _LoginScreenState extends State<LoginScreen> {
                     TextFormField(
                       controller: _passwordController,
                       obscureText: _obscurePassword,
+                      style: GoogleFonts.poppins(color: AppTheme.getTextPrimary(context), fontSize: 14),
                       decoration: InputDecoration(
                         labelText: 'Password',
-                        prefixIcon: const Icon(
+                        labelStyle: GoogleFonts.poppins(color: AppTheme.getTextSecondary(context), fontSize: 13),
+                        prefixIcon: Icon(
                           Icons.lock_outline_rounded,
-                          color: AppTheme.textSecondary,
+                          color: AppTheme.getTextSecondary(context),
                           size: 20,
                         ),
                         suffixIcon: IconButton(
@@ -317,7 +349,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             _obscurePassword
                                 ? Icons.visibility_off_outlined
                                 : Icons.visibility_outlined,
-                            color: AppTheme.textSecondary,
+                            color: AppTheme.getTextSecondary(context),
                             size: 20,
                           ),
                           onPressed: () {
@@ -326,6 +358,11 @@ class _LoginScreenState extends State<LoginScreen> {
                             );
                           },
                         ),
+                        filled: true,
+                        fillColor: isDark ? const Color(0xFF1E293B) : const Color(0xFFF4FAFB),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppTheme.getCardBorder(context))),
+                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppTheme.getCardBorder(context))),
+                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppTheme.primary, width: 1.5)),
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
@@ -368,7 +405,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         Text(
                           "Don't have an account? ",
                           style: GoogleFonts.poppins(
-                            color: AppTheme.textSecondary,
+                            color: AppTheme.getTextSecondary(context),
                             fontSize: 13,
                           ),
                         ),

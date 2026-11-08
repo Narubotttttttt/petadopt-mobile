@@ -222,17 +222,18 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
 
   @override
   Widget build(BuildContext context) {
+    final bgColor = AppTheme.getBackgroundColor(context);
     return Scaffold(
-      backgroundColor: AppTheme.surface,
+      backgroundColor: bgColor,
       appBar: AppBar(
         automaticallyImplyLeading: Navigator.canPop(context),
-        backgroundColor: AppTheme.surface,
+        backgroundColor: bgColor,
         title: Text(
           'Profile',
           style: GoogleFonts.poppins(
             fontSize: 20,
             fontWeight: FontWeight.w700,
-            color: AppTheme.textPrimary,
+            color: AppTheme.getTextPrimary(context),
           ),
         ),
         actions: [
@@ -243,9 +244,9 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
                 MaterialPageRoute(builder: (_) => const SettingsScreen()),
               );
             },
-            icon: const Icon(
+            icon: Icon(
               Icons.settings_outlined,
-              color: AppTheme.textSecondary,
+              color: AppTheme.getTextSecondary(context),
             ),
           ),
         ],
@@ -514,13 +515,14 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
 
   Widget _buildNameCard(BuildContext context) {
     final name = _user?['name'] as String? ?? 'Not set yet';
+    final isDark = AppTheme.isDark(context);
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppTheme.background,
+        color: AppTheme.getCardColor(context),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.cardBorder),
+        border: Border.all(color: AppTheme.getCardBorder(context)),
       ),
       child: Row(
         children: [
@@ -528,7 +530,7 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
             width: 38,
             height: 38,
             decoration: BoxDecoration(
-              color: AppTheme.primaryLight,
+              color: isDark ? AppTheme.primary.withValues(alpha: 0.2) : AppTheme.primaryLight,
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(
@@ -546,7 +548,7 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
                   'Full Legal Name',
                   style: GoogleFonts.poppins(
                     fontSize: 11,
-                    color: AppTheme.textSecondary,
+                    color: AppTheme.getTextSecondary(context),
                   ),
                 ),
                 Text(
@@ -554,7 +556,7 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
                   style: GoogleFonts.poppins(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: AppTheme.textPrimary,
+                    color: AppTheme.getTextPrimary(context),
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -720,13 +722,14 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
 
   Widget _buildAddressCard(BuildContext context) {
     final hasAddress = _savedAddress != null && _savedAddress!.trim().isNotEmpty;
+    final isDark = AppTheme.isDark(context);
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppTheme.background,
+        color: AppTheme.getCardColor(context),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.cardBorder),
+        border: Border.all(color: AppTheme.getCardBorder(context)),
       ),
       child: Row(
         children: [
@@ -734,7 +737,7 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
             width: 38,
             height: 38,
             decoration: BoxDecoration(
-              color: AppTheme.primaryLight,
+              color: isDark ? AppTheme.primary.withValues(alpha: 0.2) : AppTheme.primaryLight,
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(
@@ -752,7 +755,7 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
                   'Saved Location',
                   style: GoogleFonts.poppins(
                     fontSize: 11,
-                    color: AppTheme.textSecondary,
+                    color: AppTheme.getTextSecondary(context),
                   ),
                 ),
                 Text(
@@ -760,7 +763,7 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
                   style: GoogleFonts.poppins(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: hasAddress ? AppTheme.textPrimary : AppTheme.errorColor,
+                    color: hasAddress ? AppTheme.getTextPrimary(context) : AppTheme.errorColor,
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -792,14 +795,15 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
   Widget _buildPhoneCard(BuildContext context) {
     final hasPhone = _savedPhone != null && _savedPhone!.trim().isNotEmpty;
     final hasSecondary = _savedSecondaryPhone != null && _savedSecondaryPhone!.trim().isNotEmpty;
+    final isDark = AppTheme.isDark(context);
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppTheme.background,
+        color: AppTheme.getCardColor(context),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.cardBorder),
+        border: Border.all(color: AppTheme.getCardBorder(context)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -808,7 +812,7 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
             width: 38,
             height: 38,
             decoration: BoxDecoration(
-              color: AppTheme.primaryLight,
+              color: isDark ? AppTheme.primary.withValues(alpha: 0.2) : AppTheme.primaryLight,
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(
@@ -826,7 +830,7 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
                   'Saved Contact Numbers',
                   style: GoogleFonts.poppins(
                     fontSize: 11,
-                    color: AppTheme.textSecondary,
+                    color: AppTheme.getTextSecondary(context),
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -863,7 +867,7 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
                         style: GoogleFonts.poppins(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: AppTheme.textPrimary,
+                          color: AppTheme.getTextPrimary(context),
                         ),
                       ),
                     ],
@@ -875,7 +879,7 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                           decoration: BoxDecoration(
-                            color: Colors.grey.shade100,
+                            color: isDark ? const Color(0xFF334155) : Colors.grey.shade100,
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
@@ -883,7 +887,7 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
                             style: GoogleFonts.poppins(
                               fontSize: 9,
                               fontWeight: FontWeight.w600,
-                              color: AppTheme.textSecondary,
+                              color: AppTheme.getTextSecondary(context),
                             ),
                           ),
                         ),
@@ -893,7 +897,7 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
                           style: GoogleFonts.poppins(
                             fontSize: 11,
                             fontWeight: FontWeight.w500,
-                            color: AppTheme.textSecondary,
+                            color: AppTheme.getTextSecondary(context),
                           ),
                         ),
                       ],
@@ -1096,14 +1100,15 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
   Widget _buildSignatureCard(BuildContext context) {
     final signatureUrl = _user?['digital_signature_url']?.toString();
     final hasSignature = signatureUrl != null && signatureUrl.isNotEmpty;
+    final isDark = AppTheme.isDark(context);
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppTheme.background,
+        color: AppTheme.getCardColor(context),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.cardBorder),
+        border: Border.all(color: AppTheme.getCardBorder(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1114,7 +1119,7 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
                 width: 38,
                 height: 38,
                 decoration: BoxDecoration(
-                  color: AppTheme.primaryLight,
+                  color: isDark ? AppTheme.primary.withValues(alpha: 0.2) : AppTheme.primaryLight,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(
@@ -1132,7 +1137,7 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
                       'Digital Signature',
                       style: GoogleFonts.poppins(
                         fontSize: 11,
-                        color: AppTheme.textSecondary,
+                        color: AppTheme.getTextSecondary(context),
                       ),
                     ),
                     Text(
@@ -1150,9 +1155,9 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFECFDF5),
+                    color: isDark ? const Color(0xFF064E3B) : const Color(0xFFECFDF5),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFA7F3D0)),
+                    border: Border.all(color: isDark ? const Color(0xFF059669) : const Color(0xFFA7F3D0)),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -1164,7 +1169,7 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
                         style: GoogleFonts.poppins(
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
-                          color: const Color(0xFF065F46),
+                          color: isDark ? const Color(0xFF6EE7B7) : const Color(0xFF065F46),
                         ),
                       ),
                     ],
@@ -1179,9 +1184,9 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
               decoration: BoxDecoration(
-                color: const Color(0xFFFAFAFA),
+                color: isDark ? Colors.white : const Color(0xFFFAFAFA),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
+                border: Border.all(color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFFE2E8F0)),
               ),
               alignment: Alignment.centerLeft,
               child: Image.network(
@@ -1203,9 +1208,9 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEFF6FF),
+                  color: isDark ? const Color(0xFF1E3A8A) : const Color(0xFFEFF6FF),
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFFBFDBFE)),
+                  border: Border.all(color: isDark ? const Color(0xFF3B82F6) : const Color(0xFFBFDBFE)),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -1215,11 +1220,11 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
                       style: GoogleFonts.poppins(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
-                        color: const Color(0xFF1D4ED8),
+                        color: isDark ? const Color(0xFF93C5FD) : const Color(0xFF1D4ED8),
                       ),
                     ),
                     const SizedBox(width: 4),
-                    const Icon(Icons.edit_document, size: 14, color: Color(0xFF1D4ED8)),
+                    Icon(Icons.edit_document, size: 14, color: isDark ? const Color(0xFF93C5FD) : const Color(0xFF1D4ED8)),
                   ],
                 ),
               ),
@@ -1231,9 +1236,9 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEFF6FF),
+                  color: isDark ? const Color(0xFF1E3A8A) : const Color(0xFFEFF6FF),
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFFBFDBFE)),
+                  border: Border.all(color: isDark ? const Color(0xFF3B82F6) : const Color(0xFFBFDBFE)),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -1243,11 +1248,11 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
                       style: GoogleFonts.poppins(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
-                        color: const Color(0xFF1D4ED8),
+                        color: isDark ? const Color(0xFF93C5FD) : const Color(0xFF1D4ED8),
                       ),
                     ),
                     const SizedBox(width: 4),
-                    const Icon(Icons.draw_rounded, size: 14, color: Color(0xFF1D4ED8)),
+                    Icon(Icons.draw_rounded, size: 14, color: isDark ? const Color(0xFF93C5FD) : const Color(0xFF1D4ED8)),
                   ],
                 ),
               ),
@@ -1312,9 +1317,9 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
     return Expanded(
       child: Container(
         decoration: BoxDecoration(
-          color: AppTheme.background,
+          color: AppTheme.getCardColor(context),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppTheme.cardBorder),
+          border: Border.all(color: AppTheme.getCardBorder(context)),
         ),
         child: Material(
           color: Colors.transparent,
@@ -1332,7 +1337,7 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
                     style: GoogleFonts.poppins(
                       fontSize: 18,
                       fontWeight: FontWeight.w800,
-                      color: AppTheme.textPrimary,
+                      color: AppTheme.getTextPrimary(context),
                     ),
                   ),
                   Text(
@@ -1340,7 +1345,7 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
                     style: GoogleFonts.poppins(
                       fontSize: 10,
                       fontWeight: FontWeight.w500,
-                      color: AppTheme.textSecondary,
+                      color: AppTheme.getTextSecondary(context),
                     ),
                   ),
                 ],
@@ -1353,12 +1358,13 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
   }
 
   Widget _buildMenuSection(BuildContext context) {
+    final isDark = AppTheme.isDark(context);
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: AppTheme.background,
+        color: AppTheme.getCardColor(context),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.cardBorder),
+        border: Border.all(color: AppTheme.getCardBorder(context)),
       ),
       child: Column(
         children: List.generate(_menuItems.length, (index) {
@@ -1393,7 +1399,7 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
                         width: 40,
                         height: 40,
                         decoration: BoxDecoration(
-                          color: AppTheme.primaryLight,
+                          color: isDark ? AppTheme.primary.withValues(alpha: 0.2) : AppTheme.primaryLight,
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Icon(
@@ -1412,22 +1418,22 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
                               style: GoogleFonts.poppins(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
-                                color: AppTheme.textPrimary,
+                                color: AppTheme.getTextPrimary(context),
                               ),
                             ),
                             Text(
                               item['subtitle'] as String,
                               style: GoogleFonts.poppins(
                                 fontSize: 11,
-                                color: AppTheme.textSecondary,
+                                color: AppTheme.getTextSecondary(context),
                               ),
                             ),
                           ],
                         ),
                       ),
-                      const Icon(
+                      Icon(
                         Icons.chevron_right_rounded,
-                        color: AppTheme.textSecondary,
+                        color: AppTheme.getTextSecondary(context),
                         size: 20,
                       ),
                     ],
@@ -1435,10 +1441,10 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
                 ),
               ),
               if (!isLast)
-                const Divider(
+                Divider(
                   height: 1,
                   indent: 70,
-                  color: AppTheme.cardBorder,
+                  color: AppTheme.getCardBorder(context),
                 ),
             ],
           );
@@ -1465,6 +1471,7 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
   }
 
   Widget _buildLogoutButton(BuildContext context) {
+    final isDark = AppTheme.isDark(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: GestureDetector(
@@ -1489,9 +1496,9 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
           width: double.infinity,
           padding: const EdgeInsets.symmetric(vertical: 14),
           decoration: BoxDecoration(
-            color: const Color(0xFFFEEEEE),
+            color: isDark ? const Color(0xFF450A0A).withValues(alpha: 0.5) : const Color(0xFFFEEEEE),
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppTheme.errorColor.withValues(alpha: 0.2)),
+            border: Border.all(color: AppTheme.errorColor.withValues(alpha: isDark ? 0.4 : 0.2)),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,

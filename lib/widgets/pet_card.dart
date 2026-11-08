@@ -54,21 +54,24 @@ class _PetCardState extends State<PetCard> {
     final matchPct = rawPct is num
         ? rawPct
         : (rawPct != null ? double.tryParse(rawPct.toString().replaceAll('%', '').trim()) : null);
+    final isDark = AppTheme.isDark(context);
 
     return GestureDetector(
       onTap: widget.onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: AppTheme.background,
+          color: AppTheme.getCardColor(context),
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: AppTheme.cardBorder),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 12,
-              offset: const Offset(0, 3),
-            ),
-          ],
+          border: Border.all(color: AppTheme.getCardBorder(context)),
+          boxShadow: isDark
+              ? []
+              : [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 12,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -86,12 +89,12 @@ class _PetCardState extends State<PetCard> {
                           height: 120,
                           width: double.infinity,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, _, _) => _buildPlaceholder(120),
+                          errorBuilder: (_, _, _) => _buildPlaceholder(context, 120),
                           loadingBuilder: (_, child, progress) {
                             if (progress == null) return child;
                             return Container(
                               height: 120,
-                              color: AppTheme.surface,
+                              color: AppTheme.getSurfaceColor(context),
                               child: Center(
                                 child: SizedBox(
                                   width: 24,
@@ -105,7 +108,7 @@ class _PetCardState extends State<PetCard> {
                             );
                           },
                         )
-                      : _buildPlaceholder(120),
+                      : _buildPlaceholder(context, 120),
                 ),
                 Positioned(
                   top: 8,
@@ -116,21 +119,24 @@ class _PetCardState extends State<PetCard> {
                       width: 34,
                       height: 34,
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppTheme.getCardColor(context),
                         shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.1),
-                            blurRadius: 6,
-                          ),
-                        ],
+                        border: Border.all(color: AppTheme.getCardBorder(context), width: 0.8),
+                        boxShadow: isDark
+                            ? []
+                            : [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.1),
+                                  blurRadius: 6,
+                                ),
+                              ],
                       ),
                       child: Icon(
                         _isFavorite
                             ? Icons.favorite_rounded
                             : Icons.favorite_border_rounded,
                         size: 18,
-                        color: _isFavorite ? Colors.redAccent : AppTheme.textSecondary,
+                        color: _isFavorite ? Colors.redAccent : AppTheme.getTextSecondary(context),
                       ),
                     ),
                   ),
@@ -233,7 +239,7 @@ class _PetCardState extends State<PetCard> {
                     style: GoogleFonts.poppins(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
-                      color: AppTheme.textPrimary,
+                      color: AppTheme.getTextPrimary(context),
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -241,7 +247,7 @@ class _PetCardState extends State<PetCard> {
                     _breed,
                     style: GoogleFonts.poppins(
                       fontSize: 12,
-                      color: AppTheme.textSecondary,
+                      color: AppTheme.getTextSecondary(context),
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -250,11 +256,13 @@ class _PetCardState extends State<PetCard> {
                   Row(
                     children: [
                       _infoChip(
+                        context,
                         _age,
                         Icons.cake_outlined,
                       ),
                       const SizedBox(width: 6),
                       _infoChip(
+                        context,
                         _gender,
                         _gender.toLowerCase() == 'male'
                             ? Icons.male_rounded
@@ -276,22 +284,25 @@ class _PetCardState extends State<PetCard> {
     final matchPct = rawPct is num
         ? rawPct
         : (rawPct != null ? double.tryParse(rawPct.toString().replaceAll('%', '').trim()) : null);
+    final isDark = AppTheme.isDark(context);
 
     return GestureDetector(
       onTap: widget.onTap,
       child: Container(
         width: 155,
         decoration: BoxDecoration(
-          color: AppTheme.background,
+          color: AppTheme.getCardColor(context),
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: AppTheme.cardBorder),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 10,
-              offset: const Offset(0, 3),
-            ),
-          ],
+          border: Border.all(color: AppTheme.getCardBorder(context)),
+          boxShadow: isDark
+              ? []
+              : [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.04),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -309,9 +320,9 @@ class _PetCardState extends State<PetCard> {
                           height: 125,
                           width: double.infinity,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, _, _) => _buildPlaceholder(125),
+                          errorBuilder: (_, _, _) => _buildPlaceholder(context, 125),
                         )
-                      : _buildPlaceholder(125),
+                      : _buildPlaceholder(context, 125),
                 ),
                 Positioned(
                   top: 6,
@@ -322,21 +333,24 @@ class _PetCardState extends State<PetCard> {
                       width: 30,
                       height: 30,
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppTheme.getCardColor(context),
                         shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.1),
-                            blurRadius: 6,
-                          ),
-                        ],
+                        border: Border.all(color: AppTheme.getCardBorder(context), width: 0.8),
+                        boxShadow: isDark
+                            ? []
+                            : [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.1),
+                                  blurRadius: 6,
+                                ),
+                              ],
                       ),
                       child: Icon(
                         _isFavorite
                             ? Icons.favorite_rounded
                             : Icons.favorite_border_rounded,
                         size: 15,
-                        color: _isFavorite ? Colors.redAccent : AppTheme.textSecondary,
+                        color: _isFavorite ? Colors.redAccent : AppTheme.getTextSecondary(context),
                       ),
                     ),
                   ),
@@ -386,7 +400,7 @@ class _PetCardState extends State<PetCard> {
                     style: GoogleFonts.poppins(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
-                      color: AppTheme.textPrimary,
+                      color: AppTheme.getTextPrimary(context),
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -396,7 +410,7 @@ class _PetCardState extends State<PetCard> {
                     _breed,
                     style: GoogleFonts.poppins(
                       fontSize: 11,
-                      color: AppTheme.textSecondary,
+                      color: AppTheme.getTextSecondary(context),
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -433,10 +447,10 @@ class _PetCardState extends State<PetCard> {
     );
   }
 
-  Widget _buildPlaceholder(double height) {
+  Widget _buildPlaceholder(BuildContext context, double height) {
     return Container(
       height: height,
-      color: AppTheme.primaryLight,
+      color: AppTheme.isDark(context) ? const Color(0xFF1E293B) : AppTheme.primaryLight,
       child: Center(
         child: Icon(
           Icons.pets_rounded,
@@ -447,13 +461,13 @@ class _PetCardState extends State<PetCard> {
     );
   }
 
-  Widget _infoChip(String label, IconData icon) {
+  Widget _infoChip(BuildContext context, String label, IconData icon) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: AppTheme.surface,
+        color: AppTheme.getSurfaceColor(context),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppTheme.cardBorder),
+        border: Border.all(color: AppTheme.getCardBorder(context)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -464,7 +478,7 @@ class _PetCardState extends State<PetCard> {
             label,
             style: GoogleFonts.poppins(
               fontSize: 11,
-              color: AppTheme.textPrimary,
+              color: AppTheme.getTextPrimary(context),
               fontWeight: FontWeight.w500,
             ),
           ),

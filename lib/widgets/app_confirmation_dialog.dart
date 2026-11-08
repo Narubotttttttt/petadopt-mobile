@@ -102,9 +102,12 @@ class AppConfirmationDialog extends StatelessWidget {
     final hasTwoButtons = cancelText != null && cancelText!.trim().isNotEmpty;
 
     return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(24),
+        side: BorderSide(color: AppTheme.getCardBorder(context), width: 0.8),
+      ),
       elevation: 10,
-      backgroundColor: Colors.white,
+      backgroundColor: AppTheme.getCardColor(context),
       insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(22, 26, 22, 22),
@@ -122,7 +125,7 @@ class AppConfirmationDialog extends StatelessWidget {
               style: GoogleFonts.poppins(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
-                color: AppTheme.textPrimary,
+                color: AppTheme.getTextPrimary(context),
                 height: 1.3,
               ),
             ),
@@ -133,7 +136,7 @@ class AppConfirmationDialog extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: GoogleFonts.poppins(
                   fontSize: 13,
-                  color: AppTheme.textSecondary,
+                  color: AppTheme.getTextSecondary(context),
                   height: 1.5,
                 ),
               ),
@@ -153,8 +156,12 @@ class AppConfirmationDialog extends StatelessWidget {
                         onCancel?.call();
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFF1F5F9),
-                        foregroundColor: const Color(0xFF475569),
+                        backgroundColor: AppTheme.isDark(context)
+                            ? const Color(0xFF334155)
+                            : const Color(0xFFF1F5F9),
+                        foregroundColor: AppTheme.isDark(context)
+                            ? const Color(0xFFE2E8F0)
+                            : const Color(0xFF475569),
                         elevation: 0,
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                         shape: RoundedRectangleBorder(
@@ -169,7 +176,9 @@ class AppConfirmationDialog extends StatelessWidget {
                           style: GoogleFonts.poppins(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
-                            color: const Color(0xFF475569),
+                            color: AppTheme.isDark(context)
+                                ? const Color(0xFFE2E8F0)
+                                : const Color(0xFF475569),
                           ),
                           maxLines: 1,
                         ),

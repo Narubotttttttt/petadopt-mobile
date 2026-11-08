@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile_petadopt/services/api_service.dart';
+import 'package:mobile_petadopt/services/theme_service.dart';
 import 'package:mobile_petadopt/theme/app_theme.dart';
 import 'package:mobile_petadopt/widgets/app_confirmation_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -31,7 +32,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       if (mounted) {
         setState(() {
           _notificationsEnabled = prefs.getBool('settings_notifications') ?? true;
-          _darkModeEnabled = prefs.getBool('settings_dark_mode') ?? false;
+          _darkModeEnabled = ThemeService.isDarkMode;
         });
       }
     } catch (_) {}
@@ -69,8 +70,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _setDarkMode(bool value) async {
     setState(() => _darkModeEnabled = value);
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool('settings_dark_mode', value);
+      await ThemeService.setDarkMode(value);
       if (mounted) {
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(
@@ -145,7 +145,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               : selectedRating == 3
                                   ? 'Good'
                                   : 'Fair',
-                      style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: const Color(0xFF0F172A)),
+                      style: GoogleFonts.poppins(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.getTextPrimary(context),
+                      ),
                     ),
                   ),
                 ],
@@ -170,16 +174,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
       content: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          color: const Color(0xFFF1F5F9),
+          color: AppTheme.getSurfaceColor(context),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFE2E8F0)),
+          border: Border.all(color: AppTheme.getCardBorder(context)),
         ),
         child: Row(
           children: [
             Expanded(
               child: Text(
                 shareUrl,
-                style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFF0F172A), fontWeight: FontWeight.w500),
+                style: GoogleFonts.poppins(
+                  fontSize: 12,
+                  color: AppTheme.getTextPrimary(context),
+                  fontWeight: FontWeight.w500,
+                ),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
@@ -220,7 +228,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
             children: [
               Text(
                 'CDO Animal Welfare Society Inc. (CAWS)',
-                style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700, color: const Color(0xFF0F172A)),
+                style: GoogleFonts.poppins(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.getTextPrimary(context),
+                ),
               ),
               const SizedBox(height: 6),
               Text(
@@ -228,7 +240,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 '1. Information Collected: We collect your name, contact details, residence verification (Barangay Certificate), government ID, and digital signature exclusively for animal adoption processing and legal accountability.\n\n'
                 '2. Usage: Collected information is utilized to evaluate pet compatibility, process adoption agreements, and conduct scheduled health check-ins.\n\n'
                 '3. Confidentiality: Your uploaded identification documents and digital signature are encrypted and will never be sold or disclosed to third parties without your prior explicit consent.',
-                style: GoogleFonts.poppins(fontSize: 12, color: AppTheme.textSecondary, height: 1.5),
+                style: GoogleFonts.poppins(
+                  fontSize: 12,
+                  color: AppTheme.getTextSecondary(context),
+                  height: 1.5,
+                ),
               ),
             ],
           ),
@@ -253,7 +269,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
             children: [
               Text(
                 'Adoption Agreement Terms',
-                style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700, color: const Color(0xFF0F172A)),
+                style: GoogleFonts.poppins(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.getTextPrimary(context),
+                ),
               ),
               const SizedBox(height: 6),
               Text(
@@ -262,7 +282,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 '2. Non-Breeding & Spay/Neuter: Keep the animal as a companion pet and honor mandatory spay/neuter guidelines.\n\n'
                 '3. Post-Adoption Follow-ups: Cooperate with CAWS post-adoption monthly health check-ins and submit necessary health updates.\n\n'
                 '4. Non-Abandonment: Under no circumstance shall the pet be abandoned, sold, or surrendered without prior written notice to CAWS.',
-                style: GoogleFonts.poppins(fontSize: 12, color: AppTheme.textSecondary, height: 1.5),
+                style: GoogleFonts.poppins(
+                  fontSize: 12,
+                  color: AppTheme.getTextSecondary(context),
+                  height: 1.5,
+                ),
               ),
             ],
           ),
@@ -285,7 +309,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
         children: [
           Text(
             'CDO Animal Welfare Society Inc.',
-            style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w700, color: const Color(0xFF0F172A)),
+            style: GoogleFonts.poppins(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: AppTheme.getTextPrimary(context),
+            ),
           ),
           const SizedBox(height: 10),
           _buildContactRow(Icons.location_on_outlined, 'Cagayan de Oro City, Misamis Oriental, Philippines'),
@@ -304,12 +332,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 16, color: const Color(0xFF64748B)),
+        Icon(icon, size: 16, color: AppTheme.getTextSecondary(context)),
         const SizedBox(width: 8),
         Expanded(
           child: Text(
             text,
-            style: GoogleFonts.poppins(fontSize: 12, color: AppTheme.textSecondary, height: 1.35),
+            style: GoogleFonts.poppins(fontSize: 12, color: AppTheme.getTextSecondary(context), height: 1.35),
           ),
         ),
       ],
@@ -336,10 +364,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final bgColor = AppTheme.getBackgroundColor(context);
+    final cardColor = AppTheme.getCardColor(context);
+    final cardBorder = AppTheme.getCardBorder(context);
+    final textPrimary = AppTheme.getTextPrimary(context);
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: bgColor,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF8F9FA),
+        backgroundColor: bgColor,
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: true,
@@ -353,20 +386,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 width: 42,
                 height: 42,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: cardColor,
                   shape: BoxShape.circle,
-                  border: Border.all(color: const Color(0xFFE2E8F0), width: 0.8),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.03),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
+                  border: Border.all(color: cardBorder, width: 0.8),
+                  boxShadow: AppTheme.isDark(context)
+                      ? []
+                      : [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.03),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.arrow_back_rounded,
-                  color: Color(0xFF0F172A),
+                  color: textPrimary,
                   size: 20,
                 ),
               ),
@@ -378,7 +413,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           style: GoogleFonts.poppins(
             fontSize: 18,
             fontWeight: FontWeight.w700,
-            color: const Color(0xFF0F172A),
+            color: textPrimary,
           ),
         ),
       ),
@@ -477,7 +512,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         style: GoogleFonts.poppins(
           fontSize: 16,
           fontWeight: FontWeight.w700,
-          color: const Color(0xFF0F172A),
+          color: AppTheme.getTextPrimary(context),
         ),
       ),
     );
@@ -502,13 +537,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
               style: GoogleFonts.poppins(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
-                color: const Color(0xFF0F172A),
+                color: AppTheme.getTextPrimary(context),
               ),
             ),
           ),
           CupertinoSwitch(
             value: value,
-            activeTrackColor: const Color(0xFF76C81D),
+            activeTrackColor: AppTheme.primary,
             onChanged: onChanged,
           ),
         ],
@@ -541,13 +576,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 style: GoogleFonts.poppins(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
-                  color: const Color(0xFF0F172A),
+                  color: AppTheme.getTextPrimary(context),
                 ),
               ),
             ),
-            const Icon(
+            Icon(
               Icons.chevron_right_rounded,
-              color: Color(0xFF64748B),
+              color: AppTheme.getTextSecondary(context),
               size: 22,
             ),
           ],
@@ -557,46 +592,50 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _buildIconBox(IconData icon) {
+    final isDark = AppTheme.isDark(context);
     return Container(
       width: 44,
       height: 44,
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE2E8F0), width: 0.8),
+        border: Border.all(color: AppTheme.getCardBorder(context), width: 0.8),
       ),
       child: Center(
         child: Icon(
           icon,
           size: 22,
-          color: const Color(0xFF0F172A),
+          color: AppTheme.getTextPrimary(context),
         ),
       ),
     );
   }
 
   Widget _buildDivider() {
-    return const Divider(
+    return Divider(
       height: 1,
       thickness: 0.6,
-      color: Color(0xFFF1F5F9),
+      color: AppTheme.getCardBorder(context),
       indent: 74,
       endIndent: 16,
     );
   }
 
   BoxDecoration _cardDecoration() {
+    final isDark = AppTheme.isDark(context);
     return BoxDecoration(
-      color: Colors.white,
+      color: AppTheme.getCardColor(context),
       borderRadius: BorderRadius.circular(20),
-      border: Border.all(color: const Color(0xFFE2E8F0).withValues(alpha: 0.7), width: 0.8),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withValues(alpha: 0.02),
-          blurRadius: 10,
-          offset: const Offset(0, 3),
-        ),
-      ],
+      border: Border.all(color: AppTheme.getCardBorder(context), width: 0.8),
+      boxShadow: isDark
+          ? []
+          : [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.02),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+            ],
     );
   }
 }

@@ -413,7 +413,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         }
       },
       child: Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: AppTheme.getBackgroundColor(context),
         extendBody: true,
         body: IndexedStack(
           index: _selectedIndex,
@@ -427,6 +427,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   Widget _buildFloatingBottomNav(BuildContext context) {
     final bottomInset = MediaQuery.of(context).padding.bottom;
     final bottomMargin = bottomInset > 0 ? bottomInset + 4.0 : 16.0;
+    final isDark = AppTheme.isDark(context);
 
     return Padding(
       padding: EdgeInsets.only(
@@ -440,7 +441,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           borderRadius: BorderRadius.circular(32),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF0F172A).withValues(alpha: 0.12),
+              color: const Color(0xFF0F172A).withValues(alpha: isDark ? 0.35 : 0.12),
               blurRadius: 24,
               offset: const Offset(0, 8),
               spreadRadius: -2,
@@ -458,10 +459,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.94),
+                color: isDark
+                    ? const Color(0xFF1E293B).withValues(alpha: 0.94)
+                    : Colors.white.withValues(alpha: 0.94),
                 borderRadius: BorderRadius.circular(32),
                 border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.85),
+                  color: isDark
+                      ? const Color(0xFF334155).withValues(alpha: 0.85)
+                      : Colors.white.withValues(alpha: 0.85),
                   width: 1.2,
                 ),
               ),
@@ -558,7 +563,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     Icon(
                       isSelected ? activeIcon : icon,
                       size: 21,
-                      color: isSelected ? AppTheme.primary : const Color(0xFF64748B),
+                      color: isSelected ? AppTheme.primary : AppTheme.getTextSecondary(context),
                     ),
                     if (hasBadge)
                       Positioned(
@@ -583,7 +588,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   style: GoogleFonts.poppins(
                     fontSize: 10.5,
                     fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                    color: isSelected ? AppTheme.primary : const Color(0xFF64748B),
+                    color: isSelected ? AppTheme.primary : AppTheme.getTextSecondary(context),
                     letterSpacing: -0.1,
                   ),
                 ),
@@ -922,19 +927,22 @@ class _HomeTabState extends State<_HomeTab> {
     required Color badgeBg,
     VoidCallback? onTap,
   }) {
+    final isDark = AppTheme.isDark(context);
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.getCardColor(context),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 4,
-            offset: const Offset(0, 1.5),
-          ),
-        ],
+        border: Border.all(color: AppTheme.getCardBorder(context), width: 1),
+        boxShadow: isDark
+            ? []
+            : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.02),
+                  blurRadius: 4,
+                  offset: const Offset(0, 1.5),
+                ),
+              ],
       ),
       child: Material(
         color: Colors.transparent,
@@ -1042,11 +1050,12 @@ class _HomeTabState extends State<_HomeTab> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (modalContext) {
+        final isDark = AppTheme.isDark(context);
         return Container(
           height: MediaQuery.of(context).size.height * 0.70,
-          decoration: const BoxDecoration(
-            color: Color(0xFFF8FAFC),
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          decoration: BoxDecoration(
+            color: AppTheme.getSurfaceColor(context),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
           ),
           child: Column(
             children: [
@@ -1055,7 +1064,7 @@ class _HomeTabState extends State<_HomeTab> {
                 width: 36,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
+                  color: isDark ? const Color(0xFF475569) : Colors.grey.shade300,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -1083,7 +1092,7 @@ class _HomeTabState extends State<_HomeTab> {
                         style: GoogleFonts.poppins(
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
-                          color: AppTheme.textPrimary,
+                          color: AppTheme.getTextPrimary(context),
                         ),
                       ),
                     ),
@@ -1093,20 +1102,20 @@ class _HomeTabState extends State<_HomeTab> {
                         width: 28,
                         height: 28,
                         decoration: BoxDecoration(
-                          color: Colors.grey.shade200,
+                          color: isDark ? const Color(0xFF334155) : Colors.grey.shade200,
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
                           Icons.close_rounded,
                           size: 16,
-                          color: Colors.grey.shade600,
+                          color: isDark ? const Color(0xFFE2E8F0) : Colors.grey.shade600,
                         ),
                       ),
                     ),
                   ],
                 ),
               ),
-              const Divider(height: 1, thickness: 1, color: Color(0xFFE2E8F0)),
+              Divider(height: 1, thickness: 1, color: AppTheme.getCardBorder(context)),
               Expanded(
                 child: FutureBuilder<List<dynamic>>(
                   future: ApiService.getMyApplications(),
@@ -1486,13 +1495,14 @@ class _HomeTabState extends State<_HomeTab> {
         _userProfile?['profile']?['avatar']?.toString() ??
         _userProfile?['adopter']?['avatar_url']?.toString();
     final hasValidAvatar = avatarUrl != null && avatarUrl.isNotEmpty && avatarUrl.startsWith('http');
+    final isDark = AppTheme.isDark(context);
 
     return SliverToBoxAdapter(
       child: AnnotatedRegion<SystemUiOverlayStyle>(
-        value: SystemUiOverlayStyle.dark.copyWith(
+        value: (isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark).copyWith(
           statusBarColor: Colors.transparent,
-          statusBarIconBrightness: Brightness.dark,
-          statusBarBrightness: Brightness.light,
+          statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+          statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
         ),
         child: SafeArea(
           bottom: false,
@@ -1511,7 +1521,7 @@ class _HomeTabState extends State<_HomeTab> {
                         style: GoogleFonts.poppins(
                           fontSize: 12.5,
                           fontWeight: FontWeight.w500,
-                          color: AppTheme.textSecondary,
+                          color: AppTheme.getTextSecondary(context),
                           letterSpacing: -0.1,
                         ),
                       ),
@@ -1521,7 +1531,7 @@ class _HomeTabState extends State<_HomeTab> {
                         style: GoogleFonts.poppins(
                           fontSize: 22,
                           fontWeight: FontWeight.w700,
-                          color: AppTheme.textPrimary,
+                          color: AppTheme.getTextPrimary(context),
                           letterSpacing: -0.4,
                           height: 1.2,
                         ),
@@ -1540,23 +1550,25 @@ class _HomeTabState extends State<_HomeTab> {
                         width: 40,
                         height: 40,
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: AppTheme.getCardColor(context),
                           shape: BoxShape.circle,
-                          border: Border.all(color: AppTheme.cardBorder),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.03),
-                              blurRadius: 6,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
+                          border: Border.all(color: AppTheme.getCardBorder(context)),
+                          boxShadow: isDark
+                              ? []
+                              : [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.03),
+                                    blurRadius: 6,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
                         ),
                         child: Stack(
                           children: [
-                            const Center(
+                            Center(
                               child: Icon(
                                 Icons.notifications_none_rounded,
-                                color: AppTheme.textPrimary,
+                                color: AppTheme.getTextPrimary(context),
                                 size: 20,
                               ),
                             ),
@@ -1587,20 +1599,22 @@ class _HomeTabState extends State<_HomeTab> {
                         decoration: BoxDecoration(
                           color: hasValidAvatar ? null : AppTheme.primary,
                           shape: BoxShape.circle,
-                          border: Border.all(color: AppTheme.cardBorder),
+                          border: Border.all(color: AppTheme.getCardBorder(context)),
                           image: hasValidAvatar
                               ? DecorationImage(
                                   image: NetworkImage(avatarUrl),
                                   fit: BoxFit.cover,
                                 )
                               : null,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.03),
-                              blurRadius: 6,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
+                          boxShadow: isDark
+                              ? []
+                              : [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.03),
+                                    blurRadius: 6,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
                         ),
                         child: hasValidAvatar
                             ? null
@@ -1641,7 +1655,7 @@ class _HomeTabState extends State<_HomeTab> {
           style: GoogleFonts.poppins(
             fontSize: 17.5,
             fontWeight: FontWeight.w700,
-            color: AppTheme.textPrimary,
+            color: AppTheme.getTextPrimary(context),
             letterSpacing: -0.3,
           ),
         ),
@@ -1653,7 +1667,7 @@ class _HomeTabState extends State<_HomeTab> {
           style: GoogleFonts.poppins(
             fontSize: 12.5,
             fontWeight: FontWeight.w400,
-            color: const Color(0xFF475569),
+            color: AppTheme.getTextSecondary(context),
             height: 1.4,
           ),
         ),
@@ -1719,18 +1733,21 @@ class _HomeTabState extends State<_HomeTab> {
     required VoidCallback onTap,
     double verticalPadding = 13.0,
   }) {
+    final isDark = AppTheme.isDark(context);
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.getCardColor(context),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.cardBorder, width: 1.1),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF0F172A).withValues(alpha: 0.03),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        border: Border.all(color: AppTheme.getCardBorder(context), width: 1.1),
+        boxShadow: isDark
+            ? []
+            : [
+                BoxShadow(
+                  color: const Color(0xFF0F172A).withValues(alpha: 0.03),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
       ),
       child: Material(
         color: Colors.transparent,
@@ -1745,7 +1762,7 @@ class _HomeTabState extends State<_HomeTab> {
                   width: 42,
                   height: 42,
                   decoration: BoxDecoration(
-                    color: AppTheme.primaryLight,
+                    color: isDark ? AppTheme.primary.withValues(alpha: 0.2) : AppTheme.primaryLight,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Center(
@@ -1766,7 +1783,7 @@ class _HomeTabState extends State<_HomeTab> {
                         style: GoogleFonts.poppins(
                           fontSize: 14.5,
                           fontWeight: FontWeight.w700,
-                          color: AppTheme.textPrimary,
+                          color: AppTheme.getTextPrimary(context),
                           letterSpacing: -0.2,
                         ),
                       ),
@@ -1775,7 +1792,7 @@ class _HomeTabState extends State<_HomeTab> {
                         subtitle,
                         style: GoogleFonts.poppins(
                           fontSize: 12,
-                          color: const Color(0xFF64748B),
+                          color: AppTheme.getTextSecondary(context),
                           height: 1.3,
                         ),
                       ),
@@ -1783,9 +1800,9 @@ class _HomeTabState extends State<_HomeTab> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                const Icon(
+                Icon(
                   Icons.chevron_right_rounded,
-                  color: Color(0xFF94A3B8),
+                  color: AppTheme.getTextSecondary(context),
                   size: 20,
                 ),
               ],

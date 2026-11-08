@@ -298,9 +298,11 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
       );
       return;
     }
+    final isDark = AppTheme.isDark(context);
     final title = isValidId ? 'Upload Valid Government ID' : 'Upload Barangay Certificate';
     showModalBottomSheet(
       context: context,
+      backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -314,12 +316,13 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
               style: GoogleFonts.poppins(
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
+                color: AppTheme.getTextPrimary(ctx),
               ),
             ),
             const SizedBox(height: 16),
             ListTile(
               leading: const Icon(Icons.camera_alt_rounded, color: AppTheme.primary),
-              title: Text('Take Photo with Camera', style: GoogleFonts.poppins(fontSize: 14)),
+              title: Text('Take Photo with Camera', style: GoogleFonts.poppins(fontSize: 14, color: AppTheme.getTextPrimary(ctx))),
               onTap: () {
                 Navigator.pop(ctx);
                 _pickImage(ImageSource.camera, isValidId);
@@ -327,7 +330,7 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.photo_library_rounded, color: AppTheme.primary),
-              title: Text('Choose from Gallery', style: GoogleFonts.poppins(fontSize: 14)),
+              title: Text('Choose from Gallery', style: GoogleFonts.poppins(fontSize: 14, color: AppTheme.getTextPrimary(ctx))),
               onTap: () {
                 Navigator.pop(ctx);
                 _pickImage(ImageSource.gallery, isValidId);
@@ -468,6 +471,7 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
   }
 
   void _openOtpDialog() {
+    final isDark = AppTheme.isDark(context);
     final otpController = TextEditingController();
     bool isVerifying = false;
     int secondsRemaining = 60;
@@ -495,9 +499,9 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
                 left: 24,
                 right: 24,
               ),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -506,7 +510,7 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
                     width: 44,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: Colors.grey.shade300,
+                      color: isDark ? const Color(0xFF334155) : Colors.grey.shade300,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -514,8 +518,8 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
                   Container(
                     width: 56,
                     height: 56,
-                    decoration: const BoxDecoration(
-                      color: AppTheme.primaryLight,
+                    decoration: BoxDecoration(
+                      color: isDark ? AppTheme.primary.withValues(alpha: 0.2) : AppTheme.primaryLight,
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(Icons.sms_rounded, color: AppTheme.primary, size: 28),
@@ -526,7 +530,7 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
                     style: GoogleFonts.poppins(
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
-                      color: AppTheme.textPrimary,
+                      color: AppTheme.getTextPrimary(modalCtx),
                     ),
                   ),
                   const SizedBox(height: 6),
@@ -535,7 +539,7 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
                     textAlign: TextAlign.center,
                     style: GoogleFonts.poppins(
                       fontSize: 13,
-                      color: AppTheme.textSecondary,
+                      color: AppTheme.getTextSecondary(modalCtx),
                       height: 1.4,
                     ),
                   ),
@@ -550,18 +554,18 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
                       fontSize: 24,
                       letterSpacing: 8,
                       fontWeight: FontWeight.w700,
-                      color: AppTheme.primaryDark,
+                      color: isDark ? const Color(0xFF5EEAD4) : AppTheme.primaryDark,
                     ),
                     decoration: InputDecoration(
                       counterText: '',
                       hintText: '••••••',
-                      hintStyle: TextStyle(letterSpacing: 8, color: Colors.grey.shade300),
-                      fillColor: const Color(0xFFF6F8FA),
+                      hintStyle: TextStyle(letterSpacing: 8, color: isDark ? const Color(0xFF475569) : Colors.grey.shade300),
+                      fillColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF6F8FA),
                       filled: true,
                       contentPadding: const EdgeInsets.symmetric(vertical: 14),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(14),
-                        borderSide: BorderSide(color: Colors.grey.shade300),
+                        borderSide: BorderSide(color: isDark ? const Color(0xFF334155) : Colors.grey.shade300),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(14),
@@ -861,18 +865,20 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: AppTheme.getBackgroundColor(context),
       appBar: AppBar(
+        backgroundColor: AppTheme.getBackgroundColor(context),
+        foregroundColor: AppTheme.getTextPrimary(context),
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+          icon: Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: AppTheme.getTextPrimary(context)),
         ),
         title: Text(
           'Adoption Application',
           style: GoogleFonts.poppins(
             fontSize: 16.5,
             fontWeight: FontWeight.w600,
-            color: AppTheme.textPrimary,
+            color: AppTheme.getTextPrimary(context),
           ),
         ),
         elevation: 0,
@@ -901,6 +907,7 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
   }
 
   Widget _buildCompactHeader() {
+    final isDark = AppTheme.isDark(context);
     const stepTitles = [
       'Applicant Details',
       'Document Verification',
@@ -908,10 +915,10 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
 
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
-      decoration: const BoxDecoration(
-        color: AppTheme.background,
+      decoration: BoxDecoration(
+        color: AppTheme.getBackgroundColor(context),
         border: Border(
-          bottom: BorderSide(color: AppTheme.cardBorder, width: 1),
+          bottom: BorderSide(color: AppTheme.getCardBorder(context), width: 1),
         ),
       ),
       child: Column(
@@ -930,14 +937,14 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
                         errorBuilder: (_, _, _) => Container(
                           width: 36,
                           height: 36,
-                          color: AppTheme.primaryLight,
+                          color: isDark ? const Color(0xFF1E293B) : AppTheme.primaryLight,
                           child: const Icon(Icons.pets_rounded, size: 18, color: AppTheme.primary),
                         ),
                       )
                     : Container(
                         width: 36,
                         height: 36,
-                        color: AppTheme.primaryLight,
+                        color: isDark ? const Color(0xFF1E293B) : AppTheme.primaryLight,
                         child: const Icon(Icons.pets_rounded, size: 18, color: AppTheme.primary),
                       ),
               ),
@@ -953,7 +960,7 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
                       style: GoogleFonts.poppins(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: AppTheme.textPrimary,
+                        color: AppTheme.getTextPrimary(context),
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -962,7 +969,7 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
                       'Step ${_currentStep + 1} of 2 • ${stepTitles[_currentStep]}',
                       style: GoogleFonts.poppins(
                         fontSize: 11,
-                        color: AppTheme.textSecondary,
+                        color: AppTheme.getTextSecondary(context),
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -973,16 +980,16 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: AppTheme.primaryLight,
+                    color: isDark ? AppTheme.primary.withValues(alpha: 0.2) : AppTheme.primaryLight,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppTheme.primary.withValues(alpha: 0.2)),
+                    border: Border.all(color: isDark ? const Color(0xFF0E7A80).withValues(alpha: 0.5) : AppTheme.primary.withValues(alpha: 0.2)),
                   ),
                   child: Text(
                     '${_compatibilityScore!.truncateToDouble() == _compatibilityScore! ? _compatibilityScore!.toInt() : _compatibilityScore!.toStringAsFixed(1)}% Match',
                     style: GoogleFonts.poppins(
                       fontSize: 10.5,
                       fontWeight: FontWeight.w700,
-                      color: AppTheme.primaryDark,
+                      color: isDark ? const Color(0xFF5EEAD4) : AppTheme.primaryDark,
                     ),
                   ),
                 ),
@@ -997,7 +1004,7 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
                   height: 3.5,
                   margin: EdgeInsets.only(right: index < 1 ? 6 : 0),
                   decoration: BoxDecoration(
-                    color: isDoneOrActive ? AppTheme.primary : AppTheme.cardBorder,
+                    color: isDoneOrActive ? AppTheme.primary : (isDark ? const Color(0xFF334155) : AppTheme.cardBorder),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -1024,7 +1031,7 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
             style: GoogleFonts.poppins(
               fontSize: 14,
               fontWeight: FontWeight.w700,
-              color: AppTheme.textPrimary,
+              color: AppTheme.getTextPrimary(context),
             ),
             children: hasAsterisk
                 ? const [
@@ -1045,7 +1052,7 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
             subtitle,
             style: GoogleFonts.poppins(
               fontSize: 11,
-              color: AppTheme.textSecondary,
+              color: AppTheme.getTextSecondary(context),
               height: 1.35,
             ),
           ),
@@ -1055,13 +1062,14 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
   }
 
   Widget _buildCardContainer({required List<Widget> children}) {
+    final isDark = AppTheme.isDark(context);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.surface,
+        color: isDark ? const Color(0xFF1E293B) : AppTheme.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppTheme.cardBorder),
+        border: Border.all(color: AppTheme.getCardBorder(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1076,6 +1084,7 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
     IconData? icon,
     bool isRequired = false,
   }) {
+    final isDark = AppTheme.isDark(context);
     final hasAsterisk = label.endsWith('*') || isRequired;
     final cleanLabel = label.endsWith(' *')
         ? label.substring(0, label.length - 2)
@@ -1087,7 +1096,7 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
           text: cleanLabel,
           style: GoogleFonts.poppins(
             fontSize: 12,
-            color: AppTheme.textSecondary,
+            color: AppTheme.getTextSecondary(context),
           ),
           children: hasAsterisk
               ? const [
@@ -1106,21 +1115,21 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
       alignLabelWithHint: true,
       hintStyle: GoogleFonts.poppins(
         fontSize: 12,
-        color: AppTheme.textSecondary.withValues(alpha: 0.6),
+        color: AppTheme.getTextSecondary(context).withValues(alpha: 0.6),
       ),
       prefixIcon: icon != null
-          ? Icon(icon, size: 18, color: AppTheme.textSecondary)
+          ? Icon(icon, size: 18, color: AppTheme.getTextSecondary(context))
           : null,
       filled: true,
-      fillColor: Colors.white,
+      fillColor: isDark ? const Color(0xFF0F172A) : Colors.white,
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: AppTheme.cardBorder),
+        borderSide: BorderSide(color: AppTheme.getCardBorder(context)),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: AppTheme.cardBorder),
+        borderSide: BorderSide(color: AppTheme.getCardBorder(context)),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
@@ -1131,13 +1140,14 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
 
   Widget _buildSelectedPetsSummaryCard() {
     if (_effectiveSelectedPets.length <= 1) return const SizedBox.shrink();
+    final isDark = AppTheme.isDark(context);
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppTheme.primaryLight.withValues(alpha: 0.6),
+        color: isDark ? const Color(0xFF132D30) : AppTheme.primaryLight.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppTheme.primary.withValues(alpha: 0.3)),
+        border: Border.all(color: isDark ? const Color(0xFF0E7A80).withValues(alpha: 0.5) : AppTheme.primary.withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1151,7 +1161,7 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
                 style: GoogleFonts.poppins(
                   fontSize: 12.5,
                   fontWeight: FontWeight.w700,
-                  color: AppTheme.primaryDark,
+                  color: isDark ? const Color(0xFF5EEAD4) : AppTheme.primaryDark,
                 ),
               ),
             ],
@@ -1159,7 +1169,7 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
           const SizedBox(height: 6),
           Text(
             'Your identity documents and verified profile information will be automatically attached to each companion application.',
-            style: GoogleFonts.poppins(fontSize: 11, color: AppTheme.textSecondary),
+            style: GoogleFonts.poppins(fontSize: 11, color: AppTheme.getTextSecondary(context)),
           ),
           const SizedBox(height: 8),
           Wrap(
@@ -1169,19 +1179,23 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
               final name = p['name']?.toString() ?? 'Pet';
               final score = p['match_percentage'] ?? p['compatibility_score'];
               return Chip(
-                backgroundColor: Colors.white,
+                backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
                 padding: const EdgeInsets.symmetric(horizontal: 4),
-                avatar: const CircleAvatar(
-                  backgroundColor: AppTheme.primaryLight,
-                  child: Icon(Icons.pets, size: 12, color: AppTheme.primary),
+                avatar: CircleAvatar(
+                  backgroundColor: isDark ? const Color(0xFF0F172A) : AppTheme.primaryLight,
+                  child: const Icon(Icons.pets, size: 12, color: AppTheme.primary),
                 ),
                 label: Text(
                   score != null ? '$name ($score%)' : name,
-                  style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w600),
+                  style: GoogleFonts.poppins(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.getTextPrimary(context),
+                  ),
                 ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
-                  side: BorderSide(color: Colors.grey.shade300),
+                  side: BorderSide(color: AppTheme.getCardBorder(context)),
                 ),
               );
             }).toList(),
@@ -1192,6 +1206,7 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
   }
 
   Widget _buildStep1() {
+    final isDark = AppTheme.isDark(context);
     return Form(
       key: _personalFormKey,
       child: Column(
@@ -1206,16 +1221,16 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: AppTheme.primaryLight,
+                    color: isDark ? AppTheme.primary.withValues(alpha: 0.2) : AppTheme.primaryLight,
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppTheme.primary.withValues(alpha: 0.3)),
+                    border: Border.all(color: isDark ? const Color(0xFF0E7A80).withValues(alpha: 0.5) : AppTheme.primary.withValues(alpha: 0.3)),
                   ),
                   child: Text(
                     'ID: $_adopterId',
                     style: GoogleFonts.poppins(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
-                      color: AppTheme.primaryDark,
+                      color: isDark ? const Color(0xFF5EEAD4) : AppTheme.primaryDark,
                     ),
                   ),
                 ),
@@ -1230,6 +1245,7 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
                     flex: 3,
                     child: TextFormField(
                       controller: _firstNameController,
+                      style: GoogleFonts.poppins(color: AppTheme.getTextPrimary(context), fontSize: 13),
                       textCapitalization: TextCapitalization.words,
                       decoration: _minimalInputDecoration(
                         label: 'First Name *',
@@ -1245,6 +1261,7 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
                     flex: 2,
                     child: TextFormField(
                       controller: _middleNameController,
+                      style: GoogleFonts.poppins(color: AppTheme.getTextPrimary(context), fontSize: 13),
                       textCapitalization: TextCapitalization.words,
                       decoration: _minimalInputDecoration(
                         label: 'Middle',
@@ -1257,6 +1274,7 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
               const SizedBox(height: 10),
               TextFormField(
                 controller: _lastNameController,
+                style: GoogleFonts.poppins(color: AppTheme.getTextPrimary(context), fontSize: 13),
                 textCapitalization: TextCapitalization.words,
                 decoration: _minimalInputDecoration(
                   label: 'Last Name *',
@@ -1275,6 +1293,7 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
             children: [
               TextFormField(
                 controller: _phoneController,
+                style: GoogleFonts.poppins(color: AppTheme.getTextPrimary(context), fontSize: 13),
                 keyboardType: TextInputType.phone,
                 inputFormatters: [
                   FilteringTextInputFormatter.digitsOnly,
@@ -1290,6 +1309,7 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
               const SizedBox(height: 10),
               TextFormField(
                 controller: _secondaryPhoneController,
+                style: GoogleFonts.poppins(color: AppTheme.getTextPrimary(context), fontSize: 13),
                 keyboardType: TextInputType.phone,
                 inputFormatters: [
                   FilteringTextInputFormatter.digitsOnly,
@@ -1314,6 +1334,7 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
               const SizedBox(height: 10),
               TextFormField(
                 controller: _addressController,
+                style: GoogleFonts.poppins(color: AppTheme.getTextPrimary(context), fontSize: 13),
                 maxLines: 2,
                 decoration: _minimalInputDecoration(
                   label: 'Complete Address *',
@@ -1358,23 +1379,23 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: isDark ? const Color(0xFF0F172A) : Colors.white,
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: AppTheme.cardBorder),
+                    border: Border.all(color: AppTheme.getCardBorder(context)),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
                         children: [
-                          Icon(Icons.info_outline_rounded, size: 16, color: AppTheme.primary),
+                          const Icon(Icons.info_outline_rounded, size: 16, color: AppTheme.primary),
                           const SizedBox(width: 6),
                           Text(
                             'Landlord or Building Admin Info',
                             style: GoogleFonts.poppins(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
-                              color: AppTheme.textPrimary,
+                              color: AppTheme.getTextPrimary(context),
                             ),
                           ),
                         ],
@@ -1382,6 +1403,7 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
                       const SizedBox(height: 10),
                       TextFormField(
                         controller: _landlordNameController,
+                        style: GoogleFonts.poppins(color: AppTheme.getTextPrimary(context), fontSize: 13),
                         textCapitalization: TextCapitalization.words,
                         decoration: _minimalInputDecoration(
                           label: 'Landlord / Admin Name *',
@@ -1392,6 +1414,7 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
                       const SizedBox(height: 10),
                       TextFormField(
                         controller: _landlordPhoneController,
+                        style: GoogleFonts.poppins(color: AppTheme.getTextPrimary(context), fontSize: 13),
                         keyboardType: TextInputType.phone,
                         inputFormatters: [
                           FilteringTextInputFormatter.digitsOnly,
@@ -1422,6 +1445,7 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
             children: [
               TextFormField(
                 controller: _proposedPetNameController,
+                style: GoogleFonts.poppins(color: AppTheme.getTextPrimary(context), fontSize: 13),
                 decoration: _minimalInputDecoration(
                   label: 'Proposed Pet Name (Optional)',
                   hint: 'e.g. Max, Milo, Bella',
@@ -1434,13 +1458,13 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: const Color(0xFFF0FDF4),
+              color: isDark ? const Color(0xFF064E3B).withValues(alpha: 0.25) : const Color(0xFFF0FDF4),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFBBF7D0)),
+              border: Border.all(color: isDark ? const Color(0xFF065F46) : const Color(0xFFBBF7D0)),
             ),
             child: Row(
               children: [
-                const Icon(Icons.check_circle_rounded, color: Color(0xFF16A34A), size: 20),
+                const Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 20),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
@@ -1448,7 +1472,7 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
                     style: GoogleFonts.poppins(
                       fontSize: 11,
                       fontWeight: FontWeight.w500,
-                      color: const Color(0xFF166534),
+                      color: isDark ? const Color(0xFF6EE7B7) : const Color(0xFF166534),
                       height: 1.35,
                     ),
                   ),
@@ -1462,6 +1486,7 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
   }
 
   Widget _buildStep2() {
+    final isDark = AppTheme.isDark(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1475,7 +1500,7 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
                 style: GoogleFonts.poppins(
                   fontSize: 12.5,
                   fontWeight: FontWeight.w600,
-                  color: AppTheme.textPrimary,
+                  color: AppTheme.getTextPrimary(context),
                 ),
                 children: const [
                   TextSpan(
@@ -1492,24 +1517,25 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: isDark ? const Color(0xFF0F172A) : Colors.white,
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: AppTheme.cardBorder),
+                border: Border.all(color: AppTheme.getCardBorder(context)),
               ),
               child: DropdownButtonHideUnderline(
                 child: DropdownButton<String>(
+                  dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
                   value: _selectedIdType,
                   isExpanded: true,
                   hint: Text(
                     'Select government ID type...',
-                    style: GoogleFonts.poppins(fontSize: 12, color: AppTheme.textSecondary),
+                    style: GoogleFonts.poppins(fontSize: 12, color: AppTheme.getTextSecondary(context)),
                   ),
                   icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppTheme.primary, size: 20),
                   items: _validIdTypes.map((type) => DropdownMenuItem(
                     value: type,
                     child: Text(
                       type,
-                      style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w500, color: AppTheme.textPrimary),
+                      style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w500, color: AppTheme.getTextPrimary(context)),
                       overflow: TextOverflow.ellipsis,
                     ),
                   )).toList(),
@@ -1556,6 +1582,7 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
     required VoidCallback onRemove,
     bool isRequired = true,
   }) {
+    final isDark = AppTheme.isDark(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1565,7 +1592,7 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
             style: GoogleFonts.poppins(
               fontSize: 12.5,
               fontWeight: FontWeight.w600,
-              color: AppTheme.textPrimary,
+              color: AppTheme.getTextPrimary(context),
             ),
             children: isRequired
                 ? const [
@@ -1587,10 +1614,10 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
             width: double.infinity,
             height: 125,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: isDark ? const Color(0xFF0F172A) : Colors.white,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: image != null ? AppTheme.primary : AppTheme.cardBorder,
+                color: image != null ? AppTheme.primary : AppTheme.getCardBorder(context),
                 width: image != null ? 1.5 : 1,
               ),
             ),
@@ -1626,8 +1653,8 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
                       Container(
                         width: 38,
                         height: 38,
-                        decoration: const BoxDecoration(
-                          color: AppTheme.primaryLight,
+                        decoration: BoxDecoration(
+                          color: isDark ? AppTheme.primary.withValues(alpha: 0.2) : AppTheme.primaryLight,
                           shape: BoxShape.circle,
                         ),
                         child: Icon(icon, color: AppTheme.primary, size: 20),
@@ -1638,7 +1665,7 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
                         style: GoogleFonts.poppins(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: AppTheme.primaryDark,
+                          color: isDark ? const Color(0xFF5EEAD4) : AppTheme.primaryDark,
                         ),
                       ),
                     ],
@@ -1656,6 +1683,7 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
     required String subtitle,
     required IconData icon,
   }) {
+    final isDark = AppTheme.isDark(context);
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
@@ -1664,17 +1692,17 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
         constraints: const BoxConstraints(minHeight: 110),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppTheme.primaryLight.withValues(alpha: 0.5)
-              : Colors.white,
+              ? (isDark ? AppTheme.primary.withValues(alpha: 0.25) : AppTheme.primaryLight.withValues(alpha: 0.5))
+              : (isDark ? const Color(0xFF0F172A) : Colors.white),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? AppTheme.primary : AppTheme.cardBorder,
+            color: isSelected ? AppTheme.primary : AppTheme.getCardBorder(context),
             width: isSelected ? 1.5 : 1,
           ),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: AppTheme.primary.withValues(alpha: 0.08),
+                    color: AppTheme.primary.withValues(alpha: isDark ? 0.2 : 0.08),
                     blurRadius: 6,
                     offset: const Offset(0, 2),
                   ),
@@ -1694,13 +1722,13 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
                   decoration: BoxDecoration(
                     color: isSelected
                         ? AppTheme.primary
-                        : AppTheme.surface,
+                        : (isDark ? const Color(0xFF1E293B) : AppTheme.surface),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(
                     icon,
                     size: 15,
-                    color: isSelected ? Colors.white : AppTheme.textSecondary,
+                    color: isSelected ? Colors.white : AppTheme.getTextSecondary(context),
                   ),
                 ),
                 Container(
@@ -1709,10 +1737,10 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: isSelected ? AppTheme.primary : AppTheme.cardBorder,
+                      color: isSelected ? AppTheme.primary : AppTheme.getCardBorder(context),
                       width: isSelected ? 4.5 : 1.5,
                     ),
-                    color: Colors.white,
+                    color: isDark ? const Color(0xFF0F172A) : Colors.white,
                   ),
                 ),
               ],
@@ -1726,7 +1754,9 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
                   style: GoogleFonts.poppins(
                     fontSize: 12,
                     fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
-                    color: isSelected ? AppTheme.primaryDark : AppTheme.textPrimary,
+                    color: isSelected
+                        ? (isDark ? const Color(0xFF5EEAD4) : AppTheme.primaryDark)
+                        : AppTheme.getTextPrimary(context),
                     height: 1.25,
                   ),
                   maxLines: 2,
@@ -1736,7 +1766,7 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
                   subtitle,
                   style: GoogleFonts.poppins(
                     fontSize: 10,
-                    color: AppTheme.textSecondary,
+                    color: AppTheme.getTextSecondary(context),
                     height: 1.25,
                   ),
                   maxLines: 2,
@@ -1750,6 +1780,7 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
   }
 
   Widget _buildBottomNavButtons() {
+    final isDark = AppTheme.isDark(context);
     return Row(
       children: [
         if (_currentStep > 0) ...[
@@ -1758,16 +1789,16 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
               onPressed: _prevStep,
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 14),
-                side: const BorderSide(color: AppTheme.cardBorder),
+                side: BorderSide(color: AppTheme.getCardBorder(context)),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
-                backgroundColor: Colors.white,
+                backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
               ),
               child: Text(
                 'Back',
                 style: GoogleFonts.poppins(
-                  color: AppTheme.textPrimary,
+                  color: AppTheme.getTextPrimary(context),
                   fontWeight: FontWeight.w600,
                   fontSize: 13,
                 ),

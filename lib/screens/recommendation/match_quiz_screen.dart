@@ -325,10 +325,12 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
   }
 
   Future<void> _confirmAndSubmitQuiz() async {
+    final isDark = AppTheme.isDark(context);
     final confirmed = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
+        backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         titlePadding: const EdgeInsets.fromLTRB(22, 22, 22, 12),
         contentPadding: const EdgeInsets.fromLTRB(22, 0, 22, 16),
@@ -338,10 +340,14 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: const Color(0xFFE0F7FA),
+                color: isDark ? AppTheme.primary.withValues(alpha: 0.2) : const Color(0xFFE0F7FA),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(Icons.verified_user_outlined, color: AppTheme.primaryDark, size: 22),
+              child: Icon(
+                Icons.verified_user_outlined,
+                color: isDark ? const Color(0xFF5EEAD4) : AppTheme.primaryDark,
+                size: 22,
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -350,7 +356,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
                 style: GoogleFonts.poppins(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
-                  color: AppTheme.textPrimary,
+                  color: AppTheme.getTextPrimary(ctx),
                 ),
               ),
             ),
@@ -364,7 +370,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
               'Please review your answers before submitting. Under shelter compatibility rules:',
               style: GoogleFonts.poppins(
                 fontSize: 12.5,
-                color: AppTheme.textSecondary,
+                color: AppTheme.getTextSecondary(ctx),
                 height: 1.45,
               ),
             ),
@@ -372,20 +378,35 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: const Color(0xFFF0FDFA),
+                color: isDark
+                    ? const Color(0xFF451A03).withValues(alpha: 0.28)
+                    : const Color(0xFFF0FDFA),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFF99F6E4)),
+                border: Border.all(
+                  color: isDark
+                      ? const Color(0xFFB45309).withValues(alpha: 0.45)
+                      : const Color(0xFF99F6E4),
+                ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildDialogBullet(_revisionCount == 0
-                      ? 'You will have 1 immediate edit chance to fix any initial mistakes.'
-                      : 'Submitting this revision will activate a 30-day profile cooldown.'),
+                  _buildDialogBullet(
+                    _revisionCount == 0
+                        ? 'You will have 1 immediate edit chance to fix any initial mistakes.'
+                        : 'Submitting this revision will activate a 30-day profile cooldown.',
+                    isDark: isDark,
+                  ),
                   const SizedBox(height: 6),
-                  _buildDialogBullet('After using your edit chance, profile updates are limited to once every 30 days.'),
+                  _buildDialogBullet(
+                    'After using your edit chance, profile updates are limited to once every 30 days.',
+                    isDark: isDark,
+                  ),
                   const SizedBox(height: 6),
-                  _buildDialogBullet('A strict maximum adoption limit of 3 pets per household is enforced.'),
+                  _buildDialogBullet(
+                    'A strict maximum adoption limit of 3 pets per household is enforced.',
+                    isDark: isDark,
+                  ),
                 ],
               ),
             ),
@@ -395,7 +416,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
               style: GoogleFonts.poppins(
                 fontSize: 12.5,
                 fontWeight: FontWeight.w600,
-                color: AppTheme.textPrimary,
+                color: AppTheme.getTextPrimary(ctx),
               ),
             ),
           ],
@@ -404,7 +425,8 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
           OutlinedButton(
             onPressed: () => Navigator.pop(ctx, false),
             style: OutlinedButton.styleFrom(
-              side: BorderSide(color: Colors.grey.shade300),
+              side: BorderSide(color: isDark ? const Color(0xFF334155) : Colors.grey.shade300),
+              backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
             ),
@@ -415,7 +437,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
                 style: GoogleFonts.poppins(
                   fontSize: 12.5,
                   fontWeight: FontWeight.w600,
-                  color: AppTheme.textSecondary,
+                  color: AppTheme.getTextSecondary(ctx),
                 ),
               ),
             ),
@@ -449,13 +471,17 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
     }
   }
 
-  Widget _buildDialogBullet(String text) {
+  Widget _buildDialogBullet(String text, {bool isDark = false}) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
-          padding: EdgeInsets.only(top: 5, right: 8),
-          child: Icon(Icons.circle, size: 5, color: Color(0xFFD97706)),
+        Padding(
+          padding: const EdgeInsets.only(top: 5, right: 8),
+          child: Icon(
+            Icons.circle,
+            size: 5,
+            color: isDark ? const Color(0xFFF59E0B) : const Color(0xFFD97706),
+          ),
         ),
         Expanded(
           child: Text(
@@ -463,7 +489,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
             style: GoogleFonts.poppins(
               fontSize: 11.5,
               fontWeight: FontWeight.w500,
-              color: const Color(0xFF92400E),
+              color: isDark ? const Color(0xFFFDE68A) : const Color(0xFF92400E),
               height: 1.35,
             ),
           ),
@@ -601,13 +627,20 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
         }
       },
       child: Scaffold(
-        backgroundColor: AppTheme.background,
+        backgroundColor: AppTheme.getBackgroundColor(context),
         appBar: AppBar(
+          backgroundColor: AppTheme.getSurfaceColor(context),
+          elevation: 0,
+          scrolledUnderElevation: 0,
           automaticallyImplyLeading: false,
           leading: widget.isEmbeddedInTab
               ? null
               : IconButton(
-                  icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+                  icon: Icon(
+                    Icons.arrow_back_ios_new_rounded,
+                    size: 18,
+                    color: AppTheme.getTextPrimary(context),
+                  ),
                   tooltip: 'Back',
                   onPressed: () {
                     if (_showResults && _isLocked) {
@@ -623,7 +656,11 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
                 : (_showResults
                     ? 'Recommended Pet Matches'
                     : (_isLocked ? 'Compatibility Profile' : 'Compatibility Assessment')),
-            style: GoogleFonts.poppins(fontSize: 17, fontWeight: FontWeight.w600),
+            style: GoogleFonts.poppins(
+              fontSize: 17,
+              fontWeight: FontWeight.w600,
+              color: AppTheme.getTextPrimary(context),
+            ),
           ),
           actions: [
             if (!_showResults && !_isLoading && _hasAnySelection && !_isLocked)
@@ -634,7 +671,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
                   style: GoogleFonts.poppins(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: AppTheme.textSecondary,
+                    color: AppTheme.getTextSecondary(context),
                   ),
                 ),
               ),
@@ -643,21 +680,27 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
                 margin: const EdgeInsets.only(right: 14),
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF1F5F9),
+                  color: AppTheme.isDark(context) ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: const Color(0xFFCBD5E1)),
+                  border: Border.all(
+                    color: AppTheme.isDark(context) ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+                  ),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.lock_rounded, size: 13, color: Color(0xFF475569)),
+                    Icon(
+                      Icons.lock_rounded,
+                      size: 13,
+                      color: AppTheme.isDark(context) ? const Color(0xFF94A3B8) : const Color(0xFF475569),
+                    ),
                     const SizedBox(width: 4),
                     Text(
                       'Locked',
                       style: GoogleFonts.poppins(
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
-                        color: const Color(0xFF475569),
+                        color: AppTheme.isDark(context) ? const Color(0xFF94A3B8) : const Color(0xFF475569),
                       ),
                     ),
                   ],
@@ -705,6 +748,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
   }
 
   Widget _buildLoadingState() {
+    final isDark = AppTheme.isDark(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 28),
@@ -734,7 +778,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
               style: GoogleFonts.poppins(
                 fontSize: 19,
                 fontWeight: FontWeight.w700,
-                color: AppTheme.textPrimary,
+                color: AppTheme.getTextPrimary(context),
               ),
             ),
             const SizedBox(height: 10),
@@ -746,7 +790,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
                 textAlign: TextAlign.center,
                 style: GoogleFonts.poppins(
                   fontSize: 13,
-                  color: AppTheme.primary,
+                  color: isDark ? const Color(0xFF5EEAD4) : AppTheme.primary,
                   fontWeight: FontWeight.w500,
                   height: 1.4,
                 ),
@@ -763,7 +807,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
                   width: active ? 22 : 8,
                   height: 6,
                   decoration: BoxDecoration(
-                    color: active ? AppTheme.primary : AppTheme.cardBorder,
+                    color: active ? AppTheme.primary : (isDark ? const Color(0xFF334155) : AppTheme.cardBorder),
                     borderRadius: BorderRadius.circular(3),
                   ),
                 );
@@ -909,7 +953,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
       'Review & Confirm',
     ];
     return Container(
-      color: Colors.white,
+      color: AppTheme.getSurfaceColor(context),
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -923,7 +967,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
               ),
               Text(
                 '${((_currentStep + 1) / 5 * 100).toInt()}%',
-                style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.textSecondary),
+                style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.getTextSecondary(context)),
               ),
             ],
           ),
@@ -933,7 +977,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
             child: LinearProgressIndicator(
               value: (_currentStep + 1) / 5,
               minHeight: 6,
-              backgroundColor: Colors.grey.shade200,
+              backgroundColor: AppTheme.isDark(context) ? const Color(0xFF334155) : Colors.grey.shade200,
               color: AppTheme.primary,
             ),
           ),
@@ -952,13 +996,13 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
           style: GoogleFonts.poppins(
             fontSize: 20,
             fontWeight: FontWeight.w700,
-            color: AppTheme.textPrimary,
+            color: AppTheme.getTextPrimary(context),
           ),
         ),
         const SizedBox(height: 4),
         Text(
           'Tell us which companion you are looking to adopt',
-          style: GoogleFonts.poppins(fontSize: 13, color: AppTheme.textSecondary),
+          style: GoogleFonts.poppins(fontSize: 13, color: AppTheme.getTextSecondary(context)),
         ),
         const SizedBox(height: 24),
         _buildSectionTitle('Which companion are you looking for?'),
@@ -980,9 +1024,9 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Living Space & Routine', style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
+        Text('Living Space & Routine', style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.w700, color: AppTheme.getTextPrimary(context))),
         const SizedBox(height: 4),
-        Text('Helps match pets that thrive in your living environment', style: GoogleFonts.poppins(fontSize: 13, color: AppTheme.textSecondary)),
+        Text('Helps match pets that thrive in your living environment', style: GoogleFonts.poppins(fontSize: 13, color: AppTheme.getTextSecondary(context))),
         const SizedBox(height: 24),
         _buildSectionTitle('Your Residence Type'),
         _buildRadioGroup(
@@ -1029,9 +1073,9 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Experience & Household', style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
+        Text('Experience & Household', style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.w700, color: AppTheme.getTextPrimary(context))),
         const SizedBox(height: 4),
-        Text('Ensures the pet is safe and friendly with everyone in your home', style: GoogleFonts.poppins(fontSize: 13, color: AppTheme.textSecondary)),
+        Text('Ensures the pet is safe and friendly with everyone in your home', style: GoogleFonts.poppins(fontSize: 13, color: AppTheme.getTextSecondary(context))),
         const SizedBox(height: 24),
         _buildSectionTitle('Your Experience with Pets'),
         _buildRadioGroup(
@@ -1085,9 +1129,9 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Schedule & Care Capacity', style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
+        Text('Schedule & Care Capacity', style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.w700, color: AppTheme.getTextPrimary(context))),
         const SizedBox(height: 4),
-        Text('Matches pets based on your daily work hours and care availability', style: GoogleFonts.poppins(fontSize: 13, color: AppTheme.textSecondary)),
+        Text('Matches pets based on your daily work hours and care availability', style: GoogleFonts.poppins(fontSize: 13, color: AppTheme.getTextSecondary(context))),
         const SizedBox(height: 24),
         _buildSectionTitle('Hours pet will be left alone daily'),
         _buildRadioGroup(
@@ -1115,17 +1159,18 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
 
   // STEP 5: Review & Confirmation Screen (Final Page)
   Widget _buildStep5Review() {
+    final isDark = AppTheme.isDark(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Review Your Answers',
-          style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.w700, color: AppTheme.textPrimary),
+          style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.w700, color: AppTheme.getTextPrimary(context)),
         ),
         const SizedBox(height: 4),
         Text(
           'Please verify all your choices before final submission to the engine.',
-          style: GoogleFonts.poppins(fontSize: 13, color: AppTheme.textSecondary),
+          style: GoogleFonts.poppins(fontSize: 13, color: AppTheme.getTextSecondary(context)),
         ),
         const SizedBox(height: 18),
 
@@ -1133,16 +1178,21 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: const Color(0xFFF0FDFA),
+            color: isDark ? const Color(0xFF132D30) : const Color(0xFFF0FDFA),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFF99F6E4), width: 1.2),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.03),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
+            border: Border.all(
+              color: isDark ? const Color(0xFF0E7A80) : const Color(0xFF99F6E4),
+              width: 1.2,
+            ),
+            boxShadow: isDark
+                ? []
+                : [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.03),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1150,10 +1200,14 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE0F7FA),
+                  color: isDark ? AppTheme.primary.withValues(alpha: 0.25) : const Color(0xFFE0F7FA),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.verified_user_outlined, color: AppTheme.primaryDark, size: 24),
+                child: Icon(
+                  Icons.verified_user_outlined,
+                  color: isDark ? const Color(0xFF5EEAD4) : AppTheme.primaryDark,
+                  size: 24,
+                ),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -1165,7 +1219,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
                       style: GoogleFonts.poppins(
                         fontSize: 13.5,
                         fontWeight: FontWeight.w700,
-                        color: const Color(0xFF0E7A80),
+                        color: isDark ? const Color(0xFF5EEAD4) : const Color(0xFF0E7A80),
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -1173,7 +1227,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
                       'Please verify your home, yard, and routine details. You will have 1 immediate grace chance to edit any mistakes after submission. Finalized profiles can be updated once every 30 days. Maximum 3 pets allowed per household.',
                       style: GoogleFonts.poppins(
                         fontSize: 12,
-                        color: const Color(0xFF134E4A),
+                        color: isDark ? AppTheme.darkTextSecondary : const Color(0xFF134E4A),
                         height: 1.45,
                       ),
                     ),
@@ -1237,20 +1291,24 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
     Widget? extraWidget,
     bool showEditButton = true,
   }) {
+    final isDark = AppTheme.isDark(context);
+
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        border: Border.all(color: isDark ? const Color(0xFF334155) : Colors.grey.shade200),
+        boxShadow: isDark
+            ? []
+            : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.03),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1260,7 +1318,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
             children: [
               Text(
                 title,
-                style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700, color: AppTheme.textPrimary),
+                style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700, color: AppTheme.getTextPrimary(context)),
               ),
               if (showEditButton && (!_isLocked || _canRetake))
                 InkWell(
@@ -1289,7 +1347,10 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
                 ),
             ],
           ),
-          const Divider(height: 16),
+          Divider(
+            height: 16,
+            color: isDark ? const Color(0xFF334155) : Colors.grey.shade200,
+          ),
           ...rows.map((row) {
             return Padding(
               padding: const EdgeInsets.only(bottom: 6),
@@ -1300,13 +1361,13 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
                     width: 130,
                     child: Text(
                       row['label']!,
-                      style: GoogleFonts.poppins(fontSize: 12, color: AppTheme.textSecondary),
+                      style: GoogleFonts.poppins(fontSize: 12, color: AppTheme.getTextSecondary(context)),
                     ),
                   ),
                   Expanded(
                     child: Text(
                       row['val']!,
-                      style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.textPrimary),
+                      style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.getTextPrimary(context)),
                     ),
                   ),
                 ],
@@ -1323,14 +1384,19 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
   Widget _buildRevisionStatusCard() {
     final bool canEdit = _canRetake;
     final bool isGrace = _revisionCount == 0;
+    final isDark = AppTheme.isDark(context);
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: canEdit ? const Color(0xFFE0F7FA).withValues(alpha: 0.5) : const Color(0xFFF8FAFC),
+        color: canEdit
+            ? (isDark ? const Color(0xFF132D30) : const Color(0xFFE0F7FA).withValues(alpha: 0.5))
+            : (isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC)),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: canEdit ? const Color(0xFF80DEEA) : const Color(0xFFE2E8F0),
+          color: canEdit
+              ? (isDark ? const Color(0xFF0E7A80) : const Color(0xFF80DEEA))
+              : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
         ),
       ),
       child: Column(
@@ -1342,12 +1408,14 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: canEdit ? AppTheme.primaryLight : const Color(0xFFF1F5F9),
+                  color: canEdit
+                      ? (isDark ? AppTheme.primary.withValues(alpha: 0.25) : AppTheme.primaryLight)
+                      : (isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9)),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
                   canEdit ? Icons.edit_note_rounded : Icons.lock_clock_rounded,
-                  color: canEdit ? AppTheme.primaryDark : const Color(0xFF64748B),
+                  color: canEdit ? AppTheme.primary : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
                   size: 22,
                 ),
               ),
@@ -1363,7 +1431,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
                       style: GoogleFonts.poppins(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
-                        color: const Color(0xFF1E293B),
+                        color: AppTheme.getTextPrimary(context),
                       ),
                     ),
                     const SizedBox(height: 3),
@@ -1375,7 +1443,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
                           : 'To maintain matching integrity, profiles can be updated once every 30 days. Next update available on ${_nextRetakeDate ?? "next month"} ($_daysRemaining days remaining).',
                       style: GoogleFonts.poppins(
                         fontSize: 11.5,
-                        color: const Color(0xFF64748B),
+                        color: AppTheme.getTextSecondary(context),
                         height: 1.4,
                       ),
                     ),
@@ -1493,7 +1561,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
 
           Text(
             'Your Saved Preferences',
-            style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w700, color: AppTheme.textPrimary),
+            style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w700, color: AppTheme.getTextPrimary(context)),
           ),
           const SizedBox(height: 12),
 
@@ -1542,26 +1610,29 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
                 const SizedBox(height: 10),
                 Text(
                   'Desired Temperament Traits:',
-                  style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.textPrimary),
+                  style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.getTextPrimary(context)),
                 ),
                 const SizedBox(height: 6),
                 Wrap(
                   spacing: 6,
                   runSpacing: 6,
                   children: _desiredTemperaments.map((trait) {
+                    final isDark = AppTheme.isDark(context);
                     return Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: AppTheme.primaryLight,
+                        color: isDark ? AppTheme.primary.withValues(alpha: 0.2) : AppTheme.primaryLight,
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: AppTheme.primary.withValues(alpha: 0.3)),
+                        border: Border.all(
+                          color: isDark ? AppTheme.primary.withValues(alpha: 0.4) : AppTheme.primary.withValues(alpha: 0.3),
+                        ),
                       ),
                       child: Text(
                         trait,
                         style: GoogleFonts.poppins(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
-                          color: AppTheme.primaryDark,
+                          color: isDark ? const Color(0xFF5EEAD4) : AppTheme.primaryDark,
                         ),
                       ),
                     );
@@ -1632,7 +1703,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
           style: GoogleFonts.poppins(
             fontSize: 13,
             fontWeight: FontWeight.w700,
-            color: AppTheme.textPrimary,
+            color: AppTheme.getTextPrimary(context),
           ),
           children: isRequired
               ? const [
@@ -1655,6 +1726,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
     required String? selected,
     required Function(String) onSelected,
   }) {
+    final isDark = AppTheme.isDark(context);
     return Column(
       children: options.map((opt) {
         final isSelected = opt['val'] == selected;
@@ -1664,10 +1736,12 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
             margin: const EdgeInsets.only(bottom: 8),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: isSelected ? AppTheme.primaryLight.withValues(alpha: 0.4) : Colors.white,
+              color: isSelected
+                  ? (isDark ? AppTheme.primary.withValues(alpha: 0.2) : AppTheme.primaryLight.withValues(alpha: 0.4))
+                  : (isDark ? const Color(0xFF1E293B) : Colors.white),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: isSelected ? AppTheme.primary : Colors.grey.shade200,
+                color: isSelected ? AppTheme.primary : (isDark ? const Color(0xFF334155) : Colors.grey.shade200),
                 width: isSelected ? 1.5 : 1,
               ),
             ),
@@ -1675,14 +1749,18 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
               children: [
                 Icon(
                   isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
-                  color: isSelected ? AppTheme.primary : Colors.grey.shade400,
+                  color: isSelected ? AppTheme.primary : (isDark ? const Color(0xFF64748B) : Colors.grey.shade400),
                   size: 20,
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     opt['label']!,
-                    style: GoogleFonts.poppins(fontSize: 13, fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400, color: AppTheme.textPrimary),
+                    style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                      color: AppTheme.getTextPrimary(context),
+                    ),
                   ),
                 ),
               ],
@@ -1768,21 +1846,34 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: _openPetComparisonSheet,
-                icon: const Icon(Icons.auto_awesome, size: 16, color: Color(0xFF0D9488)),
+                icon: Icon(
+                  Icons.auto_awesome,
+                  size: 16,
+                  color: AppTheme.isDark(context) ? const Color(0xFF5EEAD4) : const Color(0xFF0D9488),
+                ),
                 label: Text(
                   'Compare Matches & Synthesis',
                   style: GoogleFonts.poppins(
                     fontSize: 12.5,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF0F766E),
+                    color: AppTheme.isDark(context) ? const Color(0xFF5EEAD4) : const Color(0xFF0F766E),
                   ),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFF0FDFA),
-                  foregroundColor: const Color(0xFF0F766E),
+                  backgroundColor: AppTheme.isDark(context)
+                      ? const Color(0xFF132D30)
+                      : const Color(0xFFF0FDFA),
+                  foregroundColor: AppTheme.isDark(context)
+                      ? const Color(0xFF5EEAD4)
+                      : const Color(0xFF0F766E),
                   padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 14),
                   elevation: 0,
-                  side: const BorderSide(color: Color(0xFF99F6E4), width: 1.2),
+                  side: BorderSide(
+                    color: AppTheme.isDark(context)
+                        ? const Color(0xFF0E7A80)
+                        : const Color(0xFF99F6E4),
+                    width: 1.2,
+                  ),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
               ),
@@ -1960,11 +2051,13 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
 
   Widget _buildRankTabs() {
     if (_recommendations.isEmpty) return const SizedBox.shrink();
+    final isDark = AppTheme.isDark(context);
+
     return Container(
       margin: const EdgeInsets.only(bottom: 6),
       padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
-        color: const Color(0xFFF1F5F9),
+        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
         borderRadius: BorderRadius.circular(11),
       ),
       child: Row(
@@ -1990,9 +2083,11 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
                 duration: const Duration(milliseconds: 180),
                 padding: const EdgeInsets.symmetric(vertical: 7),
                 decoration: BoxDecoration(
-                  color: isSelected ? Colors.white : Colors.transparent,
+                  color: isSelected
+                      ? (isDark ? const Color(0xFF0F172A) : Colors.white)
+                      : Colors.transparent,
                   borderRadius: BorderRadius.circular(8),
-                  boxShadow: isSelected
+                  boxShadow: isSelected && !isDark
                       ? [
                           BoxShadow(
                             color: Colors.black.withValues(alpha: 0.05),
@@ -2020,7 +2115,9 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
                       style: GoogleFonts.poppins(
                         fontSize: 10.5,
                         fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                        color: isSelected ? const Color(0xFF0F766E) : const Color(0xFF64748B),
+                        color: isSelected
+                            ? (isDark ? const Color(0xFF5EEAD4) : const Color(0xFF0F766E))
+                            : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
                       ),
                     ),
                     const SizedBox(width: 3.5),
@@ -2029,7 +2126,9 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
                       style: GoogleFonts.poppins(
                         fontSize: 10,
                         fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
-                        color: isSelected ? AppTheme.primary : const Color(0xFF94A3B8),
+                        color: isSelected
+                            ? AppTheme.primary
+                            : (isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8)),
                       ),
                     ),
                   ],
@@ -2135,19 +2234,26 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
       'care_tip': careTip,
     };
 
+    final isDark = AppTheme.isDark(context);
+
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        border: Border.all(
+          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          width: 1.2,
+        ),
+        boxShadow: isDark
+            ? []
+            : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.03),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
       ),
       child: Material(
         color: Colors.transparent,
@@ -2176,7 +2282,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
                         child: Container(
                           width: 66,
                           height: 66,
-                          color: const Color(0xFFF1F5F9),
+                          color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
                           child: (pet['photo_url'] != null || pet['photo_path'] != null || pet['image'] != null)
                               ? Image.network(
                                   ApiService.normalizeImageUrl(pet['photo_url'] ?? pet['photo_path'] ?? pet['image']),
@@ -2197,7 +2303,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
                             style: GoogleFonts.poppins(
                               fontSize: 15.5,
                               fontWeight: FontWeight.w700,
-                              color: const Color(0xFF0F172A),
+                              color: AppTheme.getTextPrimary(context),
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -2207,7 +2313,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
                             '${pet['size'] != null ? pet['size'].toString() : 'Medium'} • ${pet['type'] != null ? (pet['type'].toString().toUpperCase()) : 'PET'} • ${pet['age'] ?? 'Adult'}',
                             style: GoogleFonts.poppins(
                               fontSize: 11,
-                              color: const Color(0xFF64748B),
+                              color: AppTheme.getTextSecondary(context),
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -2220,14 +2326,15 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
                                 return Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFF1F5F9),
+                                    color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
                                     borderRadius: BorderRadius.circular(5),
+                                    border: isDark ? Border.all(color: const Color(0xFF334155), width: 0.8) : null,
                                   ),
                                   child: Text(
                                     tag.toString(),
                                     style: GoogleFonts.poppins(
                                       fontSize: 9.5,
-                                      color: const Color(0xFF475569),
+                                      color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569),
                                       fontWeight: FontWeight.w500,
                                     ),
                                   ),
@@ -2245,7 +2352,11 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
                     pet['name']?.toString(),
                   ),
                 if (reasons.isNotEmpty) ...[
-                  const Divider(height: 12, thickness: 0.8, color: Color(0xFFE2E8F0)),
+                  Divider(
+                    height: 12,
+                    thickness: 0.8,
+                    color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                  ),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: reasons.map((r) {
@@ -2268,7 +2379,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
                                 r,
                                 style: GoogleFonts.poppins(
                                   fontSize: 10.5,
-                                  color: const Color(0xFF334155),
+                                  color: isDark ? AppTheme.darkTextSecondary : const Color(0xFF334155),
                                   fontWeight: FontWeight.w400,
                                   height: 1.25,
                                 ),
@@ -2285,7 +2396,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
                   Container(
                     padding: const EdgeInsets.fromLTRB(10, 6, 10, 6),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFFFBEB),
+                      color: isDark ? const Color(0xFF451A03).withValues(alpha: 0.5) : const Color(0xFFFFFBEB),
                       borderRadius: BorderRadius.circular(7),
                       border: const Border(
                         left: BorderSide(color: Color(0xFFF59E0B), width: 3),
@@ -2299,7 +2410,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
                           style: GoogleFonts.poppins(
                             fontSize: 10,
                             fontWeight: FontWeight.w700,
-                            color: const Color(0xFFB45309),
+                            color: isDark ? const Color(0xFFFBBF24) : const Color(0xFFB45309),
                           ),
                         ),
                         const SizedBox(height: 1),
@@ -2307,7 +2418,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
                           careTip,
                           style: GoogleFonts.poppins(
                             fontSize: 10.5,
-                            color: const Color(0xFF78350F),
+                            color: isDark ? const Color(0xFFFDE68A) : const Color(0xFF78350F),
                             height: 1.25,
                           ),
                         ),
@@ -2330,7 +2441,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
                         },
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
-                          side: const BorderSide(color: Color(0xFFCBD5E1)),
+                          side: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1)),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                         ),
                         child: FittedBox(
@@ -2340,7 +2451,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
                             style: GoogleFonts.poppins(
                               fontSize: 12.5,
                               fontWeight: FontWeight.w600,
-                              color: const Color(0xFF475569),
+                              color: isDark ? AppTheme.darkTextPrimary : const Color(0xFF475569),
                             ),
                           ),
                         ),
@@ -2383,25 +2494,32 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
     final count = _adoptedCount.clamp(0, 3);
     final remaining = (3 - count).clamp(0, 3);
     final isFull = count >= 3;
+    final isDark = AppTheme.isDark(context);
 
     if (isCompact) {
       return Container(
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: isFull ? const Color(0xFFFFFBEB) : Colors.white,
+          color: isFull
+              ? (isDark ? const Color(0xFF451A03).withValues(alpha: 0.6) : const Color(0xFFFFFBEB))
+              : (isDark ? const Color(0xFF1E293B) : Colors.white),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isFull ? const Color(0xFFFDE68A) : const Color(0xFFE2E8F0),
+            color: isFull
+                ? (isDark ? const Color(0xFF92400E) : const Color(0xFFFDE68A))
+                : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
             width: 1,
           ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
-              blurRadius: 4,
-              offset: const Offset(0, 1),
-            ),
-          ],
+          boxShadow: isDark
+              ? []
+              : [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.03),
+                    blurRadius: 4,
+                    offset: const Offset(0, 1),
+                  ),
+                ],
         ),
         child: Row(
           children: [
@@ -2409,14 +2527,14 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
               padding: const EdgeInsets.all(5),
               decoration: BoxDecoration(
                 color: isFull
-                    ? const Color(0xFFFEF3C7)
-                    : AppTheme.primary.withValues(alpha: 0.1),
+                    ? (isDark ? const Color(0xFF78350F).withValues(alpha: 0.4) : const Color(0xFFFEF3C7))
+                    : (isDark ? AppTheme.primary.withValues(alpha: 0.2) : AppTheme.primary.withValues(alpha: 0.1)),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(
                 Icons.pets_rounded,
                 size: 14,
-                color: isFull ? const Color(0xFFD97706) : AppTheme.primary,
+                color: isFull ? (isDark ? const Color(0xFFFBBF24) : const Color(0xFFD97706)) : AppTheme.primary,
               ),
             ),
             const SizedBox(width: 8),
@@ -2426,14 +2544,16 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
                 style: GoogleFonts.poppins(
                   fontSize: 11.5,
                   fontWeight: FontWeight.w600,
-                  color: const Color(0xFF1E293B),
+                  color: isDark ? AppTheme.darkTextPrimary : const Color(0xFF1E293B),
                 ),
               ),
             ),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
               decoration: BoxDecoration(
-                color: isFull ? const Color(0xFFFEF3C7) : AppTheme.primary.withValues(alpha: 0.1),
+                color: isFull
+                    ? (isDark ? const Color(0xFF78350F).withValues(alpha: 0.4) : const Color(0xFFFEF3C7))
+                    : (isDark ? AppTheme.primary.withValues(alpha: 0.2) : AppTheme.primary.withValues(alpha: 0.1)),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
@@ -2441,7 +2561,9 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
                 style: GoogleFonts.poppins(
                   fontSize: 10,
                   fontWeight: FontWeight.w700,
-                  color: isFull ? const Color(0xFFB45309) : AppTheme.primary,
+                  color: isFull
+                      ? (isDark ? const Color(0xFFFDE68A) : const Color(0xFFB45309))
+                      : (isDark ? const Color(0xFF5EEAD4) : AppTheme.primary),
                 ),
               ),
             ),
@@ -2454,19 +2576,25 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isFull ? const Color(0xFFFFFBEB) : Colors.white,
+        color: isFull
+            ? (isDark ? const Color(0xFF451A03).withValues(alpha: 0.6) : const Color(0xFFFFFBEB))
+            : (isDark ? const Color(0xFF1E293B) : Colors.white),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isFull ? const Color(0xFFFDE68A) : const Color(0xFFE2E8F0),
+          color: isFull
+              ? (isDark ? const Color(0xFF92400E) : const Color(0xFFFDE68A))
+              : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
           width: 1.2,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        boxShadow: isDark
+            ? []
+            : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2477,14 +2605,14 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   color: isFull
-                      ? const Color(0xFFFEF3C7)
-                      : AppTheme.primary.withValues(alpha: 0.12),
+                      ? (isDark ? const Color(0xFF78350F).withValues(alpha: 0.4) : const Color(0xFFFEF3C7))
+                      : (isDark ? AppTheme.primary.withValues(alpha: 0.2) : AppTheme.primary.withValues(alpha: 0.12)),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
                   Icons.pets_rounded,
                   size: 18,
-                  color: isFull ? const Color(0xFFD97706) : AppTheme.primary,
+                  color: isFull ? (isDark ? const Color(0xFFFBBF24) : const Color(0xFFD97706)) : AppTheme.primary,
                 ),
               ),
               const SizedBox(width: 10),
@@ -2497,7 +2625,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
                       style: GoogleFonts.poppins(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
-                        color: const Color(0xFF1E293B),
+                        color: isDark ? AppTheme.darkTextPrimary : const Color(0xFF1E293B),
                       ),
                     ),
                     Text(
@@ -2508,7 +2636,9 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
                               : '$remaining adoption slots open',
                       style: GoogleFonts.poppins(
                         fontSize: 11,
-                        color: isFull ? const Color(0xFFB45309) : const Color(0xFF64748B),
+                        color: isFull
+                            ? (isDark ? const Color(0xFFFBBF24) : const Color(0xFFB45309))
+                            : (isDark ? AppTheme.darkTextSecondary : const Color(0xFF64748B)),
                         fontWeight: isFull ? FontWeight.w600 : FontWeight.w400,
                       ),
                     ),
@@ -2518,7 +2648,9 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: isFull ? const Color(0xFFFEF3C7) : AppTheme.primary.withValues(alpha: 0.1),
+                  color: isFull
+                      ? (isDark ? const Color(0xFF78350F).withValues(alpha: 0.4) : const Color(0xFFFEF3C7))
+                      : (isDark ? AppTheme.primary.withValues(alpha: 0.2) : AppTheme.primary.withValues(alpha: 0.1)),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
@@ -2526,7 +2658,9 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
                   style: GoogleFonts.poppins(
                     fontSize: 13,
                     fontWeight: FontWeight.w800,
-                    color: isFull ? const Color(0xFFB45309) : AppTheme.primary,
+                    color: isFull
+                        ? (isDark ? const Color(0xFFFDE68A) : const Color(0xFFB45309))
+                        : (isDark ? const Color(0xFF5EEAD4) : AppTheme.primary),
                   ),
                 ),
               ),
@@ -2547,7 +2681,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
                   decoration: BoxDecoration(
                     color: isAdopted
                         ? (isFull ? const Color(0xFFD97706) : AppTheme.primary)
-                        : const Color(0xFFE2E8F0),
+                        : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
                     borderRadius: BorderRadius.circular(4),
                   ),
                 ),
@@ -2561,7 +2695,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
                 : 'CAWS shelter policy allows up to 3 adopted pets per verified household to ensure optimal care.',
             style: GoogleFonts.poppins(
               fontSize: 10.5,
-              color: const Color(0xFF94A3B8),
+              color: isDark ? AppTheme.darkTextSecondary : const Color(0xFF94A3B8),
             ),
           ),
         ],
@@ -2572,6 +2706,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
 
   Widget _buildCompatibilityBreakdown(Map<String, dynamic>? breakdown, [String? petName]) {
     if (breakdown == null || breakdown.isEmpty) return const SizedBox.shrink();
+    final isDark = AppTheme.isDark(context);
 
     final space = (breakdown['space'] as num?)?.toInt() ?? 88;
     final routine = (breakdown['routine'] as num?)?.toInt() ?? 85;
@@ -2582,15 +2717,16 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
       margin: const EdgeInsets.only(top: 8, bottom: 2),
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(10),
+        border: isDark ? Border.all(color: const Color(0xFF334155), width: 0.8) : null,
       ),
       child: Row(
         children: [
           _buildBreakdownColumn('Space Fit', space, name),
-          Container(width: 1, height: 16, color: const Color(0xFFE2E8F0)),
+          Container(width: 1, height: 16, color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
           _buildBreakdownColumn('Routine', routine, name),
-          Container(width: 1, height: 16, color: const Color(0xFFE2E8F0)),
+          Container(width: 1, height: 16, color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
           _buildBreakdownColumn('Temperament', temperament, name),
         ],
       ),
@@ -2598,6 +2734,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
   }
 
   Widget _buildBreakdownColumn(String label, int pct, String petName) {
+    final isDark = AppTheme.isDark(context);
     return Expanded(
       child: InkWell(
         borderRadius: BorderRadius.circular(8),
@@ -2611,7 +2748,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
                 label,
                 style: GoogleFonts.poppins(
                   fontSize: 9.5,
-                  color: const Color(0xFF64748B),
+                  color: isDark ? AppTheme.darkTextSecondary : const Color(0xFF64748B),
                   fontWeight: FontWeight.w500,
                 ),
                 maxLines: 1,
@@ -2623,7 +2760,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
                 style: GoogleFonts.poppins(
                   fontSize: 11.5,
                   fontWeight: FontWeight.w700,
-                  color: const Color(0xFF0F766E),
+                  color: isDark ? const Color(0xFF5EEAD4) : const Color(0xFF0F766E),
                 ),
               ),
             ],

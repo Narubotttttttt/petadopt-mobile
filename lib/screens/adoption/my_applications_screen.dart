@@ -54,18 +54,19 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
   @override
   Widget build(BuildContext context) {
     final filteredList = _filteredApplications;
+    final bgColor = AppTheme.getBackgroundColor(context);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: bgColor,
       appBar: AppBar(
         automaticallyImplyLeading: false,
         leading: Navigator.canPop(context)
             ? IconButton(
-                icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF0F172A)),
+                icon: Icon(Icons.arrow_back_rounded, color: AppTheme.getTextPrimary(context)),
                 onPressed: () => Navigator.pop(context),
               )
             : null,
-        backgroundColor: Colors.white,
+        backgroundColor: bgColor,
         elevation: 0,
         scrolledUnderElevation: 0,
         title: Column(
@@ -76,7 +77,7 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
               style: GoogleFonts.poppins(
                 fontSize: 17,
                 fontWeight: FontWeight.w700,
-                color: const Color(0xFF0F172A),
+                color: AppTheme.getTextPrimary(context),
               ),
             ),
             Text(
@@ -92,7 +93,7 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
         actions: [
           IconButton(
             onPressed: _fetchApplications,
-            icon: const Icon(Icons.refresh_rounded, color: Color(0xFF64748B), size: 20),
+            icon: Icon(Icons.refresh_rounded, color: AppTheme.getTextSecondary(context), size: 20),
             tooltip: 'Refresh',
           ),
         ],
@@ -105,7 +106,7 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
                 if (_applications.isNotEmpty)
                   Container(
                     width: double.infinity,
-                    color: Colors.white,
+                    color: bgColor,
                     padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
                     child: SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
@@ -152,13 +153,16 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
 
   Widget _buildFilterChip(String key, String label, int count) {
     final isSelected = _selectedFilter == key;
+    final isDark = AppTheme.isDark(context);
     return GestureDetector(
       onTap: () => setState(() => _selectedFilter = key),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
         decoration: BoxDecoration(
-          color: isSelected ? AppTheme.primary : const Color(0xFFF1F5F9),
+          color: isSelected
+              ? AppTheme.primary
+              : (isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9)),
           borderRadius: BorderRadius.circular(20),
         ),
         child: Text(
@@ -166,7 +170,7 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
           style: GoogleFonts.poppins(
             fontSize: 12,
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-            color: isSelected ? Colors.white : const Color(0xFF64748B),
+            color: isSelected ? Colors.white : AppTheme.getTextSecondary(context),
           ),
         ),
       ),
@@ -174,6 +178,7 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
   }
 
   Widget _buildEmptyState({required bool isTotalEmpty}) {
+    final isDark = AppTheme.isDark(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 32),
@@ -183,14 +188,14 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
             Container(
               width: 56,
               height: 56,
-              decoration: const BoxDecoration(
-                color: Color(0xFFF1F5F9),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.assignment_outlined,
                 size: 26,
-                color: Color(0xFF94A3B8),
+                color: AppTheme.getTextSecondary(context),
               ),
             ),
             const SizedBox(height: 14),
@@ -199,7 +204,7 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
               style: GoogleFonts.poppins(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
-                color: const Color(0xFF0F172A),
+                color: AppTheme.getTextPrimary(context),
               ),
             ),
             const SizedBox(height: 4),
@@ -209,7 +214,7 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
                   : 'You have no applications under $_selectedFilter status.',
               style: GoogleFonts.poppins(
                 fontSize: 12,
-                color: const Color(0xFF64748B),
+                color: AppTheme.getTextSecondary(context),
                 height: 1.4,
               ),
               textAlign: TextAlign.center,
@@ -331,18 +336,22 @@ class _ApplicationCard extends StatelessWidget {
 
     final subtitleText = hasCustomName ? shelterCode : (breedSpecies.isNotEmpty ? breedSpecies : shelterCode);
 
+    final isDark = AppTheme.isDark(context);
+
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.getCardColor(context),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF0F172A).withValues(alpha: 0.03),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        border: Border.all(color: AppTheme.getCardBorder(context)),
+        boxShadow: isDark
+            ? []
+            : [
+                BoxShadow(
+                  color: const Color(0xFF0F172A).withValues(alpha: 0.03),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
       ),
       child: Padding(
         padding: const EdgeInsets.all(14),
@@ -363,9 +372,9 @@ class _ApplicationCard extends StatelessWidget {
                     errorBuilder: (_, _, _) => Container(
                       width: 58,
                       height: 58,
-                      color: const Color(0xFFF1F5F9),
-                      child: const Center(
-                        child: Icon(Icons.pets_rounded, color: Color(0xFF94A3B8), size: 22),
+                      color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                      child: Center(
+                        child: Icon(Icons.pets_rounded, color: AppTheme.getTextSecondary(context), size: 22),
                       ),
                     ),
                   ),
@@ -387,7 +396,7 @@ class _ApplicationCard extends StatelessWidget {
                                     style: GoogleFonts.poppins(
                                       fontSize: 15,
                                       fontWeight: FontWeight.w600,
-                                      color: const Color(0xFF0F172A),
+                                      color: AppTheme.getTextPrimary(context),
                                     ),
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -407,7 +416,7 @@ class _ApplicationCard extends StatelessWidget {
                               style: GoogleFonts.poppins(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w500,
-                                color: const Color(0xFF64748B),
+                                color: AppTheme.getTextSecondary(context),
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -420,9 +429,9 @@ class _ApplicationCard extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFECFDF5),
+                                color: isDark ? const Color(0xFF064E3B) : const Color(0xFFECFDF5),
                                 borderRadius: BorderRadius.circular(6),
-                                border: Border.all(color: const Color(0xFFA7F3D0)),
+                                border: Border.all(color: isDark ? const Color(0xFF059669) : const Color(0xFFA7F3D0)),
                               ),
                               child: Text(
                                 (application['compatibility_score'] ?? application['compatibilityScore']) != null
@@ -431,7 +440,7 @@ class _ApplicationCard extends StatelessWidget {
                                 style: GoogleFonts.poppins(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w700,
-                                  color: const Color(0xFF047857),
+                                  color: isDark ? const Color(0xFF6EE7B7) : const Color(0xFF047857),
                                 ),
                               ),
                             ),
@@ -443,7 +452,7 @@ class _ApplicationCard extends StatelessWidget {
                         'Applied: ${application['dateApplied'] ?? 'Recently'}',
                         style: GoogleFonts.poppins(
                           fontSize: 11,
-                          color: const Color(0xFF94A3B8),
+                          color: AppTheme.getTextSecondary(context),
                         ),
                       ),
                     ],
@@ -454,6 +463,7 @@ class _ApplicationCard extends StatelessWidget {
 
             // Adoption Application Tracker Stepper & Milestone Banner
             _buildTrackerSection(
+              context,
               status: status,
               isAdoptedByOther: isAdoptedByOther,
               isScheduled: isScheduled,
@@ -1023,7 +1033,8 @@ class _ApplicationCard extends StatelessWidget {
     );
   }
 
-  Widget _buildTrackerSection({
+  Widget _buildTrackerSection(
+    BuildContext context, {
     required String status,
     required bool isAdoptedByOther,
     required bool isScheduled,
@@ -1080,13 +1091,15 @@ class _ApplicationCard extends StatelessWidget {
       statusMessage = 'Application submitted and queued for shelter evaluation.';
     }
 
+    final isDark = AppTheme.isDark(context);
+
     return Container(
       margin: const EdgeInsets.only(top: 14, bottom: 4),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE2E8F0), width: 0.9),
+        border: Border.all(color: AppTheme.getCardBorder(context), width: 0.9),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1099,7 +1112,7 @@ class _ApplicationCard extends StatelessWidget {
                 style: GoogleFonts.poppins(
                   fontSize: 10,
                   fontWeight: FontWeight.w700,
-                  color: const Color(0xFF64748B),
+                  color: AppTheme.getTextSecondary(context),
                   letterSpacing: 0.6,
                 ),
               ),
@@ -1118,13 +1131,13 @@ class _ApplicationCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          _buildTrackerStepper(currentStep, isDeclined: isDeclined),
+          _buildTrackerStepper(context, currentStep, isDeclined: isDeclined),
           const SizedBox(height: 12),
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             decoration: BoxDecoration(
-              color: statusBg.withValues(alpha: 0.65),
+              color: statusBg.withValues(alpha: isDark ? 0.25 : 0.65),
               borderRadius: BorderRadius.circular(8),
               border: Border.all(color: statusColor.withValues(alpha: 0.3), width: 0.8),
             ),
@@ -1143,7 +1156,7 @@ class _ApplicationCard extends StatelessWidget {
                     statusMessage,
                     style: GoogleFonts.poppins(
                       fontSize: 11,
-                      color: const Color(0xFF334155),
+                      color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF334155),
                       fontWeight: FontWeight.w500,
                       height: 1.35,
                     ),
@@ -1157,8 +1170,9 @@ class _ApplicationCard extends StatelessWidget {
     );
   }
 
-  Widget _buildTrackerStepper(int currentStep, {bool isDeclined = false}) {
+  Widget _buildTrackerStepper(BuildContext context, int currentStep, {bool isDeclined = false}) {
     final steps = ['Submitted', 'Review', 'Interview', 'Finalize'];
+    final isDark = AppTheme.isDark(context);
 
     return Row(
       children: List.generate(steps.length * 2 - 1, (index) {
@@ -1169,7 +1183,9 @@ class _ApplicationCard extends StatelessWidget {
             child: Container(
               height: 2.5,
               decoration: BoxDecoration(
-                color: isCompleted ? AppTheme.primary : const Color(0xFFE2E8F0),
+                color: isCompleted
+                    ? AppTheme.primary
+                    : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -1185,15 +1201,15 @@ class _ApplicationCard extends StatelessWidget {
             ? const Color(0xFFDC2626)
             : isCompleted || isCurrent
                 ? AppTheme.primary
-                : const Color(0xFFCBD5E1);
+                : (isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1));
 
         final Color circleBg = isStepDeclined
-            ? const Color(0xFFFEE2E2)
+            ? (isDark ? const Color(0xFF450A0A) : const Color(0xFFFEE2E2))
             : isCompleted
                 ? AppTheme.primary
                 : isCurrent
                     ? AppTheme.primary.withValues(alpha: 0.15)
-                    : const Color(0xFFF1F5F9);
+                    : (isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9));
 
         return Column(
           mainAxisSize: MainAxisSize.min,
@@ -1239,7 +1255,7 @@ class _ApplicationCard extends StatelessWidget {
               style: GoogleFonts.poppins(
                 fontSize: 9.5,
                 fontWeight: isCurrent || isCompleted ? FontWeight.w700 : FontWeight.w500,
-                color: isCurrent ? const Color(0xFF0F172A) : const Color(0xFF64748B),
+                color: isCurrent ? (isDark ? Colors.white : const Color(0xFF0F172A)) : AppTheme.getTextSecondary(context),
                 letterSpacing: -0.2,
               ),
             ),

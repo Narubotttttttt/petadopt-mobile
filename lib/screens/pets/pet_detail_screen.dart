@@ -142,113 +142,122 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
       if (!mounted) return;
       showDialog(
         context: context,
-        builder: (ctx) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          contentPadding: const EdgeInsets.fromLTRB(24, 26, 24, 12),
-          actionsPadding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
-          title: Column(
-            children: [
-              Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  color: isBlacklisted ? const Color(0xFFFFEAEA) : const Color(0xFFFFFBEB),
-                  shape: BoxShape.circle,
-                ),
-                child: Center(
-                  child: Icon(
-                    Icons.block_rounded,
-                    color: isBlacklisted ? AppTheme.errorColor : AppTheme.warningColor,
-                    size: 30,
+        builder: (ctx) {
+          final isDark = AppTheme.isDark(ctx);
+          return AlertDialog(
+            backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+            contentPadding: const EdgeInsets.fromLTRB(24, 26, 24, 12),
+            actionsPadding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+            title: Column(
+              children: [
+                Container(
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    color: isBlacklisted
+                        ? (isDark ? const Color(0xFF450A0A) : const Color(0xFFFFEAEA))
+                        : (isDark ? const Color(0xFF451A03) : const Color(0xFFFFFBEB)),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(
+                    child: Icon(
+                      Icons.block_rounded,
+                      color: isBlacklisted ? AppTheme.errorColor : AppTheme.warningColor,
+                      size: 30,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 14),
-              Text(
-                isBlacklisted ? 'Account Banned' : 'Account Restricted',
-                textAlign: TextAlign.center,
-                style: GoogleFonts.poppins(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: AppTheme.textPrimary,
-                ),
-              ),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Text(
-                  isBlacklisted
-                      ? 'Your account has been banned from submitting adoption applications.'
-                      : 'Your account is currently restricted from submitting new adoption applications.',
+                const SizedBox(height: 14),
+                Text(
+                  isBlacklisted ? 'Account Banned' : 'Account Restricted',
                   textAlign: TextAlign.center,
                   style: GoogleFonts.poppins(
-                    fontSize: 13,
-                    color: AppTheme.textSecondary,
-                    height: 1.4,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.getTextPrimary(ctx),
                   ),
                 ),
-              ),
-              const SizedBox(height: 14),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: isBlacklisted ? const Color(0xFFFFF1F2) : const Color(0xFFFFFBEB),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: isBlacklisted ? const Color(0xFFFECDD3) : const Color(0xFFFDE68A),
+              ],
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Text(
+                    isBlacklisted
+                        ? 'Your account has been banned from submitting adoption applications.'
+                        : 'Your account is currently restricted from submitting new adoption applications.',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      color: AppTheme.getTextSecondary(ctx),
+                      height: 1.4,
+                    ),
                   ),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'OFFICIAL REASON',
-                      style: GoogleFonts.poppins(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                        color: isBlacklisted ? AppTheme.errorColor : const Color(0xFFB45309),
-                        letterSpacing: 0.5,
-                      ),
+                const SizedBox(height: 14),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: isBlacklisted
+                        ? (isDark ? const Color(0xFF450A0A).withValues(alpha: 0.3) : const Color(0xFFFFF1F2))
+                        : (isDark ? const Color(0xFF451A03).withValues(alpha: 0.3) : const Color(0xFFFFFBEB)),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: isBlacklisted
+                          ? (isDark ? const Color(0xFF991B1B) : const Color(0xFFFECDD3))
+                          : (isDark ? const Color(0xFF92400E) : const Color(0xFFFDE68A)),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      officialReason,
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: AppTheme.textPrimary,
-                        height: 1.4,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'OFFICIAL REASON',
+                        style: GoogleFonts.poppins(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          color: isBlacklisted ? AppTheme.errorColor : const Color(0xFFF59E0B),
+                          letterSpacing: 0.5,
+                        ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 4),
+                      Text(
+                        officialReason,
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.getTextPrimary(ctx),
+                          height: 1.4,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF8FAFC),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'SHELTER CONTACT & APPEALS',
-                      style: GoogleFonts.poppins(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                        color: AppTheme.primaryDark,
-                        letterSpacing: 0.5,
+                const SizedBox(height: 12),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppTheme.getCardBorder(ctx)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'SHELTER CONTACT & APPEALS',
+                        style: GoogleFonts.poppins(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          color: isDark ? const Color(0xFF5EEAD4) : AppTheme.primaryDark,
+                          letterSpacing: 0.5,
+                        ),
                       ),
-                    ),
                     const SizedBox(height: 8),
                     Row(
                       children: [
@@ -260,7 +269,7 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                             style: GoogleFonts.poppins(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
-                              color: AppTheme.textPrimary,
+                              color: AppTheme.getTextPrimary(ctx),
                             ),
                           ),
                         ),
@@ -277,7 +286,7 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                             style: GoogleFonts.poppins(
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
-                              color: AppTheme.textPrimary,
+                              color: AppTheme.getTextPrimary(ctx),
                             ),
                           ),
                         ),
@@ -294,7 +303,7 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                             style: GoogleFonts.poppins(
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
-                              color: AppTheme.textPrimary,
+                              color: AppTheme.getTextPrimary(ctx),
                             ),
                           ),
                         ),
@@ -327,10 +336,11 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
               ),
             ),
           ],
-        ),
-      );
-      return;
-    }
+        );
+      },
+    );
+    return;
+  }
 
     final userId = user != null ? user['id'] : 'guest';
     final prefs = await SharedPreferences.getInstance();
@@ -402,14 +412,15 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = AppTheme.isDark(context);
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: AppTheme.getBackgroundColor(context),
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
             expandedHeight: 320,
             pinned: true,
-            backgroundColor: AppTheme.background,
+            backgroundColor: AppTheme.getBackgroundColor(context),
             leading: Padding(
               padding: const EdgeInsets.all(8),
               child: GestureDetector(
@@ -418,19 +429,19 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                   width: 38,
                   height: 38,
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: isDark ? const Color(0xFF1E293B) : Colors.white,
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.1),
+                        color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
                         blurRadius: 8,
                       ),
                     ],
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.arrow_back_ios_new_rounded,
                     size: 18,
-                    color: AppTheme.textPrimary,
+                    color: AppTheme.getTextPrimary(context),
                   ),
                 ),
               ),
@@ -444,11 +455,11 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                     width: 38,
                     height: 38,
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: isDark ? const Color(0xFF1E293B) : Colors.white,
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.1),
+                          color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
                           blurRadius: 8,
                         ),
                       ],
@@ -458,7 +469,7 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                           ? Icons.favorite_rounded
                           : Icons.favorite_border_rounded,
                       size: 20,
-                      color: _isFavorite ? Colors.redAccent : AppTheme.textSecondary,
+                      color: _isFavorite ? Colors.redAccent : AppTheme.getTextSecondary(context),
                     ),
                   ),
                 ),
@@ -486,8 +497,8 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                           begin: Alignment.bottomCenter,
                           end: Alignment.topCenter,
                           colors: [
-                            Colors.white,
-                            Colors.white.withValues(alpha: 0.0),
+                            AppTheme.getBackgroundColor(context),
+                            AppTheme.getBackgroundColor(context).withValues(alpha: 0.0),
                           ],
                         ),
                       ),
@@ -512,7 +523,7 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                           style: GoogleFonts.poppins(
                             fontSize: 24,
                             fontWeight: FontWeight.w800,
-                            color: AppTheme.textPrimary,
+                            color: AppTheme.getTextPrimary(context),
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -524,14 +535,14 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: AppTheme.primaryLight,
+                          color: isDark ? AppTheme.primary.withValues(alpha: 0.2) : AppTheme.primaryLight,
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
                           widget.pet['status'] == 'adopted' ? 'Adopted' : 'Available',
                           style: GoogleFonts.poppins(
                             fontSize: 12,
-                            color: AppTheme.primaryDark,
+                            color: isDark ? const Color(0xFF5EEAD4) : AppTheme.primaryDark,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -543,7 +554,7 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                     '$_breed • $_type',
                     style: GoogleFonts.poppins(
                       fontSize: 14,
-                      color: AppTheme.textSecondary,
+                      color: AppTheme.getTextSecondary(context),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -651,7 +662,7 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                     style: GoogleFonts.poppins(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
-                      color: AppTheme.textPrimary,
+                      color: AppTheme.getTextPrimary(context),
                     ),
                   ),
                   const SizedBox(height: 10),
@@ -667,17 +678,17 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                                     vertical: 6,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: AppTheme.primaryLight,
+                                    color: isDark ? AppTheme.primary.withValues(alpha: 0.2) : AppTheme.primaryLight,
                                     borderRadius: BorderRadius.circular(20),
                                     border: Border.all(
-                                      color: AppTheme.primary.withValues(alpha: 0.3),
+                                      color: isDark ? const Color(0xFF0E7A80).withValues(alpha: 0.5) : AppTheme.primary.withValues(alpha: 0.3),
                                     ),
                                   ),
                                   child: Text(
                                     tag,
                                     style: GoogleFonts.poppins(
                                       fontSize: 12,
-                                      color: AppTheme.primaryDark,
+                                      color: isDark ? const Color(0xFF5EEAD4) : AppTheme.primaryDark,
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
@@ -687,7 +698,7 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                         )
                       : Text(
                           'Calm & Friendly',
-                          style: GoogleFonts.poppins(fontSize: 13, color: AppTheme.textSecondary),
+                          style: GoogleFonts.poppins(fontSize: 13, color: AppTheme.getTextSecondary(context)),
                         ),
                   const SizedBox(height: 24),
                   Text(
@@ -695,7 +706,7 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                     style: GoogleFonts.poppins(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
-                      color: AppTheme.textPrimary,
+                      color: AppTheme.getTextPrimary(context),
                     ),
                   ),
                   const SizedBox(height: 10),
@@ -703,7 +714,7 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                     _description,
                     style: GoogleFonts.poppins(
                       fontSize: 14,
-                      color: AppTheme.textSecondary,
+                      color: AppTheme.getTextSecondary(context),
                       height: 1.7,
                     ),
                   ),
@@ -713,7 +724,7 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                     style: GoogleFonts.poppins(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
-                      color: AppTheme.textPrimary,
+                      color: AppTheme.getTextPrimary(context),
                     ),
                   ),
                   const SizedBox(height: 10),
@@ -721,9 +732,9 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                     width: double.infinity,
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: AppTheme.surface,
+                      color: isDark ? const Color(0xFF1E293B) : AppTheme.surface,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppTheme.cardBorder),
+                      border: Border.all(color: AppTheme.getCardBorder(context)),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -732,13 +743,13 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                           _medicalHistory,
                           style: GoogleFonts.poppins(
                             fontSize: 13,
-                            color: AppTheme.textSecondary,
+                            color: AppTheme.getTextSecondary(context),
                             height: 1.6,
                           ),
                         ),
                         if (widget.pet['medical_logs'] != null && (widget.pet['medical_logs'] as List).isNotEmpty) ...[
                           const SizedBox(height: 12),
-                          const Divider(height: 1),
+                          Divider(height: 1, color: AppTheme.getCardBorder(context)),
                           const SizedBox(height: 12),
                           ...(widget.pet['medical_logs'] as List).map((log) {
                             final mapLog = log as Map<String, dynamic>;
@@ -758,7 +769,7 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                                           style: GoogleFonts.poppins(
                                             fontSize: 12,
                                             fontWeight: FontWeight.w600,
-                                            color: AppTheme.textPrimary,
+                                            color: AppTheme.getTextPrimary(context),
                                           ),
                                         ),
                                         if (mapLog['notes'] != null && mapLog['notes'].toString().isNotEmpty)
@@ -766,7 +777,7 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                                             mapLog['notes'].toString(),
                                             style: GoogleFonts.poppins(
                                               fontSize: 11,
-                                              color: AppTheme.textSecondary,
+                                              color: AppTheme.getTextSecondary(context),
                                             ),
                                           ),
                                       ],
@@ -789,10 +800,10 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
       bottomNavigationBar: Container(
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: isDark ? const Color(0xFF1E293B) : Colors.white,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.07),
+              color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.07),
               blurRadius: 20,
               offset: const Offset(0, -4),
             ),
@@ -808,7 +819,7 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                   : const LinearGradient(
                       colors: [AppTheme.primaryDark, AppTheme.primary],
                     ),
-              color: _hasApplied ? AppTheme.surface : null,
+              color: _hasApplied ? (isDark ? const Color(0xFF0F172A) : AppTheme.surface) : null,
               borderRadius: BorderRadius.circular(14),
               border: _hasApplied
                   ? Border.all(color: AppTheme.primary.withValues(alpha: 0.4), width: 1.5)
@@ -836,7 +847,7 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
                         ? (_applicationStatus == 'approved' ? 'Pre-Approved (Pending Event Verification)' : 'Application Under Review')
                         : 'Apply for Adoption',
                     style: GoogleFonts.poppins(
-                      color: _hasApplied ? AppTheme.primary : Colors.white,
+                      color: _hasApplied ? (isDark ? const Color(0xFF5EEAD4) : AppTheme.primary) : Colors.white,
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
                     ),
@@ -851,8 +862,9 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
   }
 
   Widget _buildPlaceholder() {
+    final isDark = AppTheme.isDark(context);
     return Container(
-      color: AppTheme.primaryLight,
+      color: isDark ? const Color(0xFF1E293B) : AppTheme.primaryLight,
       child: Center(
         child: Icon(Icons.pets_rounded, size: 64, color: AppTheme.primary.withValues(alpha: 0.35)),
       ),
@@ -860,13 +872,14 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
   }
 
   Widget _infoCard(IconData icon, String label, String value) {
+    final isDark = AppTheme.isDark(context);
     return Expanded(
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 6),
         decoration: BoxDecoration(
-          color: AppTheme.surface,
+          color: isDark ? const Color(0xFF1E293B) : AppTheme.surface,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppTheme.cardBorder),
+          border: Border.all(color: AppTheme.getCardBorder(context)),
         ),
         child: Column(
           children: [
@@ -876,7 +889,7 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
               label,
               style: GoogleFonts.poppins(
                 fontSize: 10,
-                color: AppTheme.textSecondary,
+                color: AppTheme.getTextSecondary(context),
               ),
             ),
             Text(
@@ -884,7 +897,7 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
               style: GoogleFonts.poppins(
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
-                color: AppTheme.textPrimary,
+                color: AppTheme.getTextPrimary(context),
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
