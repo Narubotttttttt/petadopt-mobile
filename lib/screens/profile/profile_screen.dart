@@ -1528,6 +1528,7 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
 
 
   void _showHelpAndSupportModal(BuildContext context) {
+    final isDark = AppTheme.isDark(context);
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -1537,9 +1538,9 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
         minChildSize: 0.5,
         maxChildSize: 0.92,
         builder: (_, scrollController) => Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1E293B) : Colors.white,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
           ),
           child: Column(
             children: [
@@ -1548,7 +1549,7 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
+                  color: isDark ? const Color(0xFF334155) : Colors.grey.shade300,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -1560,7 +1561,7 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: AppTheme.primaryLight,
+                        color: isDark ? AppTheme.primary.withValues(alpha: 0.2) : AppTheme.primaryLight,
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: const Icon(Icons.help_outline_rounded, color: AppTheme.primary, size: 22),
@@ -1575,14 +1576,14 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
                             style: GoogleFonts.poppins(
                               fontSize: 17,
                               fontWeight: FontWeight.w700,
-                              color: AppTheme.textPrimary,
+                              color: AppTheme.getTextPrimary(context),
                             ),
                           ),
                           Text(
                             'Adoption FAQs, Shelter Contact & Hours',
                             style: GoogleFonts.poppins(
                               fontSize: 11,
-                              color: AppTheme.textSecondary,
+                              color: AppTheme.getTextSecondary(context),
                             ),
                           ),
                         ],
@@ -1591,7 +1592,7 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
                   ],
                 ),
               ),
-              const Divider(height: 1),
+              Divider(height: 1, color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
               Expanded(
                 child: ListView(
                   controller: scrollController,
@@ -1602,20 +1603,21 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
                       style: GoogleFonts.poppins(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
-                        color: const Color(0xFF1E293B),
+                        color: AppTheme.getTextPrimary(context),
                       ),
                     ),
                     const SizedBox(height: 10),
                     Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF8FAFC),
+                        color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
                         borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                        border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
                       ),
                       child: Column(
                         children: [
                           _buildContactRow(
+                            context: context,
                             icon: Icons.phone_rounded,
                             title: 'Shelter Hotline',
                             value: '0936 556 6200',
@@ -1629,8 +1631,9 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
                               );
                             },
                           ),
-                          const Divider(height: 16),
+                          Divider(height: 16, color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0)),
                           _buildContactRow(
+                            context: context,
                             icon: Icons.email_rounded,
                             title: 'Official Email',
                             value: 'cdoanimalrescueorg@gmail.com',
@@ -1644,8 +1647,9 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
                               );
                             },
                           ),
-                          const Divider(height: 16),
+                          Divider(height: 16, color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0)),
                           _buildContactRow(
+                            context: context,
                             icon: Icons.location_on_rounded,
                             title: 'Shelter Location',
                             value: 'Cagayan de Oro City, Misamis Oriental, PH',
@@ -1660,23 +1664,27 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
                       style: GoogleFonts.poppins(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
-                        color: const Color(0xFF1E293B),
+                        color: AppTheme.getTextPrimary(context),
                       ),
                     ),
                     const SizedBox(height: 10),
                     _buildFaqItem(
+                      context: context,
                       question: 'How long does application review take?',
                       answer: 'Our adoption committee typically reviews applications within 24 to 48 business hours. You can monitor progress under the Applications tab.',
                     ),
                     _buildFaqItem(
+                      context: context,
                       question: 'Can I adopt more than one pet?',
                       answer: 'Shelter welfare policy permits up to 3 adopted pets per verified household to ensure optimal individual care and living space.',
                     ),
                     _buildFaqItem(
+                      context: context,
                       question: 'What are the required qualifications?',
                       answer: 'Applicants must be at least 18 years old, submit a verified government ID, sign an e-signature agreement, and pass the lifestyle compatibility quiz.',
                     ),
                     _buildFaqItem(
+                      context: context,
                       question: 'How do health check-ins work?',
                       answer: 'Adoptive parents submit regular photo and wellness updates under My Adopted Pets > Health Check-in to track vaccine status and post-adoption care.',
                     ),
@@ -1691,12 +1699,14 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
   }
 
   Widget _buildContactRow({
+    required BuildContext context,
     required IconData icon,
     required String title,
     required String value,
     String? subtitle,
     VoidCallback? onTap,
   }) {
+    final isDark = AppTheme.isDark(context);
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(8),
@@ -1708,7 +1718,7 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
             Container(
               padding: const EdgeInsets.all(7),
               decoration: BoxDecoration(
-                color: AppTheme.primaryLight,
+                color: isDark ? AppTheme.primary.withValues(alpha: 0.2) : AppTheme.primaryLight,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(icon, color: AppTheme.primary, size: 16),
@@ -1720,63 +1730,93 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
                 children: [
                   Text(
                     title,
-                    style: GoogleFonts.poppins(fontSize: 11, color: const Color(0xFF64748B), fontWeight: FontWeight.w500),
+                    style: GoogleFonts.poppins(
+                      fontSize: 11,
+                      color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                   Text(
                     value,
-                    style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600, color: const Color(0xFF1E293B)),
+                    style: GoogleFonts.poppins(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.getTextPrimary(context),
+                    ),
                   ),
                   if (subtitle != null)
                     Text(
                       subtitle,
-                      style: GoogleFonts.poppins(fontSize: 10.5, color: const Color(0xFF94A3B8)),
+                      style: GoogleFonts.poppins(
+                        fontSize: 10.5,
+                        color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
+                      ),
                     ),
                 ],
               ),
             ),
             if (onTap != null)
-              const Icon(Icons.copy_rounded, size: 14, color: Color(0xFF94A3B8)),
+              Icon(Icons.copy_rounded, size: 14, color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8)),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildFaqItem({required String question, required String answer}) {
+  Widget _buildFaqItem({
+    required BuildContext context,
+    required String question,
+    required String answer,
+  }) {
+    final isDark = AppTheme.isDark(context);
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
       ),
-      child: ExpansionTile(
-        tilePadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 0),
-        childrenPadding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
-        title: Text(
-          question,
-          style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600, color: const Color(0xFF1E293B)),
-        ),
-        children: [
-          Text(
-            answer,
-            style: GoogleFonts.poppins(fontSize: 11.5, color: const Color(0xFF475569), height: 1.4),
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          tilePadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 0),
+          childrenPadding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
+          iconColor: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+          collapsedIconColor: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
+          title: Text(
+            question,
+            style: GoogleFonts.poppins(
+              fontSize: 12.5,
+              fontWeight: FontWeight.w600,
+              color: AppTheme.getTextPrimary(context),
+            ),
           ),
-        ],
+          children: [
+            Text(
+              answer,
+              style: GoogleFonts.poppins(
+                fontSize: 11.5,
+                color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569),
+                height: 1.4,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   void _showAboutCawsModal(BuildContext context) {
+    final isDark = AppTheme.isDark(context);
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => Container(
         padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -1787,7 +1827,7 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
+                  color: isDark ? const Color(0xFF334155) : Colors.grey.shade300,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -1799,7 +1839,7 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    color: AppTheme.primaryLight,
+                    color: isDark ? AppTheme.primary.withValues(alpha: 0.2) : AppTheme.primaryLight,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(Icons.pets_rounded, color: AppTheme.primary, size: 24),
@@ -1814,14 +1854,14 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
                         style: GoogleFonts.poppins(
                           fontSize: 17,
                           fontWeight: FontWeight.w700,
-                          color: AppTheme.textPrimary,
+                          color: AppTheme.getTextPrimary(context),
                         ),
                       ),
                       Text(
                         'CDO Animal Welfare Society Inc.',
                         style: GoogleFonts.poppins(
                           fontSize: 11,
-                          color: AppTheme.textSecondary,
+                          color: AppTheme.getTextSecondary(context),
                         ),
                       ),
                     ],
@@ -1833,9 +1873,9 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: const Color(0xFFF0FDFA),
+                color: isDark ? const Color(0xFF064E3B).withValues(alpha: 0.4) : const Color(0xFFF0FDFA),
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xFFCCFBF1)),
+                border: Border.all(color: isDark ? const Color(0xFF059669).withValues(alpha: 0.4) : const Color(0xFFCCFBF1)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1845,7 +1885,7 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
                     style: GoogleFonts.poppins(
                       fontSize: 12.5,
                       fontWeight: FontWeight.w700,
-                      color: const Color(0xFF0F766E),
+                      color: isDark ? const Color(0xFF5EEAD4) : const Color(0xFF0F766E),
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -1853,7 +1893,7 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
                     'Rescuing, rehabilitating, and rehoming abandoned and neglected animals across Cagayan de Oro City while advocating for humane treatment and spay/neuter awareness.',
                     style: GoogleFonts.poppins(
                       fontSize: 11.5,
-                      color: const Color(0xFF134E4A),
+                      color: isDark ? const Color(0xFFA7F3D0) : const Color(0xFF134E4A),
                       height: 1.4,
                     ),
                   ),
@@ -1864,19 +1904,19 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
+                color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
+                border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
               ),
               child: Column(
                 children: [
-                  _buildAboutInfoRow('Organization Type', 'Certified Non-Profit NGO'),
-                  const Divider(height: 12),
-                  _buildAboutInfoRow('Location', 'Cagayan de Oro City, Misamis Oriental'),
-                  const Divider(height: 12),
-                  _buildAboutInfoRow('Official Email', 'cdoanimalrescueorg@gmail.com'),
-                  const Divider(height: 12),
-                  _buildAboutInfoRow('Application Version', 'CAWS PetAdopt v1.0.0'),
+                  _buildAboutInfoRow(context, 'Organization Type', 'Certified Non-Profit NGO'),
+                  Divider(height: 12, color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0)),
+                  _buildAboutInfoRow(context, 'Location', 'Cagayan de Oro City, Misamis Oriental'),
+                  Divider(height: 12, color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0)),
+                  _buildAboutInfoRow(context, 'Official Email', 'cdoanimalrescueorg@gmail.com'),
+                  Divider(height: 12, color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0)),
+                  _buildAboutInfoRow(context, 'Application Version', 'CAWS PetAdopt v1.0.0'),
                 ],
               ),
             ),
@@ -1904,17 +1944,26 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
     );
   }
 
-  Widget _buildAboutInfoRow(String label, String value) {
+  Widget _buildAboutInfoRow(BuildContext context, String label, String value) {
+    final isDark = AppTheme.isDark(context);
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
           label,
-          style: GoogleFonts.poppins(fontSize: 11, color: const Color(0xFF64748B), fontWeight: FontWeight.w500),
+          style: GoogleFonts.poppins(
+            fontSize: 11,
+            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+            fontWeight: FontWeight.w500,
+          ),
         ),
         Text(
           value,
-          style: GoogleFonts.poppins(fontSize: 11.5, color: const Color(0xFF1E293B), fontWeight: FontWeight.w600),
+          style: GoogleFonts.poppins(
+            fontSize: 11.5,
+            color: AppTheme.getTextPrimary(context),
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ],
     );
@@ -2094,6 +2143,7 @@ class _DigitalSignatureSheetState extends State<_DigitalSignatureSheet> {
   @override
   Widget build(BuildContext context) {
     final hasSignature = _signatureUrl != null && _signatureUrl!.isNotEmpty;
+    final isDark = AppTheme.isDark(context);
 
     return Container(
       padding: EdgeInsets.only(
@@ -2102,9 +2152,9 @@ class _DigitalSignatureSheetState extends State<_DigitalSignatureSheet> {
         left: 20,
         right: 20,
       ),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -2115,7 +2165,7 @@ class _DigitalSignatureSheetState extends State<_DigitalSignatureSheet> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.grey.shade300,
+                color: isDark ? const Color(0xFF334155) : Colors.grey.shade300,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -2129,7 +2179,7 @@ class _DigitalSignatureSheetState extends State<_DigitalSignatureSheet> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: AppTheme.primaryLight,
+                      color: isDark ? AppTheme.primary.withValues(alpha: 0.2) : AppTheme.primaryLight,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: const Icon(Icons.draw_rounded, color: AppTheme.primary, size: 22),
@@ -2143,12 +2193,12 @@ class _DigitalSignatureSheetState extends State<_DigitalSignatureSheet> {
                         style: GoogleFonts.poppins(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
-                          color: AppTheme.textPrimary,
+                          color: AppTheme.getTextPrimary(context),
                         ),
                       ),
                       Text(
                         'Official e-Signature Record',
-                        style: GoogleFonts.poppins(fontSize: 11, color: AppTheme.textSecondary),
+                        style: GoogleFonts.poppins(fontSize: 11, color: AppTheme.getTextSecondary(context)),
                       ),
                     ],
                   ),
@@ -2158,20 +2208,20 @@ class _DigitalSignatureSheetState extends State<_DigitalSignatureSheet> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFECFDF5),
+                    color: isDark ? const Color(0xFF064E3B).withValues(alpha: 0.4) : const Color(0xFFECFDF5),
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: const Color(0xFFA7F3D0)),
+                    border: Border.all(color: isDark ? const Color(0xFF059669).withValues(alpha: 0.4) : const Color(0xFFA7F3D0)),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.verified_rounded, color: Color(0xFF059669), size: 14),
+                      Icon(Icons.verified_rounded, color: isDark ? const Color(0xFF34D399) : const Color(0xFF059669), size: 14),
                       const SizedBox(width: 4),
                       Text(
                         'On Record',
                         style: GoogleFonts.poppins(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
-                          color: const Color(0xFF065F46),
+                          color: isDark ? const Color(0xFF34D399) : const Color(0xFF065F46),
                         ),
                       ),
                     ],
@@ -2186,9 +2236,9 @@ class _DigitalSignatureSheetState extends State<_DigitalSignatureSheet> {
               width: double.infinity,
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
+                color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
+                border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
               ),
               child: Column(
                 children: [
@@ -2199,13 +2249,13 @@ class _DigitalSignatureSheetState extends State<_DigitalSignatureSheet> {
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFCBD5E1)),
+                      border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1)),
                     ),
                     child: Image.network(
                       _signatureUrl!,
                       fit: BoxFit.contain,
-                      errorBuilder: (_, _, _) => const Center(
-                        child: Text('Signature on file', style: TextStyle(color: Color(0xFF64748B))),
+                      errorBuilder: (_, _, _) => Center(
+                        child: Text('Signature on file', style: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B))),
                       ),
                     ),
                   ),
@@ -2219,7 +2269,7 @@ class _DigitalSignatureSheetState extends State<_DigitalSignatureSheet> {
                           'Your e-signature is securely saved and automatically used on your approved CAWS adoption agreements.',
                           style: GoogleFonts.poppins(
                             fontSize: 11,
-                            color: const Color(0xFF64748B),
+                            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                             height: 1.35,
                           ),
                         ),
@@ -2273,17 +2323,17 @@ class _DigitalSignatureSheetState extends State<_DigitalSignatureSheet> {
           ] else ...[
             Text(
               'Draw your legal signature below using your finger (eGov Standard). It will be saved on your adopter profile.',
-              style: GoogleFonts.poppins(fontSize: 12, color: AppTheme.textSecondary, height: 1.4),
+              style: GoogleFonts.poppins(fontSize: 12, color: AppTheme.getTextSecondary(context), height: 1.4),
             ),
             const SizedBox(height: 12),
             Container(
               height: 150,
               width: double.infinity,
               decoration: BoxDecoration(
-                color: const Color(0xFFFAFAFA),
+                color: isDark ? const Color(0xFF0F172A) : const Color(0xFFFAFAFA),
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
-                  color: _isSigning ? AppTheme.primary : const Color(0xFFCBD5E1),
+                  color: _isSigning ? AppTheme.primary : (isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1)),
                   width: _isSigning ? 2.0 : 1.5,
                 ),
               ),
@@ -2292,16 +2342,16 @@ class _DigitalSignatureSheetState extends State<_DigitalSignatureSheet> {
                 child: Stack(
                   children: [
                     if (_strokes.isEmpty)
-                      const IgnorePointer(
+                      IgnorePointer(
                         child: Center(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.draw_rounded, size: 24, color: Color(0xFF94A3B8)),
-                              SizedBox(height: 4),
+                              Icon(Icons.draw_rounded, size: 24, color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8)),
+                              const SizedBox(height: 4),
                               Text(
                                 'Sign inside this box',
-                                style: TextStyle(fontFamily: 'Poppins', fontSize: 12, color: Color(0xFF94A3B8)),
+                                style: TextStyle(fontFamily: 'Poppins', fontSize: 12, color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8)),
                               ),
                             ],
                           ),
@@ -2311,11 +2361,11 @@ class _DigitalSignatureSheetState extends State<_DigitalSignatureSheet> {
                       bottom: 20,
                       left: 16,
                       right: 16,
-                      child: const IgnorePointer(
+                      child: IgnorePointer(
                         child: Divider(
                           height: 1,
                           thickness: 1,
-                          color: Color(0xFFCBD5E1),
+                          color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
                         ),
                       ),
                     ),
@@ -2354,7 +2404,10 @@ class _DigitalSignatureSheetState extends State<_DigitalSignatureSheet> {
                         },
                         child: SizedBox.expand(
                           child: CustomPaint(
-                            painter: _SignaturePadPainter(strokes: _strokes),
+                            painter: _SignaturePadPainter(
+                              strokes: _strokes,
+                              strokeColor: isDark ? const Color(0xFF5EEAD4) : const Color(0xFF0F172A),
+                            ),
                           ),
                         ),
                       ),
@@ -2369,8 +2422,8 @@ class _DigitalSignatureSheetState extends State<_DigitalSignatureSheet> {
               children: [
                 TextButton.icon(
                   onPressed: _clearSignature,
-                  icon: const Icon(Icons.refresh_rounded, size: 16, color: Color(0xFF64748B)),
-                  label: Text('Clear Pad', style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFF64748B))),
+                  icon: Icon(Icons.refresh_rounded, size: 16, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
+                  label: Text('Clear Pad', style: GoogleFonts.poppins(fontSize: 12, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B))),
                 ),
                 if (hasSignature)
                   TextButton(
@@ -2416,13 +2469,17 @@ class _DigitalSignatureSheetState extends State<_DigitalSignatureSheet> {
 
 class _SignaturePadPainter extends CustomPainter {
   final List<List<Offset>> strokes;
+  final Color strokeColor;
 
-  _SignaturePadPainter({required this.strokes});
+  _SignaturePadPainter({
+    required this.strokes,
+    this.strokeColor = const Color(0xFF0F172A),
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
     final strokePaint = Paint()
-      ..color = const Color(0xFF0F172A)
+      ..color = strokeColor
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round
       ..strokeWidth = 3.0
@@ -2430,7 +2487,7 @@ class _SignaturePadPainter extends CustomPainter {
       ..isAntiAlias = true;
 
     final dotPaint = Paint()
-      ..color = const Color(0xFF0F172A)
+      ..color = strokeColor
       ..style = PaintingStyle.fill
       ..isAntiAlias = true;
 

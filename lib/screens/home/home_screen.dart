@@ -979,7 +979,7 @@ class _HomeTabState extends State<_HomeTab> {
                               style: GoogleFonts.poppins(
                                 fontSize: 12.5,
                                 fontWeight: FontWeight.w600,
-                                color: AppTheme.textPrimary,
+                                color: AppTheme.getTextPrimary(context),
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -1453,7 +1453,7 @@ class _HomeTabState extends State<_HomeTab> {
                           style: GoogleFonts.poppins(
                             fontSize: 15.5,
                             fontWeight: FontWeight.w700,
-                            color: AppTheme.textPrimary,
+                            color: AppTheme.getTextPrimary(context),
                             letterSpacing: -0.2,
                           ),
                         ),

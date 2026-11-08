@@ -120,20 +120,20 @@ class _PetMedicalCardScreenState extends State<PetMedicalCardScreen> {
     final petDisplayName = pet?['name'] as String? ?? widget.petName ?? 'Pet Health Card';
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFB),
+      backgroundColor: AppTheme.getBackgroundColor(context),
       appBar: AppBar(
         title: Text(
           petDisplayName.isNotEmpty ? '$petDisplayName Health Card' : 'Pet Health Card',
           style: GoogleFonts.poppins(
             fontSize: 16,
             fontWeight: FontWeight.w700,
-            color: AppTheme.textPrimary,
+            color: AppTheme.getTextPrimary(context),
           ),
         ),
-        backgroundColor: Colors.white,
+        backgroundColor: AppTheme.getSurfaceColor(context),
         elevation: 0.5,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: AppTheme.textPrimary),
+          icon: Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: AppTheme.getTextPrimary(context)),
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
@@ -153,9 +153,9 @@ class _PetMedicalCardScreenState extends State<PetMedicalCardScreen> {
       bottomNavigationBar: (!_isLoading && _errorMessage == null)
           ? Container(
               padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                border: Border(top: BorderSide(color: Color(0xFFF1F5F9))),
+              decoration: BoxDecoration(
+                color: AppTheme.getSurfaceColor(context),
+                border: Border(top: BorderSide(color: AppTheme.getCardBorder(context))),
               ),
               child: SafeArea(
                 child: ElevatedButton.icon(
@@ -269,19 +269,22 @@ class _PetMedicalCardScreenState extends State<PetMedicalCardScreen> {
     final guardianName = guardian?['name'] as String? ?? 'Adopter';
     final adopterCode = guardian?['adopter_code'] as String? ?? '';
     final guardianPhone = guardian?['phone'] as String? ?? '';
+    final isDark = AppTheme.isDark(context);
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.getCardColor(context),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        border: Border.all(color: AppTheme.getCardBorder(context)),
+        boxShadow: isDark
+            ? []
+            : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.03),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(
@@ -335,7 +338,7 @@ class _PetMedicalCardScreenState extends State<PetMedicalCardScreen> {
                           errorBuilder: (_, _, _) => Container(
                             width: 58,
                             height: 58,
-                            color: const Color(0xFFF0FBFB),
+                            color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF0FBFB),
                             alignment: Alignment.center,
                             child: Text(
                               'PET',
@@ -350,7 +353,7 @@ class _PetMedicalCardScreenState extends State<PetMedicalCardScreen> {
                       : Container(
                           width: 58,
                           height: 58,
-                          color: const Color(0xFFF0FBFB),
+                          color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF0FBFB),
                           alignment: Alignment.center,
                           child: Text(
                             'PET',
@@ -372,14 +375,14 @@ class _PetMedicalCardScreenState extends State<PetMedicalCardScreen> {
                         style: GoogleFonts.poppins(
                           fontSize: 16,
                           fontWeight: FontWeight.w800,
-                          color: AppTheme.textPrimary,
+                          color: AppTheme.getTextPrimary(context),
                         ),
                       ),
                       Text(
                         '$breed • $petType',
                         style: GoogleFonts.poppins(
                           fontSize: 12,
-                          color: AppTheme.textSecondary,
+                          color: AppTheme.getTextSecondary(context),
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -398,7 +401,7 @@ class _PetMedicalCardScreenState extends State<PetMedicalCardScreen> {
             ),
           ),
 
-          const Divider(height: 1, color: Color(0xFFF1F5F9)),
+          Divider(height: 1, color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9)),
 
           // Guardian Row
           Padding(
@@ -414,7 +417,7 @@ class _PetMedicalCardScreenState extends State<PetMedicalCardScreen> {
                     style: GoogleFonts.poppins(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
-                      color: const Color(0xFF475569),
+                      color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569),
                     ),
                   ),
                 ),
@@ -424,7 +427,7 @@ class _PetMedicalCardScreenState extends State<PetMedicalCardScreen> {
                     style: GoogleFonts.poppins(
                       fontSize: 11,
                       fontWeight: FontWeight.w500,
-                      color: const Color(0xFF64748B),
+                      color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                     ),
                   ),
               ],
@@ -436,10 +439,11 @@ class _PetMedicalCardScreenState extends State<PetMedicalCardScreen> {
   }
 
   Widget _buildChip(String label) {
+    final isDark = AppTheme.isDark(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
       decoration: BoxDecoration(
-        color: const Color(0xFFF1F5F9),
+        color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9),
         borderRadius: BorderRadius.circular(5),
       ),
       child: Text(
@@ -447,7 +451,7 @@ class _PetMedicalCardScreenState extends State<PetMedicalCardScreen> {
         style: GoogleFonts.poppins(
           fontSize: 10,
           fontWeight: FontWeight.w600,
-          color: const Color(0xFF475569),
+          color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569),
         ),
       ),
     );
@@ -458,24 +462,25 @@ class _PetMedicalCardScreenState extends State<PetMedicalCardScreen> {
     final latestVac = summary?['latest_vaccine_date'] as String?;
     final latestDeworming = summary?['latest_deworming_date'] as String?;
     final totalRecords = summary?['total_records_count'] as int? ?? 0;
+    final isDark = AppTheme.isDark(context);
 
     Color statusColor;
     String statusLabel;
 
     if (status == 'Up to Date' || latestVac != null) {
-      statusColor = const Color(0xFF15838B);
+      statusColor = isDark ? const Color(0xFF2DD4BF) : const Color(0xFF15838B);
       statusLabel = 'PROTECTED';
     } else {
-      statusColor = const Color(0xFF64748B);
+      statusColor = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
       statusLabel = 'RECORDED';
     }
 
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.getCardColor(context),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: AppTheme.getCardBorder(context)),
       ),
       child: Column(
         children: [
@@ -488,13 +493,13 @@ class _PetMedicalCardScreenState extends State<PetMedicalCardScreen> {
                   fontSize: 10,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 0.6,
-                  color: const Color(0xFF64748B),
+                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                 ),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
                 decoration: BoxDecoration(
-                  color: statusColor.withValues(alpha: 0.1),
+                  color: statusColor.withValues(alpha: isDark ? 0.2 : 0.1),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
@@ -510,7 +515,7 @@ class _PetMedicalCardScreenState extends State<PetMedicalCardScreen> {
             ],
           ),
           const SizedBox(height: 8),
-          const Divider(height: 1, color: Color(0xFFF1F5F9)),
+          Divider(height: 1, color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9)),
           const SizedBox(height: 8),
           Row(
             children: [
@@ -518,28 +523,28 @@ class _PetMedicalCardScreenState extends State<PetMedicalCardScreen> {
                 child: _buildMetricCol(
                   'Last Vaccine',
                   latestVac ?? 'None',
-                  AppTheme.textPrimary,
+                  AppTheme.getTextPrimary(context),
                 ),
               ),
-              Container(width: 1, height: 28, color: const Color(0xFFF1F5F9)),
+              Container(width: 1, height: 28, color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9)),
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.only(left: 12),
                   child: _buildMetricCol(
                     'Deworming',
                     latestDeworming ?? 'Pending',
-                    AppTheme.textPrimary,
+                    AppTheme.getTextPrimary(context),
                   ),
                 ),
               ),
-              Container(width: 1, height: 28, color: const Color(0xFFF1F5F9)),
+              Container(width: 1, height: 28, color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9)),
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.only(left: 12),
                   child: _buildMetricCol(
                     'Total Logs',
                     '$totalRecords',
-                    AppTheme.textPrimary,
+                    AppTheme.getTextPrimary(context),
                   ),
                 ),
               ),
@@ -578,6 +583,7 @@ class _PetMedicalCardScreenState extends State<PetMedicalCardScreen> {
   }
 
   Widget _buildMedicalHistory(List<Map<String, dynamic>> records) {
+    final isDark = AppTheme.isDark(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -589,7 +595,7 @@ class _PetMedicalCardScreenState extends State<PetMedicalCardScreen> {
               style: GoogleFonts.poppins(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
-                color: AppTheme.textPrimary,
+                color: AppTheme.getTextPrimary(context),
               ),
             ),
             Row(
@@ -599,7 +605,7 @@ class _PetMedicalCardScreenState extends State<PetMedicalCardScreen> {
                   style: GoogleFonts.poppins(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
-                    color: const Color(0xFF64748B),
+                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -609,21 +615,21 @@ class _PetMedicalCardScreenState extends State<PetMedicalCardScreen> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEFF6FF),
+                      color: isDark ? const Color(0xFF1E3A8A).withValues(alpha: 0.35) : const Color(0xFFEFF6FF),
                       borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: const Color(0xFFBFDBFE)),
+                      border: Border.all(color: isDark ? const Color(0xFF3B82F6).withValues(alpha: 0.5) : const Color(0xFFBFDBFE)),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.add, size: 13, color: Color(0xFF2563EB)),
+                        Icon(Icons.add, size: 13, color: isDark ? const Color(0xFF60A5FA) : const Color(0xFF2563EB)),
                         const SizedBox(width: 3),
                         Text(
                           'Add Record',
                           style: GoogleFonts.poppins(
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
-                            color: const Color(0xFF2563EB),
+                            color: isDark ? const Color(0xFF60A5FA) : const Color(0xFF2563EB),
                           ),
                         ),
                       ],
@@ -640,20 +646,20 @@ class _PetMedicalCardScreenState extends State<PetMedicalCardScreen> {
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppTheme.getCardColor(context),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
+              border: Border.all(color: AppTheme.getCardBorder(context)),
             ),
             child: Column(
               children: [
-                const Icon(Icons.health_and_safety_outlined, size: 36, color: Color(0xFF94A3B8)),
+                Icon(Icons.health_and_safety_outlined, size: 36, color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8)),
                 const SizedBox(height: 8),
                 Text(
                   'No medical records logged yet.',
                   style: GoogleFonts.poppins(
                     fontSize: 12.5,
                     fontWeight: FontWeight.w600,
-                    color: AppTheme.textPrimary,
+                    color: AppTheme.getTextPrimary(context),
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -662,7 +668,7 @@ class _PetMedicalCardScreenState extends State<PetMedicalCardScreen> {
                   textAlign: TextAlign.center,
                   style: GoogleFonts.poppins(
                     fontSize: 11,
-                    color: AppTheme.textSecondary,
+                    color: AppTheme.getTextSecondary(context),
                   ),
                 ),
               ],
@@ -691,16 +697,21 @@ class _PetMedicalCardScreenState extends State<PetMedicalCardScreen> {
     final isExternal = log['is_external'] == true;
     final clinicName = log['clinic_name'] as String?;
     final proofPhotoUrl = log['proof_photo_url'] as String?;
+    final isDark = AppTheme.isDark(context);
 
     final isVaccination = category == 'vaccination';
     final isDeworming = category == 'deworming';
 
     final Color badgeBg = isVaccination
-        ? const Color(0xFFE6F4F5)
-        : (isDeworming ? const Color(0xFFF3E8FF) : const Color(0xFFF1F5F9));
+        ? (isDark ? const Color(0xFF0E7490).withValues(alpha: 0.3) : const Color(0xFFE6F4F5))
+        : (isDeworming
+            ? (isDark ? const Color(0xFF581C87).withValues(alpha: 0.3) : const Color(0xFFF3E8FF))
+            : (isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9)));
     final Color badgeColor = isVaccination
-        ? const Color(0xFF15838B)
-        : (isDeworming ? const Color(0xFF7E22CE) : const Color(0xFF475569));
+        ? (isDark ? const Color(0xFF22D3EE) : const Color(0xFF15838B))
+        : (isDeworming
+            ? (isDark ? const Color(0xFFC084FC) : const Color(0xFF7E22CE))
+            : (isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569)));
 
     final primaryTitle = (vaccineName != null &&
             vaccineName.trim().isNotEmpty &&
@@ -710,16 +721,18 @@ class _PetMedicalCardScreenState extends State<PetMedicalCardScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.getCardColor(context),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 4,
-            offset: const Offset(0, 1),
-          ),
-        ],
+        border: Border.all(color: AppTheme.getCardBorder(context)),
+        boxShadow: isDark
+            ? []
+            : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.02),
+                  blurRadius: 4,
+                  offset: const Offset(0, 1),
+                ),
+              ],
       ),
       child: Material(
         color: Colors.transparent,
@@ -759,9 +772,9 @@ class _PetMedicalCardScreenState extends State<PetMedicalCardScreen> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF5F3FF),
+                              color: isDark ? const Color(0xFF4C1D95).withValues(alpha: 0.4) : const Color(0xFFF5F3FF),
                               borderRadius: BorderRadius.circular(5),
-                              border: Border.all(color: const Color(0xFFDDD6FE)),
+                              border: Border.all(color: isDark ? const Color(0xFF7C3AED).withValues(alpha: 0.5) : const Color(0xFFDDD6FE)),
                             ),
                             child: Text(
                               'EXTERNAL VET',
@@ -769,7 +782,7 @@ class _PetMedicalCardScreenState extends State<PetMedicalCardScreen> {
                                 fontSize: 9,
                                 fontWeight: FontWeight.w700,
                                 letterSpacing: 0.3,
-                                color: const Color(0xFF7C3AED),
+                                color: isDark ? const Color(0xFFA78BFA) : const Color(0xFF7C3AED),
                               ),
                             ),
                           ),
@@ -781,7 +794,7 @@ class _PetMedicalCardScreenState extends State<PetMedicalCardScreen> {
                       style: GoogleFonts.poppins(
                         fontSize: 11,
                         fontWeight: FontWeight.w500,
-                        color: const Color(0xFF64748B),
+                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                       ),
                     ),
                   ],
@@ -794,7 +807,7 @@ class _PetMedicalCardScreenState extends State<PetMedicalCardScreen> {
                   style: GoogleFonts.poppins(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
-                    color: AppTheme.textPrimary,
+                    color: AppTheme.getTextPrimary(context),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -804,9 +817,9 @@ class _PetMedicalCardScreenState extends State<PetMedicalCardScreen> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF8FAFC),
+                          color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
                           borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                          border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -827,7 +840,7 @@ class _PetMedicalCardScreenState extends State<PetMedicalCardScreen> {
                                 style: GoogleFonts.poppins(
                                   fontSize: 10.5,
                                   fontWeight: FontWeight.w500,
-                                  color: const Color(0xFF475569),
+                                  color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569),
                                 ),
                               ),
                             ),
@@ -843,21 +856,21 @@ class _PetMedicalCardScreenState extends State<PetMedicalCardScreen> {
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFEFF6FF),
+                            color: isDark ? const Color(0xFF1E3A8A).withValues(alpha: 0.35) : const Color(0xFFEFF6FF),
                             borderRadius: BorderRadius.circular(6),
-                            border: Border.all(color: const Color(0xFFBFDBFE)),
+                            border: Border.all(color: isDark ? const Color(0xFF3B82F6).withValues(alpha: 0.5) : const Color(0xFFBFDBFE)),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.receipt_long_outlined, size: 13, color: Color(0xFF2563EB)),
+                              Icon(Icons.receipt_long_outlined, size: 13, color: isDark ? const Color(0xFF60A5FA) : const Color(0xFF2563EB)),
                               const SizedBox(width: 4),
                               Text(
                                 'Proof',
                                 style: GoogleFonts.poppins(
                                   fontSize: 10.5,
                                   fontWeight: FontWeight.w600,
-                                  color: const Color(0xFF2563EB),
+                                  color: isDark ? const Color(0xFF60A5FA) : const Color(0xFF2563EB),
                                 ),
                               ),
                             ],
@@ -882,10 +895,11 @@ class _PetMedicalCardScreenState extends State<PetMedicalCardScreen> {
     final clinicName = log['clinic_name'] as String?;
     final proofPhotoUrl = log['proof_photo_url'] as String?;
     final nextDue = log['next_due_formatted'] as String?;
+    final isDark = AppTheme.isDark(context);
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -903,7 +917,7 @@ class _PetMedicalCardScreenState extends State<PetMedicalCardScreen> {
                     width: 36,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFE2E8F0),
+                      color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -918,13 +932,13 @@ class _PetMedicalCardScreenState extends State<PetMedicalCardScreen> {
                         style: GoogleFonts.poppins(
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
-                          color: AppTheme.textPrimary,
+                          color: AppTheme.getTextPrimary(context),
                         ),
                       ),
                     ),
                     const SizedBox(width: 8),
                     IconButton(
-                      icon: const Icon(Icons.close, size: 18, color: Color(0xFF64748B)),
+                      icon: Icon(Icons.close, size: 18, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
                       onPressed: () => Navigator.pop(ctx),
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
@@ -962,7 +976,7 @@ class _PetMedicalCardScreenState extends State<PetMedicalCardScreen> {
                     style: GoogleFonts.poppins(
                       fontSize: 11.5,
                       fontWeight: FontWeight.w600,
-                      color: const Color(0xFF64748B),
+                      color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -976,7 +990,7 @@ class _PetMedicalCardScreenState extends State<PetMedicalCardScreen> {
                       child: Container(
                         height: 140,
                         width: double.infinity,
-                        color: const Color(0xFFF1F5F9),
+                        color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
                         child: Stack(
                           fit: StackFit.expand,
                           children: [
@@ -986,7 +1000,7 @@ class _PetMedicalCardScreenState extends State<PetMedicalCardScreen> {
                               errorBuilder: (_, _, _) => Center(
                                 child: Text(
                                   'Unable to load photo',
-                                  style: GoogleFonts.poppins(fontSize: 11, color: AppTheme.textSecondary),
+                                  style: GoogleFonts.poppins(fontSize: 11, color: AppTheme.getTextSecondary(context)),
                                 ),
                               ),
                             ),
@@ -1027,6 +1041,7 @@ class _PetMedicalCardScreenState extends State<PetMedicalCardScreen> {
   }
 
   Widget _buildDetailTile(String label, String value) {
+    final isDark = AppTheme.isDark(context);
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
@@ -1039,7 +1054,7 @@ class _PetMedicalCardScreenState extends State<PetMedicalCardScreen> {
               style: GoogleFonts.poppins(
                 fontSize: 11.5,
                 fontWeight: FontWeight.w500,
-                color: const Color(0xFF64748B),
+                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
               ),
             ),
           ),
@@ -1049,7 +1064,7 @@ class _PetMedicalCardScreenState extends State<PetMedicalCardScreen> {
               style: GoogleFonts.poppins(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: AppTheme.textPrimary,
+                color: AppTheme.getTextPrimary(context),
               ),
             ),
           ),
@@ -1059,21 +1074,22 @@ class _PetMedicalCardScreenState extends State<PetMedicalCardScreen> {
   }
 
   Widget _buildAdvisoryFooter() {
+    final isDark = AppTheme.isDark(context);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF1F5F9),
+        color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(
+          Icon(
             Icons.verified_outlined,
             size: 18,
-            color: Color(0xFF15838B),
+            color: isDark ? const Color(0xFF2DD4BF) : const Color(0xFF15838B),
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -1081,7 +1097,7 @@ class _PetMedicalCardScreenState extends State<PetMedicalCardScreen> {
               'Official record of clinical care administered at CAWS and registered veterinary clinics. Present this card to your veterinarian during routine checkups.',
               style: GoogleFonts.poppins(
                 fontSize: 10.5,
-                color: const Color(0xFF64748B),
+                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                 height: 1.4,
               ),
             ),
@@ -1296,11 +1312,12 @@ class _RecordVetVaccineModalState extends State<_RecordVetVaccineModal> {
   @override
   Widget build(BuildContext context) {
     final currentSuggestions = _suggestions[_category] ?? [];
+    final isDark = AppTheme.isDark(context);
 
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       padding: EdgeInsets.only(
         left: 20,
@@ -1318,7 +1335,7 @@ class _RecordVetVaccineModalState extends State<_RecordVetVaccineModal> {
                 width: 36,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE2E8F0),
+                  color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -1336,7 +1353,7 @@ class _RecordVetVaccineModalState extends State<_RecordVetVaccineModal> {
                         style: GoogleFonts.poppins(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
-                          color: AppTheme.textPrimary,
+                          color: AppTheme.getTextPrimary(context),
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -1344,7 +1361,7 @@ class _RecordVetVaccineModalState extends State<_RecordVetVaccineModal> {
                         'Log visits to private clinics to update CAWS records',
                         style: GoogleFonts.poppins(
                           fontSize: 11,
-                          color: AppTheme.textSecondary,
+                          color: AppTheme.getTextSecondary(context),
                         ),
                       ),
                     ],
@@ -1352,7 +1369,7 @@ class _RecordVetVaccineModalState extends State<_RecordVetVaccineModal> {
                 ),
                 const SizedBox(width: 8),
                 IconButton(
-                  icon: const Icon(Icons.close, size: 20, color: Color(0xFF64748B)),
+                  icon: Icon(Icons.close, size: 20, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
                   onPressed: () => Navigator.pop(context),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
@@ -1394,7 +1411,7 @@ class _RecordVetVaccineModalState extends State<_RecordVetVaccineModal> {
               style: GoogleFonts.poppins(
                 fontSize: 11.5,
                 fontWeight: FontWeight.w600,
-                color: AppTheme.textPrimary,
+                color: AppTheme.getTextPrimary(context),
               ),
             ),
             const SizedBox(height: 6),
@@ -1417,26 +1434,26 @@ class _RecordVetVaccineModalState extends State<_RecordVetVaccineModal> {
               style: GoogleFonts.poppins(
                 fontSize: 11.5,
                 fontWeight: FontWeight.w600,
-                color: AppTheme.textPrimary,
+                color: AppTheme.getTextPrimary(context),
               ),
             ),
             const SizedBox(height: 6),
             TextField(
               controller: _vaccineNameCtrl,
-              style: GoogleFonts.poppins(fontSize: 13, color: AppTheme.textPrimary),
+              style: GoogleFonts.poppins(fontSize: 13, color: AppTheme.getTextPrimary(context)),
               decoration: InputDecoration(
                 hintText: _category == 'vaccination' ? 'e.g. 5-in-1 (DHPP) or Rabies' : 'e.g. Heartgard Plus',
-                hintStyle: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFF94A3B8)),
+                hintStyle: GoogleFonts.poppins(fontSize: 12, color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8)),
                 filled: true,
-                fillColor: const Color(0xFFF8FAFC),
+                fillColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                  borderSide: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                  borderSide: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -1458,16 +1475,16 @@ class _RecordVetVaccineModalState extends State<_RecordVetVaccineModal> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF1F5F9),
+                        color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
                         borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                        border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
                       ),
                       child: Text(
                         sug,
                         style: GoogleFonts.poppins(
                           fontSize: 10,
                           fontWeight: FontWeight.w500,
-                          color: const Color(0xFF475569),
+                          color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569),
                         ),
                       ),
                     ),
@@ -1489,7 +1506,7 @@ class _RecordVetVaccineModalState extends State<_RecordVetVaccineModal> {
                         style: GoogleFonts.poppins(
                           fontSize: 11.5,
                           fontWeight: FontWeight.w600,
-                          color: AppTheme.textPrimary,
+                          color: AppTheme.getTextPrimary(context),
                         ),
                       ),
                       const SizedBox(height: 6),
@@ -1499,9 +1516,9 @@ class _RecordVetVaccineModalState extends State<_RecordVetVaccineModal> {
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF8FAFC),
+                            color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
                             borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: const Color(0xFFE2E8F0)),
+                            border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
                           ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1511,7 +1528,7 @@ class _RecordVetVaccineModalState extends State<_RecordVetVaccineModal> {
                                 style: GoogleFonts.poppins(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
-                                  color: AppTheme.textPrimary,
+                                  color: AppTheme.getTextPrimary(context),
                                 ),
                               ),
                               const Icon(Icons.calendar_today_outlined, size: 14, color: AppTheme.primary),
@@ -1532,7 +1549,7 @@ class _RecordVetVaccineModalState extends State<_RecordVetVaccineModal> {
                         style: GoogleFonts.poppins(
                           fontSize: 11.5,
                           fontWeight: FontWeight.w600,
-                          color: AppTheme.textPrimary,
+                          color: AppTheme.getTextPrimary(context),
                         ),
                       ),
                       const SizedBox(height: 6),
@@ -1542,9 +1559,9 @@ class _RecordVetVaccineModalState extends State<_RecordVetVaccineModal> {
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF8FAFC),
+                            color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
                             borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: const Color(0xFFE2E8F0)),
+                            border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
                           ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1554,10 +1571,10 @@ class _RecordVetVaccineModalState extends State<_RecordVetVaccineModal> {
                                 style: GoogleFonts.poppins(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
-                                  color: _nextDueDate != null ? const Color(0xFFB45309) : const Color(0xFF94A3B8),
+                                  color: _nextDueDate != null ? const Color(0xFFF59E0B) : (isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8)),
                                 ),
                               ),
-                              const Icon(Icons.event_repeat_outlined, size: 14, color: Color(0xFFB45309)),
+                              const Icon(Icons.event_repeat_outlined, size: 14, color: Color(0xFFF59E0B)),
                             ],
                           ),
                         ),
@@ -1581,26 +1598,26 @@ class _RecordVetVaccineModalState extends State<_RecordVetVaccineModal> {
                         style: GoogleFonts.poppins(
                           fontSize: 11.5,
                           fontWeight: FontWeight.w600,
-                          color: AppTheme.textPrimary,
+                          color: AppTheme.getTextPrimary(context),
                         ),
                       ),
                       const SizedBox(height: 6),
                       TextField(
                         controller: _clinicCtrl,
-                        style: GoogleFonts.poppins(fontSize: 13, color: AppTheme.textPrimary),
+                        style: GoogleFonts.poppins(fontSize: 13, color: AppTheme.getTextPrimary(context)),
                         decoration: InputDecoration(
                           hintText: 'e.g. CDO Pet Hospital',
-                          hintStyle: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFF94A3B8)),
+                          hintStyle: GoogleFonts.poppins(fontSize: 12, color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8)),
                           filled: true,
-                          fillColor: const Color(0xFFF8FAFC),
+                          fillColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
                           contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
-                            borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                            borderSide: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
-                            borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                            borderSide: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
@@ -1621,26 +1638,26 @@ class _RecordVetVaccineModalState extends State<_RecordVetVaccineModal> {
                         style: GoogleFonts.poppins(
                           fontSize: 11.5,
                           fontWeight: FontWeight.w600,
-                          color: AppTheme.textPrimary,
+                          color: AppTheme.getTextPrimary(context),
                         ),
                       ),
                       const SizedBox(height: 6),
                       TextField(
                         controller: _vetCtrl,
-                        style: GoogleFonts.poppins(fontSize: 13, color: AppTheme.textPrimary),
+                        style: GoogleFonts.poppins(fontSize: 13, color: AppTheme.getTextPrimary(context)),
                         decoration: InputDecoration(
                           hintText: 'e.g. Dr. Santos',
-                          hintStyle: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFF94A3B8)),
+                          hintStyle: GoogleFonts.poppins(fontSize: 12, color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8)),
                           filled: true,
-                          fillColor: const Color(0xFFF8FAFC),
+                          fillColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
                           contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
-                            borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                            borderSide: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
-                            borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                            borderSide: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
@@ -1661,7 +1678,7 @@ class _RecordVetVaccineModalState extends State<_RecordVetVaccineModal> {
               style: GoogleFonts.poppins(
                 fontSize: 11.5,
                 fontWeight: FontWeight.w600,
-                color: AppTheme.textPrimary,
+                color: AppTheme.getTextPrimary(context),
               ),
             ),
             const SizedBox(height: 6),
@@ -1671,7 +1688,7 @@ class _RecordVetVaccineModalState extends State<_RecordVetVaccineModal> {
                 width: double.infinity,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
                 ),
                 clipBehavior: Clip.antiAlias,
                 child: Stack(
@@ -1723,20 +1740,20 @@ class _RecordVetVaccineModalState extends State<_RecordVetVaccineModal> {
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF8FAFC),
+                  color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFCBD5E1), style: BorderStyle.solid),
+                  border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1), style: BorderStyle.solid),
                 ),
                 child: Column(
                   children: [
-                    const Icon(Icons.photo_camera_back_outlined, size: 28, color: Color(0xFF64748B)),
+                    Icon(Icons.photo_camera_back_outlined, size: 28, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
                     const SizedBox(height: 6),
                     Text(
                       'Attach a clear photo of the veterinary booklet or sticker page',
                       textAlign: TextAlign.center,
                       style: GoogleFonts.poppins(
                         fontSize: 11,
-                        color: AppTheme.textSecondary,
+                        color: AppTheme.getTextSecondary(context),
                       ),
                     ),
                     const SizedBox(height: 10),
@@ -1751,10 +1768,10 @@ class _RecordVetVaccineModalState extends State<_RecordVetVaccineModal> {
                             style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w600),
                           ),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
+                            backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
                             foregroundColor: AppTheme.primary,
                             elevation: 0,
-                            side: const BorderSide(color: Color(0xFFCBD5E1)),
+                            side: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1)),
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                           ),
@@ -1768,10 +1785,10 @@ class _RecordVetVaccineModalState extends State<_RecordVetVaccineModal> {
                             style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w600),
                           ),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
+                            backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
                             foregroundColor: AppTheme.primary,
                             elevation: 0,
-                            side: const BorderSide(color: Color(0xFFCBD5E1)),
+                            side: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1)),
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                           ),
@@ -1818,6 +1835,7 @@ class _RecordVetVaccineModalState extends State<_RecordVetVaccineModal> {
 
   Widget _buildCategoryTab(String cat, String label) {
     final isSelected = _category == cat;
+    final isDark = AppTheme.isDark(context);
     return Expanded(
       child: InkWell(
         onTap: () => _onCategoryChanged(cat),
@@ -1826,10 +1844,14 @@ class _RecordVetVaccineModalState extends State<_RecordVetVaccineModal> {
           padding: const EdgeInsets.symmetric(vertical: 8),
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: isSelected ? AppTheme.primary : const Color(0xFFF1F5F9),
+            color: isSelected
+                ? AppTheme.primary
+                : (isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9)),
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
-              color: isSelected ? AppTheme.primary : const Color(0xFFE2E8F0),
+              color: isSelected
+                  ? AppTheme.primary
+                  : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
             ),
           ),
           child: Text(
@@ -1837,7 +1859,9 @@ class _RecordVetVaccineModalState extends State<_RecordVetVaccineModal> {
             style: GoogleFonts.poppins(
               fontSize: 11,
               fontWeight: FontWeight.w700,
-              color: isSelected ? Colors.white : const Color(0xFF475569),
+              color: isSelected
+                  ? Colors.white
+                  : (isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569)),
             ),
           ),
         ),

@@ -234,14 +234,15 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
     final isDeceased = _healthStatus == 'deceased';
 
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: AppTheme.getBackgroundColor(context),
       appBar: AppBar(
+        backgroundColor: AppTheme.getSurfaceColor(context),
         title: Text(
           isDeceased ? 'Report Pet Passing' : 'Monthly Health Check-in',
           style: GoogleFonts.poppins(
             fontSize: 18,
             fontWeight: FontWeight.w700,
-            color: AppTheme.textPrimary,
+            color: AppTheme.getTextPrimary(context),
           ),
         ),
       ),
@@ -276,13 +277,14 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
 
   Widget _buildPetHeader() {
     final isDeceased = _healthStatus == 'deceased';
+    final isDark = AppTheme.isDark(context);
 
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppTheme.surface,
+        color: AppTheme.getCardColor(context),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.cardBorder),
+        border: Border.all(color: AppTheme.getCardBorder(context)),
       ),
       child: Row(
         children: [
@@ -296,7 +298,7 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
               errorBuilder: (_, _, _) => Container(
                 width: 52,
                 height: 52,
-                color: AppTheme.primaryLight,
+                color: isDark ? const Color(0xFF1E293B) : AppTheme.primaryLight,
                 child: const Icon(Icons.pets_rounded, color: AppTheme.primary, size: 24),
               ),
             ),
@@ -311,7 +313,7 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
                   style: GoogleFonts.poppins(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
-                    color: AppTheme.textPrimary,
+                    color: AppTheme.getTextPrimary(context),
                   ),
                 ),
                 Text(
@@ -320,7 +322,7 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
                       : 'Post-Adoption Monthly Health Report',
                   style: GoogleFonts.poppins(
                     fontSize: 12,
-                    color: AppTheme.textSecondary,
+                    color: AppTheme.getTextSecondary(context),
                   ),
                 ),
               ],
@@ -333,6 +335,7 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
 
   Widget _buildPhotoSection() {
     final isDeceased = _healthStatus == 'deceased';
+    final isDark = AppTheme.isDark(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -344,17 +347,21 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
               style: GoogleFonts.poppins(
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
-                color: AppTheme.textPrimary,
+                color: AppTheme.getTextPrimary(context),
               ),
             ),
             const SizedBox(width: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
               decoration: BoxDecoration(
-                color: isDeceased ? const Color(0xFFF1F5F9) : const Color(0xFFFEE2E2),
+                color: isDeceased
+                    ? (isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9))
+                    : (isDark ? const Color(0xFF7F1D1D).withValues(alpha: 0.3) : const Color(0xFFFEE2E2)),
                 borderRadius: BorderRadius.circular(6),
                 border: Border.all(
-                  color: isDeceased ? const Color(0xFFCBD5E1) : const Color(0xFFF87171),
+                  color: isDeceased
+                      ? (isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1))
+                      : (isDark ? const Color(0xFFEF4444).withValues(alpha: 0.5) : const Color(0xFFF87171)),
                   width: 0.8,
                 ),
               ),
@@ -363,7 +370,9 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
                 style: GoogleFonts.poppins(
                   fontSize: 9.5,
                   fontWeight: FontWeight.w800,
-                  color: isDeceased ? const Color(0xFF475569) : const Color(0xFFDC2626),
+                  color: isDeceased
+                      ? (isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569))
+                      : (isDark ? const Color(0xFFF87171) : const Color(0xFFDC2626)),
                   letterSpacing: 0.5,
                 ),
               ),
@@ -377,7 +386,7 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
               : 'Take or upload a clear, current photo of your pet.',
           style: GoogleFonts.poppins(
             fontSize: 12,
-            color: AppTheme.textSecondary,
+            color: AppTheme.getTextSecondary(context),
           ),
         ),
         const SizedBox(height: 10),
@@ -386,9 +395,14 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
           Container(
             width: double.infinity,
             decoration: BoxDecoration(
-              color: AppTheme.surface,
+              color: AppTheme.getCardColor(context),
               borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: isDeceased ? const Color(0xFF475569) : AppTheme.primary, width: 1.5),
+              border: Border.all(
+                color: isDeceased
+                    ? (isDark ? const Color(0xFF64748B) : const Color(0xFF475569))
+                    : AppTheme.primary,
+                width: 1.5,
+              ),
             ),
             child: Column(
               children: [
@@ -455,9 +469,9 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 24),
                     decoration: BoxDecoration(
-                      color: AppTheme.surface,
+                      color: AppTheme.getCardColor(context),
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppTheme.cardBorder),
+                      border: Border.all(color: AppTheme.getCardBorder(context)),
                     ),
                     child: Column(
                       children: [
@@ -465,12 +479,16 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
                           width: 48,
                           height: 48,
                           decoration: BoxDecoration(
-                            color: isDeceased ? const Color(0xFFF1F5F9) : AppTheme.primaryLight,
+                            color: isDeceased
+                                ? (isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9))
+                                : (isDark ? AppTheme.primary.withValues(alpha: 0.2) : AppTheme.primaryLight),
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
                             Icons.camera_alt_outlined,
-                            color: isDeceased ? const Color(0xFF475569) : AppTheme.primary,
+                            color: isDeceased
+                                ? (isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569))
+                                : AppTheme.primary,
                             size: 24,
                           ),
                         ),
@@ -480,12 +498,12 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
                           style: GoogleFonts.poppins(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
-                            color: AppTheme.textPrimary,
+                            color: AppTheme.getTextPrimary(context),
                           ),
                         ),
                         Text(
                           'Use Camera',
-                          style: GoogleFonts.poppins(fontSize: 11, color: AppTheme.textSecondary),
+                          style: GoogleFonts.poppins(fontSize: 11, color: AppTheme.getTextSecondary(context)),
                         ),
                       ],
                     ),
@@ -499,9 +517,9 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 24),
                     decoration: BoxDecoration(
-                      color: AppTheme.surface,
+                      color: AppTheme.getCardColor(context),
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppTheme.cardBorder),
+                      border: Border.all(color: AppTheme.getCardBorder(context)),
                     ),
                     child: Column(
                       children: [
@@ -509,12 +527,16 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
                           width: 48,
                           height: 48,
                           decoration: BoxDecoration(
-                            color: isDeceased ? const Color(0xFFF1F5F9) : AppTheme.primaryLight,
+                            color: isDeceased
+                                ? (isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9))
+                                : (isDark ? AppTheme.primary.withValues(alpha: 0.2) : AppTheme.primaryLight),
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
                             Icons.photo_library_outlined,
-                            color: isDeceased ? const Color(0xFF475569) : AppTheme.primary,
+                            color: isDeceased
+                                ? (isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569))
+                                : AppTheme.primary,
                             size: 24,
                           ),
                         ),
@@ -524,12 +546,12 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
                           style: GoogleFonts.poppins(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
-                            color: AppTheme.textPrimary,
+                            color: AppTheme.getTextPrimary(context),
                           ),
                         ),
                         Text(
                           'Select from Device',
-                          style: GoogleFonts.poppins(fontSize: 11, color: AppTheme.textSecondary),
+                          style: GoogleFonts.poppins(fontSize: 11, color: AppTheme.getTextSecondary(context)),
                         ),
                       ],
                     ),
@@ -551,7 +573,7 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
           style: GoogleFonts.poppins(
             fontSize: 14,
             fontWeight: FontWeight.w700,
-            color: AppTheme.textPrimary,
+            color: AppTheme.getTextPrimary(context),
           ),
         ),
         const SizedBox(height: 4),
@@ -559,7 +581,7 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
           'Select the option that best describes your pet current status.',
           style: GoogleFonts.poppins(
             fontSize: 12,
-            color: AppTheme.textSecondary,
+            color: AppTheme.getTextSecondary(context),
           ),
         ),
         const SizedBox(height: 10),
@@ -602,6 +624,7 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
     Color bgColor,
   ) {
     final isSelected = _healthStatus == key;
+    final isDark = AppTheme.isDark(context);
 
     return GestureDetector(
       onTap: () {
@@ -613,10 +636,12 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: isSelected ? bgColor : AppTheme.surface,
+          color: isSelected
+              ? (isDark ? accentColor.withValues(alpha: 0.2) : bgColor)
+              : AppTheme.getCardColor(context),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: isSelected ? accentColor : AppTheme.cardBorder,
+            color: isSelected ? accentColor : AppTheme.getCardBorder(context),
             width: isSelected ? 1.5 : 1,
           ),
         ),
@@ -626,7 +651,9 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                color: isSelected ? accentColor.withValues(alpha: 0.15) : AppTheme.primaryLight,
+                color: isSelected
+                    ? accentColor.withValues(alpha: isDark ? 0.3 : 0.15)
+                    : (isDark ? AppTheme.primary.withValues(alpha: 0.2) : AppTheme.primaryLight),
                 shape: BoxShape.circle,
               ),
               child: Icon(icon, size: 18, color: isSelected ? accentColor : AppTheme.primary),
@@ -641,14 +668,14 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
                     style: GoogleFonts.poppins(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
-                      color: AppTheme.textPrimary,
+                      color: AppTheme.getTextPrimary(context),
                     ),
                   ),
                   Text(
                     description,
                     style: GoogleFonts.poppins(
                       fontSize: 11,
-                      color: AppTheme.textSecondary,
+                      color: AppTheme.getTextSecondary(context),
                     ),
                   ),
                 ],
@@ -680,6 +707,7 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
     final passDateStr = _passingDate != null
         ? '${_passingDate!.year}-${_passingDate!.month.toString().padLeft(2, '0')}-${_passingDate!.day.toString().padLeft(2, '0')}'
         : 'Select Date of Passing';
+    final isDark = AppTheme.isDark(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -689,7 +717,7 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
           style: GoogleFonts.poppins(
             fontSize: 14,
             fontWeight: FontWeight.w700,
-            color: AppTheme.textPrimary,
+            color: AppTheme.getTextPrimary(context),
           ),
         ),
         const SizedBox(height: 4),
@@ -697,16 +725,16 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
           'Please share the circumstances to help CAWS update their records respectfully.',
           style: GoogleFonts.poppins(
             fontSize: 12,
-            color: AppTheme.textSecondary,
+            color: AppTheme.getTextSecondary(context),
           ),
         ),
         const SizedBox(height: 10),
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppTheme.surface,
+            color: AppTheme.getCardColor(context),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFCBD5E1)),
+            border: Border.all(color: AppTheme.getCardBorder(context)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -714,21 +742,21 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF1F5F9),
+                  color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
                 ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.info_outline_rounded, color: Color(0xFF475569), size: 20),
+                    Icon(Icons.info_outline_rounded, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569), size: 20),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
                         'Submitting this report will officially notify CAWS shelter staff that ${widget.petName} has passed away and will permanently complete your monthly check-in obligations.',
                         style: GoogleFonts.poppins(
                           fontSize: 12,
-                          color: const Color(0xFF334155),
+                          color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF334155),
                           height: 1.4,
                         ),
                       ),
@@ -742,7 +770,7 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
                 style: GoogleFonts.poppins(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: AppTheme.textPrimary,
+                  color: AppTheme.getTextPrimary(context),
                 ),
               ),
               const SizedBox(height: 6),
@@ -752,23 +780,23 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF8FAFC),
+                    color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey.shade300),
+                    border: Border.all(color: isDark ? const Color(0xFF334155) : Colors.grey.shade300),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Row(
                         children: [
-                          const Icon(Icons.calendar_today_outlined, size: 18, color: Color(0xFF475569)),
+                          Icon(Icons.calendar_today_outlined, size: 18, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569)),
                           const SizedBox(width: 10),
                           Text(
                             passDateStr,
                             style: GoogleFonts.poppins(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
-                              color: _passingDate != null ? AppTheme.textPrimary : Colors.grey,
+                              color: _passingDate != null ? AppTheme.getTextPrimary(context) : (isDark ? const Color(0xFF64748B) : Colors.grey),
                             ),
                           ),
                         ],
@@ -791,28 +819,29 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
                 style: GoogleFonts.poppins(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: AppTheme.textPrimary,
+                  color: AppTheme.getTextPrimary(context),
                 ),
               ),
               const SizedBox(height: 6),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF8FAFC),
+                  color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey.shade300),
+                  border: Border.all(color: isDark ? const Color(0xFF334155) : Colors.grey.shade300),
                 ),
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<String>(
+                    dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
                     value: _deceasedCause,
                     isExpanded: true,
-                    icon: const Icon(Icons.arrow_drop_down, color: Color(0xFF475569)),
+                    icon: Icon(Icons.arrow_drop_down, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569)),
                     items: _deceasedCauses.map((cause) {
                       return DropdownMenuItem<String>(
                         value: cause,
                         child: Text(
                           cause,
-                          style: GoogleFonts.poppins(fontSize: 13, color: AppTheme.textPrimary),
+                          style: GoogleFonts.poppins(fontSize: 13, color: AppTheme.getTextPrimary(context)),
                         ),
                       );
                     }).toList(),
@@ -828,24 +857,30 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
                 style: GoogleFonts.poppins(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: AppTheme.textPrimary,
+                  color: AppTheme.getTextPrimary(context),
                 ),
               ),
               const SizedBox(height: 6),
               TextFormField(
                 controller: _clinicCtrl,
+                style: GoogleFonts.poppins(fontSize: 13, color: AppTheme.getTextPrimary(context)),
                 decoration: InputDecoration(
                   hintText: 'e.g. City Vet Animal Clinic or Dr. Reyes',
-                  fillColor: const Color(0xFFF8FAFC),
+                  hintStyle: GoogleFonts.poppins(fontSize: 12, color: isDark ? const Color(0xFF64748B) : Colors.grey.shade400),
+                  fillColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
                   filled: true,
                   contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.grey.shade300),
+                    borderSide: BorderSide(color: isDark ? const Color(0xFF334155) : Colors.grey.shade300),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: isDark ? const Color(0xFF334155) : Colors.grey.shade300),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Color(0xFF475569), width: 1.5),
+                    borderSide: const BorderSide(color: AppTheme.primary, width: 1.5),
                   ),
                 ),
               ),
@@ -858,23 +893,23 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
                       style: GoogleFonts.poppins(
                         fontSize: 12.5,
                         fontWeight: FontWeight.w700,
-                        color: AppTheme.textPrimary,
+                        color: AppTheme.getTextPrimary(context),
                       ),
                     ),
                   ),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFEE2E2),
+                      color: isDark ? const Color(0xFF7F1D1D).withValues(alpha: 0.3) : const Color(0xFFFEE2E2),
                       borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: const Color(0xFFF87171), width: 0.8),
+                      border: Border.all(color: isDark ? const Color(0xFFEF4444).withValues(alpha: 0.5) : const Color(0xFFF87171), width: 0.8),
                     ),
                     child: Text(
                       'REQUIRED',
                       style: GoogleFonts.poppins(
                         fontSize: 9.5,
                         fontWeight: FontWeight.w800,
-                        color: const Color(0xFFDC2626),
+                        color: isDark ? const Color(0xFFF87171) : const Color(0xFFDC2626),
                         letterSpacing: 0.5,
                       ),
                     ),
@@ -886,7 +921,7 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
                 'Please explain in detail what happened to your pet (symptoms, timeline, accident, or veterinary findings) so CAWS can record it respectfully.',
                 style: GoogleFonts.poppins(
                   fontSize: 11,
-                  color: AppTheme.textSecondary,
+                  color: AppTheme.getTextSecondary(context),
                   height: 1.3,
                 ),
               ),
@@ -894,6 +929,7 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
               TextFormField(
                 controller: _notesCtrl,
                 maxLines: 5,
+                style: GoogleFonts.poppins(fontSize: 13, color: AppTheme.getTextPrimary(context)),
                 onChanged: (val) {
                   if (_notesError != null) {
                     setState(() => _notesError = null);
@@ -901,27 +937,29 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
                 },
                 decoration: InputDecoration(
                   hintText: 'Describe what happened in detail (e.g. When did symptoms start? What medical care or veterinary diagnosis was given? What led to their passing?)...',
-                  hintStyle: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade400),
+                  hintStyle: GoogleFonts.poppins(fontSize: 12, color: isDark ? const Color(0xFF64748B) : Colors.grey.shade400),
                   errorText: _notesError,
                   errorMaxLines: 3,
-                  fillColor: const Color(0xFFF8FAFC),
+                  fillColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
                   filled: true,
                   contentPadding: const EdgeInsets.all(12),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.grey.shade300),
+                    borderSide: BorderSide(color: isDark ? const Color(0xFF334155) : Colors.grey.shade300),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide(
-                      color: _notesError != null ? AppTheme.errorColor : Colors.grey.shade300,
+                      color: _notesError != null
+                          ? AppTheme.errorColor
+                          : (isDark ? const Color(0xFF334155) : Colors.grey.shade300),
                       width: _notesError != null ? 1.5 : 1.0,
                     ),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide(
-                      color: _notesError != null ? AppTheme.errorColor : const Color(0xFF475569),
+                      color: _notesError != null ? AppTheme.errorColor : AppTheme.primary,
                       width: 1.5,
                     ),
                   ),
@@ -943,6 +981,8 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
   }
 
   Widget _buildWeightAndNotesSection() {
+    final isDark = AppTheme.isDark(context);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -951,16 +991,16 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
           style: GoogleFonts.poppins(
             fontSize: 14,
             fontWeight: FontWeight.w700,
-            color: AppTheme.textPrimary,
+            color: AppTheme.getTextPrimary(context),
           ),
         ),
         const SizedBox(height: 10),
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppTheme.surface,
+            color: AppTheme.getCardColor(context),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppTheme.cardBorder),
+            border: Border.all(color: AppTheme.getCardBorder(context)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -970,22 +1010,29 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
                 style: GoogleFonts.poppins(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: AppTheme.textPrimary,
+                  color: AppTheme.getTextPrimary(context),
                 ),
               ),
               const SizedBox(height: 6),
               TextFormField(
                 controller: _weightCtrl,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                style: GoogleFonts.poppins(fontSize: 13, color: AppTheme.getTextPrimary(context)),
                 decoration: InputDecoration(
                   hintText: 'e.g. 12.5',
+                  hintStyle: GoogleFonts.poppins(fontSize: 12, color: isDark ? const Color(0xFF64748B) : Colors.grey.shade400),
                   suffixText: 'kg',
-                  fillColor: const Color(0xFFF8FAFC),
+                  suffixStyle: GoogleFonts.poppins(fontSize: 12, color: AppTheme.getTextSecondary(context)),
+                  fillColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
                   filled: true,
                   contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.grey.shade300),
+                    borderSide: BorderSide(color: isDark ? const Color(0xFF334155) : Colors.grey.shade300),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: isDark ? const Color(0xFF334155) : Colors.grey.shade300),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -999,21 +1046,27 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
                 style: GoogleFonts.poppins(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: AppTheme.textPrimary,
+                  color: AppTheme.getTextPrimary(context),
                 ),
               ),
               const SizedBox(height: 6),
               TextFormField(
                 controller: _notesCtrl,
                 maxLines: 3,
+                style: GoogleFonts.poppins(fontSize: 13, color: AppTheme.getTextPrimary(context)),
                 decoration: InputDecoration(
                   hintText: 'Share how your pet is adapting, appetite, favorite activities, or any recent vet check-ups...',
-                  fillColor: const Color(0xFFF8FAFC),
+                  hintStyle: GoogleFonts.poppins(fontSize: 12, color: isDark ? const Color(0xFF64748B) : Colors.grey.shade400),
+                  fillColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
                   filled: true,
                   contentPadding: const EdgeInsets.all(12),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.grey.shade300),
+                    borderSide: BorderSide(color: isDark ? const Color(0xFF334155) : Colors.grey.shade300),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: isDark ? const Color(0xFF334155) : Colors.grey.shade300),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -1034,7 +1087,8 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
       decoration: BoxDecoration(
-        color: AppTheme.surface,
+        color: AppTheme.getSurfaceColor(context),
+        border: Border(top: BorderSide(color: AppTheme.getCardBorder(context))),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),

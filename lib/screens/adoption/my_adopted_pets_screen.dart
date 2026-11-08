@@ -62,8 +62,19 @@ class _MyAdoptedPetsScreenState extends State<MyAdoptedPetsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: AppTheme.getBackgroundColor(context),
       appBar: AppBar(
+        backgroundColor: AppTheme.getSurfaceColor(context),
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        leading: IconButton(
+          icon: Icon(
+            Icons.arrow_back_ios_new_rounded,
+            size: 19,
+            color: AppTheme.getTextPrimary(context),
+          ),
+          onPressed: () => Navigator.pop(context),
+        ),
         title: Text(
           widget.isMonthlyReportMode
               ? 'Monthly Welfare Reports'
@@ -73,7 +84,7 @@ class _MyAdoptedPetsScreenState extends State<MyAdoptedPetsScreen> {
           style: GoogleFonts.poppins(
             fontSize: 18,
             fontWeight: FontWeight.w700,
-            color: AppTheme.textPrimary,
+            color: AppTheme.getTextPrimary(context),
           ),
         ),
       ),
@@ -111,24 +122,25 @@ class _MyAdoptedPetsScreenState extends State<MyAdoptedPetsScreen> {
   }
 
   Widget _buildHealthCardBanner() {
+    final isDark = AppTheme.isDark(context);
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFE0F2FE).withValues(alpha: 0.5),
+        color: isDark ? const Color(0xFF0F172A) : const Color(0xFFE0F2FE).withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFBAE6FD)),
+        border: Border.all(color: isDark ? const Color(0xFF0284C7).withValues(alpha: 0.4) : const Color(0xFFBAE6FD)),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(8),
-            decoration: const BoxDecoration(
-              color: Colors.white,
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF0284C7).withValues(alpha: 0.25) : Colors.white,
               shape: BoxShape.circle,
             ),
-            child: const Icon(
+            child: Icon(
               Icons.medical_services_rounded,
-              color: Color(0xFF0284C7),
+              color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF0284C7),
               size: 20,
             ),
           ),
@@ -142,7 +154,7 @@ class _MyAdoptedPetsScreenState extends State<MyAdoptedPetsScreen> {
                   style: GoogleFonts.poppins(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF0369A1),
+                    color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF0369A1),
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -150,7 +162,7 @@ class _MyAdoptedPetsScreenState extends State<MyAdoptedPetsScreen> {
                   'Select an adopted companion to view their verified health passport, vaccinations, and veterinary care history.',
                   style: GoogleFonts.poppins(
                     fontSize: 11.5,
-                    color: const Color(0xFF0C4A6E),
+                    color: isDark ? const Color(0xFFBAE6FD) : const Color(0xFF0C4A6E),
                     height: 1.35,
                   ),
                 ),
@@ -163,19 +175,20 @@ class _MyAdoptedPetsScreenState extends State<MyAdoptedPetsScreen> {
   }
 
   Widget _buildMonthlyReportBanner() {
+    final isDark = AppTheme.isDark(context);
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppTheme.primaryLight.withValues(alpha: 0.5),
+        color: isDark ? const Color(0xFF0F172A) : AppTheme.primaryLight.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.cardBorder),
+        border: Border.all(color: isDark ? AppTheme.primary.withValues(alpha: 0.35) : AppTheme.cardBorder),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(8),
-            decoration: const BoxDecoration(
-              color: Colors.white,
+            decoration: BoxDecoration(
+              color: isDark ? AppTheme.primary.withValues(alpha: 0.2) : Colors.white,
               shape: BoxShape.circle,
             ),
             child: const Icon(
@@ -194,7 +207,7 @@ class _MyAdoptedPetsScreenState extends State<MyAdoptedPetsScreen> {
                   style: GoogleFonts.poppins(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
-                    color: AppTheme.textPrimary,
+                    color: AppTheme.getTextPrimary(context),
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -202,7 +215,7 @@ class _MyAdoptedPetsScreenState extends State<MyAdoptedPetsScreen> {
                   'Select an adopted companion to submit recurring photo updates, pet condition logs, and weight records.',
                   style: GoogleFonts.poppins(
                     fontSize: 11.5,
-                    color: AppTheme.textSecondary,
+                    color: AppTheme.getTextSecondary(context),
                     height: 1.35,
                   ),
                 ),
@@ -215,6 +228,7 @@ class _MyAdoptedPetsScreenState extends State<MyAdoptedPetsScreen> {
   }
 
   Widget _buildEmptyState() {
+    final isDark = AppTheme.isDark(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -224,8 +238,8 @@ class _MyAdoptedPetsScreenState extends State<MyAdoptedPetsScreen> {
             Container(
               width: 80,
               height: 80,
-              decoration: const BoxDecoration(
-                color: AppTheme.primaryLight,
+              decoration: BoxDecoration(
+                color: isDark ? AppTheme.primary.withValues(alpha: 0.2) : AppTheme.primaryLight,
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -240,7 +254,7 @@ class _MyAdoptedPetsScreenState extends State<MyAdoptedPetsScreen> {
               style: GoogleFonts.poppins(
                 fontSize: 17,
                 fontWeight: FontWeight.w700,
-                color: AppTheme.textPrimary,
+                color: AppTheme.getTextPrimary(context),
               ),
             ),
             const SizedBox(height: 8),
@@ -251,7 +265,7 @@ class _MyAdoptedPetsScreenState extends State<MyAdoptedPetsScreen> {
               textAlign: TextAlign.center,
               style: GoogleFonts.poppins(
                 fontSize: 13,
-                color: AppTheme.textSecondary,
+                color: AppTheme.getTextSecondary(context),
                 height: 1.5,
               ),
             ),
@@ -300,17 +314,22 @@ class _MyAdoptedPetsScreenState extends State<MyAdoptedPetsScreen> {
                     (u['health_status']?.toString().toLowerCase().trim() == 'in memory') ||
                     (u['health_status']?.toString().toLowerCase().trim() == 'passed away'))));
 
+    final isDark = AppTheme.isDark(context);
+
     return Container(
       decoration: BoxDecoration(
-        color: AppTheme.surface,
+        color: AppTheme.getCardColor(context),
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        border: Border.all(color: AppTheme.getCardBorder(context)),
+        boxShadow: isDark
+            ? []
+            : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
       ),
       child: Material(
         color: Colors.transparent,
@@ -364,14 +383,14 @@ class _MyAdoptedPetsScreenState extends State<MyAdoptedPetsScreen> {
                               errorBuilder: (_, _, _) => Container(
                                 width: 74,
                                 height: 74,
-                                color: AppTheme.primaryLight,
+                                color: isDark ? const Color(0xFF1E293B) : AppTheme.primaryLight,
                                 child: const Icon(Icons.pets_rounded, color: AppTheme.primary, size: 30),
                               ),
                             )
                           : Container(
                               width: 74,
                               height: 74,
-                              color: AppTheme.primaryLight,
+                              color: isDark ? const Color(0xFF1E293B) : AppTheme.primaryLight,
                               child: const Icon(Icons.pets_rounded, color: AppTheme.primary, size: 30),
                             ),
                     ),
@@ -389,7 +408,7 @@ class _MyAdoptedPetsScreenState extends State<MyAdoptedPetsScreen> {
                                   style: GoogleFonts.poppins(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w700,
-                                    color: AppTheme.textPrimary,
+                                    color: AppTheme.getTextPrimary(context),
                                   ),
                                   overflow: TextOverflow.ellipsis,
                                 ),
@@ -398,21 +417,21 @@ class _MyAdoptedPetsScreenState extends State<MyAdoptedPetsScreen> {
                                 padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3.5),
                                 decoration: BoxDecoration(
                                   color: isDeceased
-                                      ? const Color(0xFFF1F5F9)
+                                      ? (isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9))
                                       : widget.isMonthlyReportMode
-                                          ? const Color(0xFFFDF2F8)
+                                          ? (isDark ? const Color(0xFF831843).withValues(alpha: 0.3) : const Color(0xFFFDF2F8))
                                           : widget.isHealthCardMode
-                                              ? const Color(0xFFE0F2FE)
-                                              : const Color(0xFFE8F8F1),
+                                              ? (isDark ? const Color(0xFF075985).withValues(alpha: 0.3) : const Color(0xFFE0F2FE))
+                                              : (isDark ? const Color(0xFF064E3B).withValues(alpha: 0.3) : const Color(0xFFE8F8F1)),
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(
                                     color: isDeceased
-                                        ? const Color(0xFFE2E8F0)
+                                        ? (isDark ? const Color(0xFF475569) : const Color(0xFFE2E8F0))
                                         : widget.isMonthlyReportMode
-                                            ? const Color(0xFFFBCFE8)
+                                            ? (isDark ? const Color(0xFFBE185D).withValues(alpha: 0.5) : const Color(0xFFFBCFE8))
                                             : widget.isHealthCardMode
-                                                ? const Color(0xFFBAE6FD)
-                                                : const Color(0xFFA7F3D0),
+                                                ? (isDark ? const Color(0xFF0284C7).withValues(alpha: 0.5) : const Color(0xFFBAE6FD))
+                                                : (isDark ? const Color(0xFF059669).withValues(alpha: 0.5) : const Color(0xFFA7F3D0)),
                                   ),
                                 ),
                                 child: Text(
@@ -427,12 +446,12 @@ class _MyAdoptedPetsScreenState extends State<MyAdoptedPetsScreen> {
                                     fontSize: 10.5,
                                     fontWeight: FontWeight.w700,
                                     color: isDeceased
-                                        ? const Color(0xFF475569)
+                                        ? (isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569))
                                         : widget.isMonthlyReportMode
-                                            ? const Color(0xFFBE185D)
+                                            ? (isDark ? const Color(0xFFF472B6) : const Color(0xFFBE185D))
                                             : widget.isHealthCardMode
-                                                ? const Color(0xFF0284C7)
-                                                : AppTheme.successColor,
+                                                ? (isDark ? const Color(0xFF38BDF8) : const Color(0xFF0284C7))
+                                                : (isDark ? const Color(0xFF34D399) : AppTheme.successColor),
                                   ),
                                 ),
                               ),
@@ -443,7 +462,7 @@ class _MyAdoptedPetsScreenState extends State<MyAdoptedPetsScreen> {
                             shelterCode.isNotEmpty ? '$shelterCode • $petBreed' : '$petBreed • $petType',
                             style: GoogleFonts.poppins(
                               fontSize: 12,
-                              color: AppTheme.textSecondary,
+                              color: AppTheme.getTextSecondary(context),
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -455,7 +474,7 @@ class _MyAdoptedPetsScreenState extends State<MyAdoptedPetsScreen> {
                                     : 'Recurring photo & health check-ins',
                             style: GoogleFonts.poppins(
                               fontSize: 11,
-                              color: const Color(0xFF64748B),
+                              color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                             ),
                           ),
                         ],
@@ -464,7 +483,7 @@ class _MyAdoptedPetsScreenState extends State<MyAdoptedPetsScreen> {
                   ],
                 ),
                 const SizedBox(height: 14),
-                const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                Divider(height: 1, color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9)),
                 const SizedBox(height: 12),
                 if (widget.isMonthlyReportMode) ...[
                   SizedBox(
@@ -501,13 +520,15 @@ class _MyAdoptedPetsScreenState extends State<MyAdoptedPetsScreen> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primary,
                         foregroundColor: Colors.white,
-                        disabledBackgroundColor: const Color(0xFFF1F5F9),
-                        disabledForegroundColor: const Color(0xFF94A3B8),
+                        disabledBackgroundColor: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                        disabledForegroundColor: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
                         elevation: 0,
                         padding: const EdgeInsets.symmetric(vertical: 11),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
-                          side: isDeceased ? const BorderSide(color: Color(0xFFCBD5E1)) : BorderSide.none,
+                          side: isDeceased
+                              ? BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1))
+                              : BorderSide.none,
                         ),
                       ),
                     ),
@@ -567,7 +588,7 @@ class _MyAdoptedPetsScreenState extends State<MyAdoptedPetsScreen> {
                             style: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w600, color: AppTheme.primary),
                           ),
                           style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Color(0xFFCBD5E1)),
+                            side: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1)),
                             padding: const EdgeInsets.symmetric(vertical: 9),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                           ),
@@ -606,13 +627,15 @@ class _MyAdoptedPetsScreenState extends State<MyAdoptedPetsScreen> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFFBE185D),
                             foregroundColor: Colors.white,
-                            disabledBackgroundColor: const Color(0xFFF1F5F9),
-                            disabledForegroundColor: const Color(0xFF94A3B8),
+                            disabledBackgroundColor: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                            disabledForegroundColor: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
                             elevation: 0,
                             padding: const EdgeInsets.symmetric(vertical: 9),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
-                              side: isDeceased ? const BorderSide(color: Color(0xFFE2E8F0)) : BorderSide.none,
+                              side: isDeceased
+                                  ? BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0))
+                                  : BorderSide.none,
                             ),
                           ),
                         ),
