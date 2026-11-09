@@ -50,6 +50,9 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
   final _landlordPhoneController = TextEditingController();
 
   String _homeOwnership = 'owned';
+  String _employmentStatus = 'employed';
+  final _occupationOrProgramController = TextEditingController();
+  final _employerOrSchoolController = TextEditingController();
   String? _adopterId;
 
   // ignore: unused_field
@@ -158,6 +161,8 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
     _proposedPetNameController.dispose();
     _landlordNameController.dispose();
     _landlordPhoneController.dispose();
+    _occupationOrProgramController.dispose();
+    _employerOrSchoolController.dispose();
     super.dispose();
   }
 
@@ -232,6 +237,21 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
         }
         if (prefill != null && prefill['landlord_phone'] != null && prefill['landlord_phone'].toString().isNotEmpty) {
           _landlordPhoneController.text = prefill['landlord_phone'].toString();
+        }
+        if (prefill != null && prefill['employment_status'] != null) {
+          final emp = prefill['employment_status'].toString().toLowerCase().trim();
+          if (['employed', 'student', 'self_employed', 'unemployed'].contains(emp)) {
+            _employmentStatus = emp;
+          }
+        }
+        if (prefill != null && prefill['occupation_or_program'] != null && prefill['occupation_or_program'].toString().isNotEmpty) {
+          _occupationOrProgramController.text = prefill['occupation_or_program'].toString();
+        }
+        if (prefill != null && prefill['employer_or_school'] != null && prefill['employer_or_school'].toString().isNotEmpty) {
+          _employerOrSchoolController.text = prefill['employer_or_school'].toString();
+        }
+        if (_employmentStatus == 'student' && (_selectedIdType == null || _selectedIdType!.isEmpty)) {
+          _selectedIdType = 'Student / School ID';
         }
       });
     }
@@ -774,6 +794,13 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
         'home_ownership': _homeOwnership,
         'landlord_name': _homeOwnership == 'rented' ? _landlordNameController.text.trim() : null,
         'landlord_phone': _homeOwnership == 'rented' ? _landlordPhoneController.text.trim() : null,
+        'employment_status': _employmentStatus,
+        'occupation_or_program': _occupationOrProgramController.text.trim().isNotEmpty
+            ? _occupationOrProgramController.text.trim()
+            : null,
+        'employer_or_school': _employerOrSchoolController.text.trim().isNotEmpty
+            ? _employerOrSchoolController.text.trim()
+            : null,
         'proposed_pet_name': _proposedPetNameController.text.trim(),
         'application_source': appSource,
       };
@@ -1439,6 +1466,267 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
             ],
           ),
           const SizedBox(height: 18),
+          _buildSectionHeader('Employment / Student Status *', subtitle: 'Shelter lifestyle & companion care assessment'),
+          const SizedBox(height: 10),
+          _buildCardContainer(
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildInteractiveChoiceCard(
+                      isSelected: _employmentStatus == 'employed',
+                      onTap: () => setState(() => _employmentStatus = 'employed'),
+                      title: 'Employed',
+                      subtitle: 'Full-time / part-time',
+                      icon: Icons.work_outline_rounded,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _buildInteractiveChoiceCard(
+                      isSelected: _employmentStatus == 'student',
+                      onTap: () => setState(() {
+                        _employmentStatus = 'student';
+                        if (_selectedIdType == null || _selectedIdType!.isEmpty) {
+                          _selectedIdType = 'Student / School ID';
+                        }
+                      }),
+                      title: 'Student',
+                      subtitle: 'College / university',
+                      icon: Icons.school_outlined,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildInteractiveChoiceCard(
+                      isSelected: _employmentStatus == 'self_employed',
+                      onTap: () => setState(() => _employmentStatus = 'self_employed'),
+                      title: 'Self-Employed',
+                      subtitle: 'Business / freelance',
+                      icon: Icons.storefront_outlined,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _buildInteractiveChoiceCard(
+                      isSelected: _employmentStatus == 'unemployed',
+                      onTap: () => setState(() => _employmentStatus = 'unemployed'),
+                      title: 'Dependent',
+                      subtitle: 'Family / homemaker',
+                      icon: Icons.family_restroom_outlined,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF0F172A) : Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: AppTheme.getCardBorder(context)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (_employmentStatus == 'student') ...[
+                      Row(
+                        children: [
+                          const Icon(Icons.school_outlined, size: 16, color: AppTheme.primary),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              'Student Information & School Affiliation',
+                              style: GoogleFonts.poppins(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: AppTheme.getTextPrimary(context),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'CAWS warmly welcomes students to adopt companions. Please enter your school details so our team can verify student credentials.',
+                        style: GoogleFonts.poppins(
+                          fontSize: 11,
+                          color: AppTheme.getTextSecondary(context),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: _employerOrSchoolController,
+                        style: GoogleFonts.poppins(color: AppTheme.getTextPrimary(context), fontSize: 13),
+                        textCapitalization: TextCapitalization.words,
+                        decoration: _minimalInputDecoration(
+                          label: 'School / College / University Name *',
+                          hint: 'e.g. Xavier University - Ateneo de Cagayan',
+                          icon: Icons.account_balance_outlined,
+                        ),
+                        validator: (value) {
+                          if (_employmentStatus == 'student') {
+                            if (value == null || value.trim().isEmpty) {
+                              return 'Please enter your school or university';
+                            }
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 10),
+                      TextFormField(
+                        controller: _occupationOrProgramController,
+                        style: GoogleFonts.poppins(color: AppTheme.getTextPrimary(context), fontSize: 13),
+                        textCapitalization: TextCapitalization.words,
+                        decoration: _minimalInputDecoration(
+                          label: 'Course / Program & Year Level *',
+                          hint: 'e.g. BS Information Technology - 3rd Year',
+                          icon: Icons.history_edu_outlined,
+                        ),
+                        validator: (value) {
+                          if (_employmentStatus == 'student') {
+                            if (value == null || value.trim().isEmpty) {
+                              return 'Please enter your course or year level';
+                            }
+                          }
+                          return null;
+                        },
+                      ),
+                    ] else if (_employmentStatus == 'employed') ...[
+                      Row(
+                        children: [
+                          const Icon(Icons.badge_outlined, size: 16, color: AppTheme.primary),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Employment & Role Details',
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.getTextPrimary(context),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      TextFormField(
+                        controller: _occupationOrProgramController,
+                        style: GoogleFonts.poppins(color: AppTheme.getTextPrimary(context), fontSize: 13),
+                        textCapitalization: TextCapitalization.words,
+                        decoration: _minimalInputDecoration(
+                          label: 'Occupation / Job Title *',
+                          hint: 'e.g. Software Engineer, Registered Nurse',
+                          icon: Icons.work_outline_rounded,
+                        ),
+                        validator: (value) {
+                          if (_employmentStatus == 'employed') {
+                            if (value == null || value.trim().isEmpty) {
+                              return 'Please enter your occupation / job title';
+                            }
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 10),
+                      TextFormField(
+                        controller: _employerOrSchoolController,
+                        style: GoogleFonts.poppins(color: AppTheme.getTextPrimary(context), fontSize: 13),
+                        textCapitalization: TextCapitalization.words,
+                        decoration: _minimalInputDecoration(
+                          label: 'Company / Employer Name (Optional)',
+                          hint: 'e.g. Concentrix, DepEd, Ayala Corp',
+                          icon: Icons.business_outlined,
+                        ),
+                      ),
+                    ] else if (_employmentStatus == 'self_employed') ...[
+                      Row(
+                        children: [
+                          const Icon(Icons.storefront_outlined, size: 16, color: AppTheme.primary),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Business / Freelance Details',
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.getTextPrimary(context),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      TextFormField(
+                        controller: _occupationOrProgramController,
+                        style: GoogleFonts.poppins(color: AppTheme.getTextPrimary(context), fontSize: 13),
+                        textCapitalization: TextCapitalization.words,
+                        decoration: _minimalInputDecoration(
+                          label: 'Nature of Business or Freelance Work *',
+                          hint: 'e.g. Online Store Owner, Freelance Designer',
+                          icon: Icons.handyman_outlined,
+                        ),
+                        validator: (value) {
+                          if (_employmentStatus == 'self_employed') {
+                            if (value == null || value.trim().isEmpty) {
+                              return 'Please specify your line of work or business';
+                            }
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 10),
+                      TextFormField(
+                        controller: _employerOrSchoolController,
+                        style: GoogleFonts.poppins(color: AppTheme.getTextPrimary(context), fontSize: 13),
+                        textCapitalization: TextCapitalization.words,
+                        decoration: _minimalInputDecoration(
+                          label: 'Business / Brand Name (Optional)',
+                          hint: 'e.g. Santos Crafts, Freelance',
+                          icon: Icons.store_outlined,
+                        ),
+                      ),
+                    ] else ...[
+                      Row(
+                        children: [
+                          const Icon(Icons.favorite_border_rounded, size: 16, color: AppTheme.primary),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Pet Care Financial Support',
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.getTextPrimary(context),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      TextFormField(
+                        controller: _occupationOrProgramController,
+                        style: GoogleFonts.poppins(color: AppTheme.getTextPrimary(context), fontSize: 13),
+                        textCapitalization: TextCapitalization.words,
+                        decoration: _minimalInputDecoration(
+                          label: 'Source of Pet Care Support / Guarantor *',
+                          hint: 'e.g. Family allowance, Parents, Savings',
+                          icon: Icons.volunteer_activism_outlined,
+                        ),
+                        validator: (value) {
+                          if (_employmentStatus == 'unemployed') {
+                            if (value == null || value.trim().isEmpty) {
+                              return 'Please specify how pet expenses will be supported';
+                            }
+                          }
+                          return null;
+                        },
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
           _buildSectionHeader('Adoption Details', subtitle: 'Proposed pet name for shelter records (Optional)'),
           const SizedBox(height: 10),
           _buildCardContainer(
@@ -1494,9 +1782,36 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
         const SizedBox(height: 12),
         _buildCardContainer(
           children: [
+            if (_employmentStatus == 'student') ...[
+              Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF0F262B) : const Color(0xFFE6F7F8),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: AppTheme.primary.withValues(alpha: 0.3)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.school_outlined, size: 16, color: AppTheme.primary),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Student applicants may select "Student / School ID" and upload their active school ID or Certificate of Registration.',
+                        style: GoogleFonts.poppins(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                          color: isDark ? const Color(0xFF99F6E4) : const Color(0xFF0F766E),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             Text.rich(
               TextSpan(
-                text: 'Valid Government ID Type',
+                text: _employmentStatus == 'student' ? 'Valid Student or Government ID Type' : 'Valid Government ID Type',
                 style: GoogleFonts.poppins(
                   fontSize: 12.5,
                   fontWeight: FontWeight.w600,
@@ -1547,8 +1862,8 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
             ),
             const SizedBox(height: 14),
             _buildUploadBox(
-              title: 'Photo of Valid Government ID',
-              buttonText: 'Tap to upload Valid ID',
+              title: _employmentStatus == 'student' ? 'Photo of Student or Government ID' : 'Photo of Valid Government ID',
+              buttonText: _employmentStatus == 'student' ? 'Tap to upload Student / Valid ID' : 'Tap to upload Valid ID',
               icon: Icons.badge_outlined,
               image: _validIdImage,
               onTap: () => _showImagePickerSheet(true),
