@@ -638,7 +638,9 @@ class _ApplicationCard extends StatelessWidget {
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
-                          'Note: This is only a pre-signing step. Please bring the original copies of your uploaded Valid ID and Barangay Certificate on your scheduled date. The Pet Health Hub and adoption contract will unlock after CAWS staff physically verifies your identification and completes the pet handover.',
+                          (application['home_ownership'] == 'rented' || application['homeOwnership'] == 'rented')
+                              ? 'Note: This is only a pre-signing step. Please bring the original copies of your uploaded Valid ID, Barangay Certificate, and Landlord Permission Letter (or signed lease agreement) on your scheduled date. The Pet Health Hub and adoption contract will unlock after CAWS staff physically verifies your documents and completes the pet handover.'
+                              : 'Note: This is only a pre-signing step. Please bring the original copies of your uploaded Valid ID and Barangay Certificate on your scheduled date. The Pet Health Hub and adoption contract will unlock after CAWS staff physically verifies your identification and completes the pet handover.',
                           style: GoogleFonts.poppins(
                             fontSize: 10.5,
                             color: const Color(0xFF92400E),

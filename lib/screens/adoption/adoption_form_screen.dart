@@ -38,6 +38,7 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
 
   int _currentStep = 0;
   final _personalFormKey = GlobalKey<FormState>();
+  bool _autoValidateStep1 = false;
 
   final _firstNameController = TextEditingController();
   final _middleNameController = TextEditingController();
@@ -68,7 +69,13 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
   XFile? _certificateImage;
 
   String? _selectedIdType;
-  final List<String> _validIdTypes = [
+
+  final List<String> _studentIdTypes = const [
+    'Student / School ID',
+    'Certificate of Registration (COR) / Enrollment Form',
+  ];
+
+  final List<String> _governmentIdTypes = const [
     'Philippine National ID (PhilSys)',
     'Driver\'s License',
     'Philippine Passport',
@@ -77,10 +84,12 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
     'Voter\'s ID / Certificate',
     'PhilHealth ID',
     'PRC ID',
-    'Student / School ID',
     'Senior Citizen / PWD ID',
     'Other Government-Issued ID',
   ];
+
+  List<String> get _currentIdTypes =>
+      _employmentStatus == 'student' ? _studentIdTypes : _governmentIdTypes;
 
   String? get _petImageUrl {
     final img = widget.pet['image']?.toString() ??
@@ -250,8 +259,14 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
         if (prefill != null && prefill['employer_or_school'] != null && prefill['employer_or_school'].toString().isNotEmpty) {
           _employerOrSchoolController.text = prefill['employer_or_school'].toString();
         }
-        if (_employmentStatus == 'student' && (_selectedIdType == null || _selectedIdType!.isEmpty)) {
-          _selectedIdType = 'Student / School ID';
+        if (_employmentStatus == 'student') {
+          if (_selectedIdType == null || !_studentIdTypes.contains(_selectedIdType)) {
+            _selectedIdType = 'Student / School ID';
+          }
+        } else {
+          if (_selectedIdType == null || _studentIdTypes.contains(_selectedIdType)) {
+            _selectedIdType = 'Philippine National ID (PhilSys)';
+          }
         }
       });
     }
@@ -319,7 +334,9 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
       return;
     }
     final isDark = AppTheme.isDark(context);
-    final title = isValidId ? 'Upload Valid Government ID' : 'Upload Barangay Certificate';
+    final title = isValidId
+        ? (_employmentStatus == 'student' ? 'Upload Student ID / COR' : 'Upload Valid Government ID')
+        : 'Upload Barangay Certificate';
     showModalBottomSheet(
       context: context,
       backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
@@ -364,7 +381,10 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
 
   void _nextStep() {
     if (_currentStep == 0) {
-      if (!_personalFormKey.currentState!.validate()) return;
+      if (!_personalFormKey.currentState!.validate()) {
+        setState(() => _autoValidateStep1 = true);
+        return;
+      }
       _savePhoneNumberLocally();
       setState(() => _currentStep++);
     } else if (_currentStep == 1) {
@@ -388,7 +408,9 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Please upload a photo of your Valid Government ID',
+              _employmentStatus == 'student'
+                  ? 'Please upload a photo of your Student ID or COR'
+                  : 'Please upload a photo of your Valid Government ID',
               style: GoogleFonts.poppins(fontSize: 13),
             ),
             backgroundColor: AppTheme.warningColor,
@@ -1150,6 +1172,11 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
       filled: true,
       fillColor: isDark ? const Color(0xFF0F172A) : Colors.white,
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      errorMaxLines: 2,
+      errorStyle: GoogleFonts.poppins(
+        fontSize: 11,
+        color: const Color(0xFFEF4444),
+      ),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
         borderSide: BorderSide(color: AppTheme.getCardBorder(context)),
@@ -1236,6 +1263,9 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
     final isDark = AppTheme.isDark(context);
     return Form(
       key: _personalFormKey,
+      autovalidateMode: _autoValidateStep1
+          ? AutovalidateMode.onUserInteraction
+          : AutovalidateMode.disabled,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1365,7 +1395,6 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
                 maxLines: 2,
                 decoration: _minimalInputDecoration(
                   label: 'Complete Address *',
-                  hint: 'Street, Barangay, City, Province',
                   icon: Icons.location_on_outlined,
                 ),
                 validator: (value) =>
@@ -1427,14 +1456,39 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 10),
+                      Container(
+                        margin: const EdgeInsets.only(top: 8, bottom: 12),
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: AppTheme.getCardBorder(context)),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Icon(Icons.assignment_outlined, size: 16, color: AppTheme.primary),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Rental Policy: If your application is approved, please prepare a signed Landlord Permission Letter or a lease agreement showing pets are allowed to present during your face-to-face screening.',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppTheme.getTextSecondary(context),
+                                  height: 1.35,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                       TextFormField(
                         controller: _landlordNameController,
                         style: GoogleFonts.poppins(color: AppTheme.getTextPrimary(context), fontSize: 13),
                         textCapitalization: TextCapitalization.words,
                         decoration: _minimalInputDecoration(
                           label: 'Landlord / Admin Name *',
-                          hint: 'e.g. Maria Santos',
                           icon: Icons.person_outline_rounded,
                         ),
                       ),
@@ -1449,7 +1503,6 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
                         ],
                         decoration: _minimalInputDecoration(
                           label: 'Landlord Contact Phone (11 digits) *',
-                          hint: '09123456789',
                           icon: Icons.phone_outlined,
                         ),
                         validator: (value) {
@@ -1470,57 +1523,119 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
           const SizedBox(height: 10),
           _buildCardContainer(
             children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildInteractiveChoiceCard(
-                      isSelected: _employmentStatus == 'employed',
-                      onTap: () => setState(() => _employmentStatus = 'employed'),
-                      title: 'Employed',
-                      subtitle: 'Full-time / part-time',
-                      icon: Icons.work_outline_rounded,
-                    ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF0F172A) : Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: AppTheme.getCardBorder(context)),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                    value: _employmentStatus,
+                    isExpanded: true,
+                    icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppTheme.primary, size: 22),
+                    items: [
+                      DropdownMenuItem(
+                        value: 'employed',
+                        child: Row(
+                          children: [
+                            const Icon(Icons.work_outline_rounded, size: 18, color: AppTheme.primary),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                'Employed (Full-time / Part-time)',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppTheme.getTextPrimary(context),
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      DropdownMenuItem(
+                        value: 'student',
+                        child: Row(
+                          children: [
+                            const Icon(Icons.school_outlined, size: 18, color: AppTheme.primary),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                'Student (College / University / Senior High)',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppTheme.getTextPrimary(context),
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      DropdownMenuItem(
+                        value: 'self_employed',
+                        child: Row(
+                          children: [
+                            const Icon(Icons.storefront_outlined, size: 18, color: AppTheme.primary),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                'Self-Employed / Freelancer / Business',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppTheme.getTextPrimary(context),
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      DropdownMenuItem(
+                        value: 'unemployed',
+                        child: Row(
+                          children: [
+                            const Icon(Icons.family_restroom_outlined, size: 18, color: AppTheme.primary),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                'Not Employed / Dependent / Homemaker',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppTheme.getTextPrimary(context),
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                    onChanged: (val) {
+                      if (val != null) {
+                        setState(() {
+                          _employmentStatus = val;
+                          if (val == 'student') {
+                            if (_selectedIdType == null || !_studentIdTypes.contains(_selectedIdType)) {
+                              _selectedIdType = 'Student / School ID';
+                            }
+                          } else {
+                            if (_selectedIdType == null || _studentIdTypes.contains(_selectedIdType)) {
+                              _selectedIdType = 'Philippine National ID (PhilSys)';
+                            }
+                          }
+                        });
+                      }
+                    },
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _buildInteractiveChoiceCard(
-                      isSelected: _employmentStatus == 'student',
-                      onTap: () => setState(() {
-                        _employmentStatus = 'student';
-                        if (_selectedIdType == null || _selectedIdType!.isEmpty) {
-                          _selectedIdType = 'Student / School ID';
-                        }
-                      }),
-                      title: 'Student',
-                      subtitle: 'College / university',
-                      icon: Icons.school_outlined,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildInteractiveChoiceCard(
-                      isSelected: _employmentStatus == 'self_employed',
-                      onTap: () => setState(() => _employmentStatus = 'self_employed'),
-                      title: 'Self-Employed',
-                      subtitle: 'Business / freelance',
-                      icon: Icons.storefront_outlined,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _buildInteractiveChoiceCard(
-                      isSelected: _employmentStatus == 'unemployed',
-                      onTap: () => setState(() => _employmentStatus = 'unemployed'),
-                      title: 'Dependent',
-                      subtitle: 'Family / homemaker',
-                      icon: Icons.family_restroom_outlined,
-                    ),
-                  ),
-                ],
+                ),
               ),
               const SizedBox(height: 12),
               Container(
@@ -1565,7 +1680,6 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
                         textCapitalization: TextCapitalization.words,
                         decoration: _minimalInputDecoration(
                           label: 'School / College / University Name *',
-                          hint: 'e.g. Xavier University - Ateneo de Cagayan',
                           icon: Icons.account_balance_outlined,
                         ),
                         validator: (value) {
@@ -1584,7 +1698,6 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
                         textCapitalization: TextCapitalization.words,
                         decoration: _minimalInputDecoration(
                           label: 'Course / Program & Year Level *',
-                          hint: 'e.g. BS Information Technology - 3rd Year',
                           icon: Icons.history_edu_outlined,
                         ),
                         validator: (value) {
@@ -1618,7 +1731,6 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
                         textCapitalization: TextCapitalization.words,
                         decoration: _minimalInputDecoration(
                           label: 'Occupation / Job Title *',
-                          hint: 'e.g. Software Engineer, Registered Nurse',
                           icon: Icons.work_outline_rounded,
                         ),
                         validator: (value) {
@@ -1637,7 +1749,6 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
                         textCapitalization: TextCapitalization.words,
                         decoration: _minimalInputDecoration(
                           label: 'Company / Employer Name (Optional)',
-                          hint: 'e.g. Concentrix, DepEd, Ayala Corp',
                           icon: Icons.business_outlined,
                         ),
                       ),
@@ -1663,7 +1774,6 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
                         textCapitalization: TextCapitalization.words,
                         decoration: _minimalInputDecoration(
                           label: 'Nature of Business or Freelance Work *',
-                          hint: 'e.g. Online Store Owner, Freelance Designer',
                           icon: Icons.handyman_outlined,
                         ),
                         validator: (value) {
@@ -1682,7 +1792,6 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
                         textCapitalization: TextCapitalization.words,
                         decoration: _minimalInputDecoration(
                           label: 'Business / Brand Name (Optional)',
-                          hint: 'e.g. Santos Crafts, Freelance',
                           icon: Icons.store_outlined,
                         ),
                       ),
@@ -1708,7 +1817,6 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
                         textCapitalization: TextCapitalization.words,
                         decoration: _minimalInputDecoration(
                           label: 'Source of Pet Care Support / Guarantor *',
-                          hint: 'e.g. Family allowance, Parents, Savings',
                           icon: Icons.volunteer_activism_outlined,
                         ),
                         validator: (value) {
@@ -1736,38 +1844,12 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
                 style: GoogleFonts.poppins(color: AppTheme.getTextPrimary(context), fontSize: 13),
                 decoration: _minimalInputDecoration(
                   label: 'Proposed Pet Name (Optional)',
-                  hint: 'e.g. Max, Milo, Bella',
                   icon: Icons.label_outline_rounded,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 14),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF064E3B).withValues(alpha: 0.25) : const Color(0xFFF0FDF4),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: isDark ? const Color(0xFF065F46) : const Color(0xFFBBF7D0)),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 20),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    'Compatibility Quiz Connected: Your living space, schedule, other pets, and experience from your quiz will be attached automatically.',
-                    style: GoogleFonts.poppins(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
-                      color: isDark ? const Color(0xFF6EE7B7) : const Color(0xFF166534),
-                      height: 1.35,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+
         ],
       ),
     );
@@ -1797,7 +1879,7 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Student applicants may select "Student / School ID" and upload their active school ID or Certificate of Registration.',
+                        'Please upload your active Student / School ID or Certificate of Registration (COR) / enrollment form below.',
                         style: GoogleFonts.poppins(
                           fontSize: 11,
                           fontWeight: FontWeight.w500,
@@ -1809,9 +1891,38 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
                 ),
               ),
             ],
+            if (_homeOwnership == 'rented') ...[
+              Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: AppTheme.getCardBorder(context)),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.home_work_outlined, size: 16, color: AppTheme.primary),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Rental Requirement: As a tenant, please remember to bring a signed Landlord Permission Letter or lease pet addendum to your face-to-face screening before pet release.',
+                        style: GoogleFonts.poppins(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                          color: AppTheme.getTextSecondary(context),
+                          height: 1.35,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             Text.rich(
               TextSpan(
-                text: _employmentStatus == 'student' ? 'Valid Student or Government ID Type' : 'Valid Government ID Type',
+                text: _employmentStatus == 'student' ? 'Student Identification Type' : 'Valid Government ID Type',
                 style: GoogleFonts.poppins(
                   fontSize: 12.5,
                   fontWeight: FontWeight.w600,
@@ -1839,14 +1950,18 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
               child: DropdownButtonHideUnderline(
                 child: DropdownButton<String>(
                   dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
-                  value: _selectedIdType,
+                  value: _currentIdTypes.contains(_selectedIdType)
+                      ? _selectedIdType
+                      : _currentIdTypes.first,
                   isExpanded: true,
                   hint: Text(
-                    'Select government ID type...',
+                    _employmentStatus == 'student'
+                        ? 'Select student ID type...'
+                        : 'Select government ID type...',
                     style: GoogleFonts.poppins(fontSize: 12, color: AppTheme.getTextSecondary(context)),
                   ),
                   icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppTheme.primary, size: 20),
-                  items: _validIdTypes.map((type) => DropdownMenuItem(
+                  items: _currentIdTypes.map((type) => DropdownMenuItem(
                     value: type,
                     child: Text(
                       type,
@@ -1862,9 +1977,9 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
             ),
             const SizedBox(height: 14),
             _buildUploadBox(
-              title: _employmentStatus == 'student' ? 'Photo of Student or Government ID' : 'Photo of Valid Government ID',
-              buttonText: _employmentStatus == 'student' ? 'Tap to upload Student / Valid ID' : 'Tap to upload Valid ID',
-              icon: Icons.badge_outlined,
+              title: _employmentStatus == 'student' ? 'Photo of Student ID / COR' : 'Photo of Valid Government ID',
+              buttonText: _employmentStatus == 'student' ? 'Tap to upload Student ID / COR' : 'Tap to upload Valid ID',
+              icon: _employmentStatus == 'student' ? Icons.school_outlined : Icons.badge_outlined,
               image: _validIdImage,
               onTap: () => _showImagePickerSheet(true),
               onRemove: () => setState(() => _validIdImage = null),
