@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile_petadopt/screens/adoption/adopted_pet_hub_screen.dart';
@@ -9,7 +10,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class MyApplicationsScreen extends StatefulWidget {
   final String? initialFilter;
-  const MyApplicationsScreen({super.key, this.initialFilter});
+  final List<Map<String, dynamic>>? initialApplications;
+
+  const MyApplicationsScreen({
+    super.key,
+    this.initialFilter,
+    this.initialApplications,
+  });
 
   @override
   State<MyApplicationsScreen> createState() => _MyApplicationsScreenState();
@@ -24,26 +31,60 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
   void initState() {
     super.initState();
     _selectedFilter = widget.initialFilter ?? 'all';
+    _loadCachedApplications();
     _fetchApplications();
+  }
+
+  Future<void> _loadCachedApplications() async {
+    // 1. Immediately apply initial in-memory applications if supplied
+    if (widget.initialApplications != null && widget.initialApplications!.isNotEmpty) {
+      if (mounted) {
+        setState(() {
+          _applications = List<Map<String, dynamic>>.from(widget.initialApplications!);
+          _isLoading = false;
+        });
+      }
+      return;
+    }
+
+    // 2. Otherwise load cached applications from disk for instant 0ms rendering
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final cachedStr = prefs.getString('cached_home_applications');
+      if (cachedStr != null && cachedStr.isNotEmpty && mounted) {
+        final decoded = jsonDecode(cachedStr);
+        if (decoded is List && decoded.isNotEmpty) {
+          setState(() {
+            _applications = decoded.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+            _isLoading = false;
+          });
+        }
+      }
+    } catch (_) {}
   }
 
   Future<void> _fetchApplications() async {
     try {
       final list = await ApiService.getMyApplications();
-      final user = await ApiService.getUser();
-      if (user != null) {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString(
-          'user_${user["id"]}_last_viewed_applications_time',
-          DateTime.now().toIso8601String(),
-        );
-      }
       if (mounted) {
         setState(() {
           _applications = list;
           _isLoading = false;
         });
       }
+
+      // Persist cache and activity timestamp in background without delaying UI render
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('cached_home_applications', jsonEncode(list));
+        final user = await ApiService.getUser();
+        if (user != null) {
+          await prefs.setString(
+            'user_${user["id"]}_last_viewed_applications_time',
+            DateTime.now().toIso8601String(),
+          );
+        }
+      } catch (_) {}
     } catch (_) {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -637,15 +678,27 @@ class _ApplicationCard extends StatelessWidget {
                       const Icon(Icons.info_outline_rounded, size: 14, color: Color(0xFFB45309)),
                       const SizedBox(width: 6),
                       Expanded(
-                        child: Text(
-                          (application['home_ownership'] == 'rented' || application['homeOwnership'] == 'rented')
-                              ? 'Note: This is only a pre-signing step. Please bring the original copies of your uploaded Valid ID, Barangay Certificate, and Landlord Permission Letter (or signed lease agreement) on your scheduled date. The Pet Health Hub and adoption contract will unlock after CAWS staff physically verifies your documents and completes the pet handover.'
-                              : 'Note: This is only a pre-signing step. Please bring the original copies of your uploaded Valid ID and Barangay Certificate on your scheduled date. The Pet Health Hub and adoption contract will unlock after CAWS staff physically verifies your identification and completes the pet handover.',
-                          style: GoogleFonts.poppins(
-                            fontSize: 10.5,
-                            color: const Color(0xFF92400E),
-                            height: 1.35,
-                          ),
+                        child: Builder(
+                          builder: (context) {
+                            final bool isStudent = (application['employment_status']?.toString().toLowerCase() == 'student') ||
+                                (application['employmentStatus']?.toString().toLowerCase() == 'student') ||
+                                application['is_student'] == true ||
+                                application['isStudent'] == true ||
+                                (application['id_type']?.toString().toLowerCase().contains('student') ?? false) ||
+                                (application['id_type']?.toString().toLowerCase().contains('cor') ?? false);
+                            final String idDocName = isStudent ? 'Student ID/COR' : 'Valid ID';
+                            final bool isRented = (application['home_ownership'] == 'rented' || application['homeOwnership'] == 'rented');
+                            return Text(
+                              isRented
+                                  ? 'Note: This is only a pre-signing step. Please bring the original copies of your uploaded $idDocName and Proof of Residence (Barangay Certificate, Lease Contract, or Landlord Permission Letter) on your scheduled date. The Pet Health Hub and adoption contract will unlock after CAWS staff physically verifies your documents and completes the pet handover.'
+                                  : 'Note: This is only a pre-signing step. Please bring the original copies of your uploaded $idDocName and Barangay Certificate on your scheduled date. The Pet Health Hub and adoption contract will unlock after CAWS staff physically verifies your identification and completes the pet handover.',
+                              style: GoogleFonts.poppins(
+                                fontSize: 10.5,
+                                color: const Color(0xFF92400E),
+                                height: 1.35,
+                              ),
+                            );
+                          },
                         ),
                       ),
                     ],

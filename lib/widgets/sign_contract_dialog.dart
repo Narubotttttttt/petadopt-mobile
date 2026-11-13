@@ -45,6 +45,27 @@ class _SignContractDialogState extends State<SignContractDialog> {
     super.dispose();
   }
 
+  bool get _isStudent {
+    final emp = widget.application['employment_status']?.toString().toLowerCase() ??
+        widget.application['employmentStatus']?.toString().toLowerCase() ?? '';
+    final idType = widget.application['id_type']?.toString().toLowerCase() ??
+        widget.application['idType']?.toString().toLowerCase() ?? '';
+    final msg = widget.application['message']?.toString().toLowerCase() ?? '';
+    return emp == 'student' ||
+        widget.application['is_student'] == true ||
+        widget.application['isStudent'] == true ||
+        idType.contains('student') ||
+        idType.contains('cor') ||
+        msg.contains('employment status: student');
+  }
+
+  bool get _isRented {
+    final home = widget.application['home_ownership']?.toString().toLowerCase() ??
+        widget.application['homeOwnership']?.toString().toLowerCase() ?? '';
+    final msg = widget.application['message']?.toString().toLowerCase() ?? '';
+    return home == 'rented' || msg.contains('housing status: rented');
+  }
+
   Future<void> _loadSavedSignature() async {
     try {
       final user = await ApiService.getUser();
@@ -195,7 +216,7 @@ class _SignContractDialogState extends State<SignContractDialog> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Adoption agreement pre-signed! Bring your original Valid ID and Barangay Certificate to the event for verification.',
+                    'Adoption agreement pre-signed! Bring your original ${_isStudent ? 'Student ID/COR' : 'Valid ID'} and ${_isRented ? 'Proof of Residence (Barangay Cert, Lease, or Landlord Letter)' : 'Barangay Certificate'} to the event for verification.',
                     style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600),
                   ),
                 ),
@@ -556,7 +577,7 @@ class _SignContractDialogState extends State<SignContractDialog> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Note: This is only a pre-signing step. Please bring the original copies of your uploaded Valid ID and Barangay Certificate on your scheduled date. You can only download the adoption contract after CAWS verifies your identification.',
+                    'Note: This is only a pre-signing step. Please bring the original copies of your uploaded ${_isStudent ? 'Student ID/COR' : 'Valid ID'} and ${_isRented ? 'Proof of Residence (Barangay Certificate, Lease, or Landlord Letter)' : 'Barangay Certificate'} on your scheduled date. You can only download the adoption contract after CAWS verifies your identification.',
                     style: GoogleFonts.poppins(
                       fontSize: 11,
                       color: const Color(0xFF1E40AF),

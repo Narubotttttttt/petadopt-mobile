@@ -638,9 +638,43 @@ class _HomeTabState extends State<_HomeTab> {
   @override
   void initState() {
     super.initState();
-    _loadCachedUser();
+    _loadCachedData();
     _loadDashboardData();
     NotificationService.setupFirebaseFCM();
+  }
+
+  Future<void> _loadCachedData() async {
+    await _loadCachedUser();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final cachedAppsStr = prefs.getString('cached_home_applications');
+      final cachedRemindersStr = prefs.getString('cached_home_reminders');
+
+      List<Map<String, dynamic>> cachedApps = [];
+      List<Map<String, dynamic>> cachedReminders = [];
+
+      if (cachedAppsStr != null && cachedAppsStr.isNotEmpty) {
+        final decoded = jsonDecode(cachedAppsStr);
+        if (decoded is List) {
+          cachedApps = decoded.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+        }
+      }
+
+      if (cachedRemindersStr != null && cachedRemindersStr.isNotEmpty) {
+        final decoded = jsonDecode(cachedRemindersStr);
+        if (decoded is List) {
+          cachedReminders = decoded.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+        }
+      }
+
+      if (mounted && (cachedApps.isNotEmpty || cachedReminders.isNotEmpty)) {
+        setState(() {
+          if (cachedApps.isNotEmpty) _applications = cachedApps;
+          if (cachedReminders.isNotEmpty) _vaccineReminders = cachedReminders;
+          _isLoading = false;
+        });
+      }
+    } catch (_) {}
   }
 
   String _formatGreetingName(String name) {
@@ -751,67 +785,66 @@ class _HomeTabState extends State<_HomeTab> {
   }
 
   Future<void> _loadDashboardData() async {
-    // 1. Immediately ensure cached user is applied
-    await _loadCachedUser();
+    // 1. Immediately ensure cached data is loaded first for instant display
+    await _loadCachedData();
 
-    // 2. Fetch fresh profile independently
+    // 2. Fetch fresh profile, applications, and vaccine reminders in parallel
+    final profileFuture = ApiService.getProfile().catchError((_) => null);
+    final appsFuture = ApiService.getMyApplications().catchError((_) => <Map<String, dynamic>>[]);
+    final remindersFuture = ApiService.getVaccineReminders().catchError((_) => <Map<String, dynamic>>[]);
+
+    final results = await Future.wait([
+      profileFuture,
+      appsFuture,
+      remindersFuture,
+    ]);
+
+    final profile = results[0] as Map<String, dynamic>?;
+    final apps = (results[1] as List<dynamic>?)?.cast<Map<String, dynamic>>() ?? <Map<String, dynamic>>[];
+    final reminders = (results[2] as List<dynamic>?)?.cast<Map<String, dynamic>>() ?? <Map<String, dynamic>>[];
+
+    if (!mounted) return;
+
+    // Cache latest dashboard data for instant zero-lag rendering on future visits
     try {
-      final profile = await ApiService.getProfile();
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('cached_home_applications', jsonEncode(apps));
+      await prefs.setString('cached_home_reminders', jsonEncode(reminders));
+    } catch (_) {}
+
+    setState(() {
       if (profile != null) {
+        _userProfile = profile;
         final name = _extractNameFromMap(profile);
-        if (mounted) {
-          setState(() {
-            _userProfile = profile;
-            if (name != null && name.isNotEmpty && name.toLowerCase() != 'adopter') {
-              _userName = _formatGreetingName(name);
-            }
-          });
+        if (name != null && name.isNotEmpty && name.toLowerCase() != 'adopter') {
+          _userName = _formatGreetingName(name);
         }
       }
-    } catch (_) {}
 
-
-    // 4. Fetch applications independently (and extract applicant name if still fallback!)
-    List<Map<String, dynamic>> apps = [];
-    try {
-      apps = await ApiService.getMyApplications();
-      if (mounted) {
-        setState(() {
-          _applications = apps;
-          if (_userName.toLowerCase() == 'adopter' && apps.isNotEmpty) {
-            for (final app in apps) {
-              final applicantName = app['adopter_name'] ??
-                  app['applicant_name'] ??
-                  app['adopterName'] ??
-                  app['applicantName'] ??
-                  app['user']?['name'] ??
-                  app['user_name'];
-              if (applicantName != null && applicantName.toString().trim().isNotEmpty) {
-                final extracted = applicantName.toString().trim();
-                if (extracted.toLowerCase() != 'adopter' && extracted.toLowerCase() != 'null') {
-                  _userName = _formatGreetingName(extracted);
-                  break;
-                }
-              }
+      _applications = apps;
+      if (_userName.toLowerCase() == 'adopter' && apps.isNotEmpty) {
+        for (final app in apps) {
+          final applicantName = app['adopter_name'] ??
+              app['applicant_name'] ??
+              app['adopterName'] ??
+              app['applicantName'] ??
+              app['user']?['name'] ??
+              app['user_name'];
+          if (applicantName != null && applicantName.toString().trim().isNotEmpty) {
+            final extracted = applicantName.toString().trim();
+            if (extracted.toLowerCase() != 'adopter' && extracted.toLowerCase() != 'null') {
+              _userName = _formatGreetingName(extracted);
+              break;
             }
           }
-        });
+        }
       }
-    } catch (_) {}
 
-    // 5. Fetch vaccine reminders independently
-    List<Map<String, dynamic>> reminders = [];
-    try {
-      reminders = await ApiService.getVaccineReminders();
-      if (mounted) {
-        setState(() => _vaccineReminders = reminders);
-      }
-    } catch (_) {}
+      _vaccineReminders = reminders;
+      _isLoading = false;
+    });
 
-    if (mounted) {
-      setState(() => _isLoading = false);
-      _checkUnreadNotificationsFromData(apps, reminders);
-    }
+    _checkUnreadNotificationsFromData(apps, reminders);
   }
 
   Future<void> _checkUnreadNotificationsFromData(
@@ -1304,12 +1337,22 @@ class _HomeTabState extends State<_HomeTab> {
 
                             if (status == 'approved') {
                               final eventDate = item['scheduledAt'] ?? 'Sunday Event';
+                              final bool isStudent = item['isStudent'] == true ||
+                                  item['is_student'] == true ||
+                                  item['employment_status']?.toString().toLowerCase() == 'student' ||
+                                  item['employmentStatus']?.toString().toLowerCase() == 'student' ||
+                                  (item['id_type']?.toString().toLowerCase().contains('student') ?? false) ||
+                                  (item['id_type']?.toString().toLowerCase().contains('cor') ?? false);
+                              final bool isRented = item['home_ownership']?.toString().toLowerCase() == 'rented' ||
+                                  item['homeOwnership']?.toString().toLowerCase() == 'rented';
+                              final idDocShort = isStudent ? 'Student ID/COR' : 'ID';
+                              final resDocShort = isRented ? 'Proof of Residence' : 'Brgy Cert';
                               return _buildMinimalNotificationCard(
                                 icon: Icons.assignment_turned_in_outlined,
                                 iconColor: const Color(0xFF0D9488),
                                 iconBg: const Color(0xFFF0FDFA),
                                 title: '$petName - Pre-Approved',
-                                subtitle: 'Event: $eventDate - Bring ID & Brgy Cert',
+                                subtitle: 'Event: $eventDate - Bring $idDocShort & $resDocShort',
                                 badgeText: 'Pre-Approved',
                                 badgeColor: const Color(0xFF0D9488),
                                 badgeBg: const Color(0xFFCCFBF1),

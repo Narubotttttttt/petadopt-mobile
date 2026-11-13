@@ -525,28 +525,13 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
     };
 
     try {
-      final startTime = DateTime.now();
       final recsFuture = ApiService.getRecommendations(profile: payload);
+      final appsFuture = ApiService.getMyApplications();
 
-      // Multi-stage natural AI evaluation progression
-      await Future.delayed(const Duration(milliseconds: 1100));
-      if (mounted && _isLoading) {
-        setState(() {
-          _loadingStep = 2;
-          _loadingStatus = 'Evaluating pet temperaments and lifestyle fit...';
-        });
-      }
+      final results = await Future.wait([recsFuture, appsFuture]);
+      final recs = results[0] as List<Map<String, dynamic>>;
+      final applications = results[1] as List<Map<String, dynamic>>;
 
-      await Future.delayed(const Duration(milliseconds: 1200));
-      if (mounted && _isLoading) {
-        setState(() {
-          _loadingStep = 3;
-          _loadingStatus = 'Ranking top matches by lifestyle and environmental safety...';
-        });
-      }
-
-      final recs = await recsFuture;
-      final applications = await ApiService.getMyApplications();
       final appliedPetIds = applications
           .where((app) {
             final st = (app['status']?.toString() ?? '').toLowerCase();
@@ -562,12 +547,6 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
         final alreadyApplied = petId != null && appliedPetIds.contains(petId);
         return (status == null || status.isEmpty || status == 'available') && !alreadyApplied;
       }).take(3).toList();
-
-      // Ensure the full animated recommendation evaluation cycle finishes naturally (~3.4s total)
-      final elapsed = DateTime.now().difference(startTime).inMilliseconds;
-      if (elapsed < 3400) {
-        await Future.delayed(Duration(milliseconds: 3400 - elapsed));
-      }
 
       if (mounted) {
         try {

@@ -22,7 +22,7 @@ class _SplashScreenState extends State<SplashScreen>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1300),
+      duration: const Duration(milliseconds: 1000),
     );
 
     _scaleAnim = Tween<double>(begin: 0.5, end: 1.0).animate(
@@ -47,38 +47,49 @@ class _SplashScreenState extends State<SplashScreen>
     );
 
     _controller.forward();
+    _initApp();
+  }
 
-    Future.delayed(const Duration(milliseconds: 2400), () async {
-      final isExpired = await ApiService.isSessionExpired();
-      if (isExpired) {
-        await ApiService.clearSession();
-        if (mounted) {
-          Navigator.pushReplacementNamed(context, '/login');
-        }
-        return;
-      }
+  Future<void> _initApp() async {
+    // Run authentication checks concurrently with the smooth logo entrance animation
+    final minSplashDuration = Future.delayed(const Duration(milliseconds: 1000));
 
-      final token = await ApiService.getToken();
+    final isExpired = await ApiService.isSessionExpired();
+    if (isExpired) {
+      await ApiService.clearSession();
+      await minSplashDuration;
       if (mounted) {
-        if (token != null && token.isNotEmpty) {
-          final user = await ApiService.getProfile();
-          if (user == null) {
-            await ApiService.clearSession();
-            if (mounted) {
-              Navigator.pushReplacementNamed(context, '/login');
-            }
-            return;
-          }
-
-          await ApiService.updateLastActiveTime();
-          if (mounted) {
-            Navigator.pushReplacementNamed(context, '/home');
-          }
-        } else {
-          Navigator.pushReplacementNamed(context, '/login');
-        }
+        Navigator.pushReplacementNamed(context, '/login');
       }
-    });
+      return;
+    }
+
+    final token = await ApiService.getToken();
+    if (token == null || token.isEmpty) {
+      await minSplashDuration;
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, '/login');
+      }
+      return;
+    }
+
+    final user = await ApiService.getProfile();
+    await minSplashDuration;
+
+    if (!mounted) return;
+
+    if (user == null) {
+      await ApiService.clearSession();
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, '/login');
+      }
+      return;
+    }
+
+    await ApiService.updateLastActiveTime();
+    if (mounted) {
+      Navigator.pushReplacementNamed(context, '/home');
+    }
   }
 
   @override

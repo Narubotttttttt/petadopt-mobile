@@ -336,7 +336,7 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
     final isDark = AppTheme.isDark(context);
     final title = isValidId
         ? (_employmentStatus == 'student' ? 'Upload Student ID / COR' : 'Upload Valid Government ID')
-        : 'Upload Barangay Certificate';
+        : (_homeOwnership == 'rented' ? 'Upload Proof of Residence (Barangay Cert, Lease, or Landlord Letter)' : 'Upload Barangay Certificate');
     showModalBottomSheet(
       context: context,
       backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
@@ -423,10 +423,13 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
         return;
       }
       if (_certificateImage == null) {
+        final docPrompt = _homeOwnership == 'rented'
+            ? 'Proof of Residence (Barangay Cert, Lease Contract, or Landlord Letter)'
+            : 'Barangay Certificate';
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Please upload a photo of your Barangay Certificate',
+              'Please upload your $docPrompt',
               style: GoogleFonts.poppins(fontSize: 13),
             ),
             backgroundColor: AppTheme.warningColor,
@@ -757,10 +760,13 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
       return;
     }
     if (_certificateImage == null) {
+      final docPrompt = _homeOwnership == 'rented'
+          ? 'Proof of Residence (Barangay Cert, Lease Contract, or Landlord Letter)'
+          : 'Barangay Certificate of Residency';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Please upload your Barangay Certificate of Residency',
+            'Please upload your $docPrompt',
             style: GoogleFonts.poppins(fontSize: 13),
           ),
           backgroundColor: AppTheme.warningColor,
@@ -850,11 +856,51 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
         }
       }
 
-      await ApiService.submitAdoptionApplication(
+      final res = await ApiService.submitAdoptionApplication(
         data: submitData,
         validIdPath: _validIdImage?.path,
         certificatePath: _certificateImage?.path,
       );
+
+      // Pre-seed submitted application records into local cache for instant 0ms My Applications render
+      List<Map<String, dynamic>> optimisticApps = [];
+      for (final pet in _effectiveSelectedPets) {
+        final pId = pet['id'] ?? pet['pet_id'] ?? (widget.pet['id'] ?? widget.pet['pet_id'] ?? 0);
+        final pName = pet['name'] ?? _petDisplayName;
+        optimisticApps.add({
+          'id': res['data']?['id'] ?? 0,
+          'pet_id': pId,
+          'petId': pId,
+          'shelterPetId': pId,
+          'shelterPetCode': 'Pet no. $pId',
+          'shelter_id': pId,
+          'shelter_code': 'Pet no. $pId',
+          'pet': pet,
+          'petName': pName,
+          'adoptedPetName': pName,
+          'petBreed': pet['breed'] ?? 'Mixed',
+          'petType': pet['type'] ?? 'Dog',
+          'petImage': pet['photo_url'] ?? pet['image'] ?? '',
+          'dateApplied': 'Just now',
+          'status': 'pending',
+          'display_status': 'Pending Verification',
+          'displayStatus': 'Pending Verification',
+        });
+      }
+
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        final cachedStr = prefs.getString('cached_home_applications');
+        List<Map<String, dynamic>> existingList = [];
+        if (cachedStr != null && cachedStr.isNotEmpty) {
+          final decoded = jsonDecode(cachedStr);
+          if (decoded is List) {
+            existingList = decoded.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+          }
+        }
+        final merged = [...optimisticApps, ...existingList];
+        await prefs.setString('cached_home_applications', jsonEncode(merged));
+      } catch (_) {}
 
       if (mounted) {
         Navigator.pop(context);
@@ -879,7 +925,12 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
             Navigator.popUntil(context, ModalRoute.withName('/home'));
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const MyApplicationsScreen(initialFilter: 'all')),
+              MaterialPageRoute(
+                builder: (_) => MyApplicationsScreen(
+                  initialFilter: 'all',
+                  initialApplications: optimisticApps,
+                ),
+              ),
             );
           },
         );
@@ -1860,7 +1911,7 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionHeader('Document Verification', subtitle: 'Upload photos of your ID and barangay residency certificate'),
+        _buildSectionHeader('Document Verification', subtitle: _homeOwnership == 'rented' ? 'Upload photos of your ID and proof of residence' : 'Upload photos of your ID and barangay residency certificate'),
         const SizedBox(height: 12),
         _buildCardContainer(
           children: [
@@ -1896,22 +1947,22 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
                 margin: const EdgeInsets.only(bottom: 12),
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
+                  color: isDark ? const Color(0xFF0F262B) : const Color(0xFFEFF6FF),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppTheme.getCardBorder(context)),
+                  border: Border.all(color: const Color(0xFF3B82F6).withValues(alpha: 0.3)),
                 ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.home_work_outlined, size: 16, color: AppTheme.primary),
+                    const Icon(Icons.home_work_outlined, size: 16, color: Color(0xFF2563EB)),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Rental Requirement: As a tenant, please remember to bring a signed Landlord Permission Letter or lease pet addendum to your face-to-face screening before pet release.',
+                        'Renter / Student Note: If you do not have a local Barangay Certificate, you may upload your signed Landlord Permission Letter, Dorm Certificate, Rental/Lease Agreement, or Barangay Certificate from your permanent hometown.',
                         style: GoogleFonts.poppins(
                           fontSize: 11,
                           fontWeight: FontWeight.w500,
-                          color: AppTheme.getTextSecondary(context),
+                          color: isDark ? const Color(0xFF93C5FD) : const Color(0xFF1E40AF),
                           height: 1.35,
                         ),
                       ),
@@ -1990,8 +2041,12 @@ class _AdoptionFormScreenState extends State<AdoptionFormScreen> {
         _buildCardContainer(
           children: [
             _buildUploadBox(
-              title: 'Barangay Certificate of Residency',
-              buttonText: 'Tap to upload Barangay Certificate',
+              title: _homeOwnership == 'rented'
+                  ? 'Proof of Residence (Barangay Cert, Lease, or Landlord Letter)'
+                  : 'Barangay Certificate of Residency',
+              buttonText: _homeOwnership == 'rented'
+                  ? 'Tap to upload Proof of Residence'
+                  : 'Tap to upload Barangay Certificate',
               icon: Icons.description_outlined,
               image: _certificateImage,
               onTap: () => _showImagePickerSheet(false),
