@@ -1442,8 +1442,6 @@ class _RecordVetVaccineModalState extends State<_RecordVetVaccineModal> {
               controller: _vaccineNameCtrl,
               style: GoogleFonts.poppins(fontSize: 13, color: AppTheme.getTextPrimary(context)),
               decoration: InputDecoration(
-                hintText: _category == 'vaccination' ? 'e.g. 5-in-1 (DHPP) or Rabies' : 'e.g. Heartgard Plus',
-                hintStyle: GoogleFonts.poppins(fontSize: 12, color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8)),
                 filled: true,
                 fillColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
@@ -1606,8 +1604,6 @@ class _RecordVetVaccineModalState extends State<_RecordVetVaccineModal> {
                         controller: _clinicCtrl,
                         style: GoogleFonts.poppins(fontSize: 13, color: AppTheme.getTextPrimary(context)),
                         decoration: InputDecoration(
-                          hintText: 'e.g. CDO Pet Hospital',
-                          hintStyle: GoogleFonts.poppins(fontSize: 12, color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8)),
                           filled: true,
                           fillColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
                           contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
@@ -1646,8 +1642,6 @@ class _RecordVetVaccineModalState extends State<_RecordVetVaccineModal> {
                         controller: _vetCtrl,
                         style: GoogleFonts.poppins(fontSize: 13, color: AppTheme.getTextPrimary(context)),
                         decoration: InputDecoration(
-                          hintText: 'e.g. Dr. Santos',
-                          hintStyle: GoogleFonts.poppins(fontSize: 12, color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8)),
                           filled: true,
                           fillColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
                           contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
