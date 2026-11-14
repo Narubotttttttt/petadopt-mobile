@@ -521,9 +521,11 @@ class _ApplicationCard extends StatelessWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF8FAFC),
+                  color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  border: Border.all(
+                    color: isDark ? AppTheme.darkCardBorder : const Color(0xFFE2E8F0),
+                  ),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -538,7 +540,7 @@ class _ApplicationCard extends StatelessWidget {
                             style: GoogleFonts.poppins(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
-                              color: const Color(0xFF0F172A),
+                              color: isDark ? AppTheme.darkTextPrimary : const Color(0xFF0F172A),
                             ),
                           ),
                         ),
@@ -548,14 +550,18 @@ class _ApplicationCard extends StatelessWidget {
                       const SizedBox(height: 4),
                       Row(
                         children: [
-                          const Icon(Icons.location_on_outlined, size: 14, color: Color(0xFF64748B)),
+                          Icon(
+                            Icons.location_on_outlined,
+                            size: 14,
+                            color: isDark ? AppTheme.darkTextSecondary : const Color(0xFF64748B),
+                          ),
                           const SizedBox(width: 6),
                           Expanded(
                             child: Text(
                               eventLocation,
                               style: GoogleFonts.poppins(
                                 fontSize: 11,
-                                color: const Color(0xFF64748B),
+                                color: isDark ? AppTheme.darkTextSecondary : const Color(0xFF64748B),
                               ),
                             ),
                           ),
@@ -568,7 +574,7 @@ class _ApplicationCard extends StatelessWidget {
                         eventNotes,
                         style: GoogleFonts.poppins(
                           fontSize: 11,
-                          color: const Color(0xFF94A3B8),
+                          color: isDark ? AppTheme.darkTextSecondary : const Color(0xFF64748B),
                           fontStyle: FontStyle.italic,
                         ),
                       ),
@@ -611,7 +617,10 @@ class _ApplicationCard extends StatelessWidget {
               Center(
                 child: Text(
                   'Pre-signing saves time. Original documents must still be presented on-site.',
-                  style: GoogleFonts.poppins(fontSize: 11, color: const Color(0xFFB45309)),
+                  style: GoogleFonts.poppins(
+                    fontSize: 11,
+                    color: isDark ? const Color(0xFFFBBF24) : const Color(0xFFB45309),
+                  ),
                 ),
               ),
             ] else if ((status == 'approved' || status == 'adopted') && isSigned) ...[
@@ -636,7 +645,7 @@ class _ApplicationCard extends StatelessWidget {
                                 ? (signedAt != null && signedAt.isNotEmpty
                                     ? 'Handover Finalized - Contract Unlocked ($signedAt)'
                                     : 'Handover Finalized - Contract Unlocked')
-                                : 'Pre-Signed - Pending Venue Verification',
+                                : 'Agreement Pre-Signed - Awaiting On-Site Handover',
                             style: GoogleFonts.poppins(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
@@ -669,19 +678,25 @@ class _ApplicationCard extends StatelessWidget {
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFFFBEB),
+                    color: isDark ? const Color(0xFF78350F).withValues(alpha: 0.25) : const Color(0xFFFFFBEB),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: const Color(0xFFFDE68A)),
+                    border: Border.all(
+                      color: isDark ? const Color(0xFFD97706).withValues(alpha: 0.35) : const Color(0xFFFDE68A),
+                    ),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.info_outline_rounded, size: 14, color: Color(0xFFB45309)),
+                      Icon(
+                        Icons.info_outline_rounded,
+                        size: 14,
+                        color: isDark ? const Color(0xFFFBBF24) : const Color(0xFFB45309),
+                      ),
                       const SizedBox(width: 6),
                       Expanded(
                         child: Builder(
                           builder: (context) {
                             final bool isStudent = (application['employment_status']?.toString().toLowerCase() == 'student') ||
-                                (application['employmentStatus']?.toString().toLowerCase() == 'student') ||
+                                 (application['employmentStatus']?.toString().toLowerCase() == 'student') ||
                                 application['is_student'] == true ||
                                 application['isStudent'] == true ||
                                 (application['id_type']?.toString().toLowerCase().contains('student') ?? false) ||
@@ -690,11 +705,11 @@ class _ApplicationCard extends StatelessWidget {
                             final bool isRented = (application['home_ownership'] == 'rented' || application['homeOwnership'] == 'rented');
                             return Text(
                               isRented
-                                  ? 'Note: This is only a pre-signing step. Please bring the original copies of your uploaded $idDocName and Proof of Residence (Barangay Certificate, Lease Contract, or Landlord Permission Letter) on your scheduled date. The Pet Health Hub and adoption contract will unlock after CAWS staff physically verifies your documents and completes the pet handover.'
-                                  : 'Note: This is only a pre-signing step. Please bring the original copies of your uploaded $idDocName and Barangay Certificate on your scheduled date. The Pet Health Hub and adoption contract will unlock after CAWS staff physically verifies your identification and completes the pet handover.',
+                                  ? 'Note: You have pre-signed the Adoption Agreement. Please bring the original copies of your uploaded $idDocName and Proof of Residence (Barangay Certificate, Lease Contract, or Landlord Permission Letter) on your scheduled date. The Pet Health Hub and official contract will unlock after CAWS staff physically verifies your documents and completes the pet handover.'
+                                  : 'Note: You have pre-signed the Adoption Agreement. Please bring the original copies of your uploaded $idDocName and Barangay Certificate on your scheduled date. The Pet Health Hub and official contract will unlock after CAWS staff physically verifies your identification and completes the pet handover.',
                               style: GoogleFonts.poppins(
                                 fontSize: 10.5,
-                                color: const Color(0xFF92400E),
+                                color: isDark ? const Color(0xFFFDE68A) : const Color(0xFF92400E),
                                 height: 1.35,
                               ),
                             );
@@ -832,6 +847,7 @@ class _ApplicationCard extends StatelessWidget {
         currentName.toLowerCase().startsWith('pet no.');
     final controller = TextEditingController(text: isDefault ? '' : currentName);
     bool isSaving = false;
+    final isDark = AppTheme.isDark(context);
 
     showDialog(
       context: context,
@@ -839,7 +855,11 @@ class _ApplicationCard extends StatelessWidget {
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return Dialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              backgroundColor: isDark ? AppTheme.darkSurface : Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+                side: isDark ? const BorderSide(color: AppTheme.darkCardBorder, width: 0.8) : BorderSide.none,
+              ),
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(20, 22, 20, 20),
                 child: Column(
@@ -852,7 +872,7 @@ class _ApplicationCard extends StatelessWidget {
                           width: 36,
                           height: 36,
                           decoration: BoxDecoration(
-                            color: AppTheme.primary.withValues(alpha: 0.1),
+                            color: AppTheme.primary.withValues(alpha: isDark ? 0.2 : 0.1),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: const Icon(
@@ -868,7 +888,7 @@ class _ApplicationCard extends StatelessWidget {
                             style: GoogleFonts.poppins(
                               fontSize: 16,
                               fontWeight: FontWeight.w700,
-                              color: const Color(0xFF0F172A),
+                              color: isDark ? AppTheme.darkTextPrimary : const Color(0xFF0F172A),
                             ),
                           ),
                         ),
@@ -881,7 +901,7 @@ class _ApplicationCard extends StatelessWidget {
                           : 'You may rename this pet or leave the field empty to keep the current name.',
                       style: GoogleFonts.poppins(
                         fontSize: 12,
-                        color: const Color(0xFF64748B),
+                        color: isDark ? AppTheme.darkTextSecondary : const Color(0xFF64748B),
                         height: 1.4,
                       ),
                     ),
@@ -890,20 +910,27 @@ class _ApplicationCard extends StatelessWidget {
                       controller: controller,
                       autofocus: true,
                       textCapitalization: TextCapitalization.words,
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        color: isDark ? AppTheme.darkTextPrimary : const Color(0xFF0F172A),
+                      ),
                       decoration: InputDecoration(
                         hintText: 'e.g. Bella, Milo, Rocky',
-                        hintStyle: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade400),
+                        hintStyle: GoogleFonts.poppins(
+                          fontSize: 13,
+                          color: isDark ? AppTheme.darkTextSecondary : Colors.grey.shade400,
+                        ),
                         prefixIcon: const Icon(Icons.pets_rounded, size: 18, color: AppTheme.primary),
                         filled: true,
-                        fillColor: const Color(0xFFF8FAFC),
+                        fillColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                          borderSide: BorderSide(color: isDark ? AppTheme.darkCardBorder : const Color(0xFFE2E8F0)),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                          borderSide: BorderSide(color: isDark ? AppTheme.darkCardBorder : const Color(0xFFE2E8F0)),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -918,8 +945,8 @@ class _ApplicationCard extends StatelessWidget {
                           child: ElevatedButton(
                             onPressed: isSaving ? null : () => Navigator.pop(dialogContext),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFF1F5F9),
-                              foregroundColor: const Color(0xFF475569),
+                              backgroundColor: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9),
+                              foregroundColor: isDark ? Colors.white : const Color(0xFF475569),
                               elevation: 0,
                               padding: const EdgeInsets.symmetric(vertical: 14),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
@@ -929,7 +956,7 @@ class _ApplicationCard extends StatelessWidget {
                               style: GoogleFonts.poppins(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
-                                color: const Color(0xFF475569),
+                                color: isDark ? Colors.white : const Color(0xFF475569),
                               ),
                             ),
                           ),
@@ -1122,17 +1149,17 @@ class _ApplicationCard extends StatelessWidget {
         statusColor = const Color(0xFF10B981);
         statusBg = const Color(0xFFD1FAE5);
         currentStep = 3;
-        statusMessage = 'Agreement signed. Awaiting final shelter handover.';
+        statusMessage = 'Agreement pre-signed! Awaiting physical document verification and handover.';
       } else if (isScheduled) {
         statusColor = const Color(0xFF7C3AED);
         statusBg = const Color(0xFFEDE9FE);
         currentStep = 2;
-        statusMessage = 'Pickup/Interview scheduled for $scheduledAt. Please pre-sign below.';
+        statusMessage = 'Pickup scheduled for $scheduledAt. Pre-sign the adoption agreement below to save time.';
       } else {
         statusColor = const Color(0xFF10B981);
         statusBg = const Color(0xFFD1FAE5);
         currentStep = 2;
-        statusMessage = 'Pre-Approved! Please review and sign the adoption agreement below.';
+        statusMessage = 'Pre-Approved! Please review and pre-sign the adoption agreement below.';
       }
     } else if (status == 'under_review') {
       statusColor = const Color(0xFF0284C7);
@@ -1321,10 +1348,15 @@ class _ApplicationCard extends StatelessWidget {
   }
 
   void _showSignatureDialog(BuildContext context, String signatureUrl) {
+    final isDark = AppTheme.isDark(context);
     showDialog(
       context: context,
       builder: (ctx) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: isDark ? AppTheme.darkSurface : Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: isDark ? const BorderSide(color: AppTheme.darkCardBorder, width: 0.8) : BorderSide.none,
+        ),
         child: Padding(
           padding: const EdgeInsets.all(20),
           child: Column(
@@ -1332,7 +1364,11 @@ class _ApplicationCard extends StatelessWidget {
             children: [
               Text(
                 'Adopter Digital Signature',
-                style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w700),
+                style: GoogleFonts.poppins(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: isDark ? AppTheme.darkTextPrimary : const Color(0xFF0F172A),
+                ),
               ),
               const SizedBox(height: 14),
               Container(
@@ -1340,17 +1376,30 @@ class _ApplicationCard extends StatelessWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF8FAFC),
+                  color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
-                ),
-                child: Image.network(
-                  ApiService.normalizeImageUrl(signatureUrl),
-                  fit: BoxFit.contain,
-                  errorBuilder: (_, _, _) => const Center(
-                    child: Text('Signature on file', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                  border: Border.all(
+                    color: isDark ? AppTheme.darkCardBorder : const Color(0xFFE2E8F0),
                   ),
                 ),
+                child: isDark
+                    ? ColorFiltered(
+                        colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+                        child: Image.network(
+                          ApiService.normalizeImageUrl(signatureUrl),
+                          fit: BoxFit.contain,
+                          errorBuilder: (_, _, _) => const Center(
+                            child: Text('Signature on file', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                          ),
+                        ),
+                      )
+                    : Image.network(
+                        ApiService.normalizeImageUrl(signatureUrl),
+                        fit: BoxFit.contain,
+                        errorBuilder: (_, _, _) => const Center(
+                          child: Text('Signature on file', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                        ),
+                      ),
               ),
               const SizedBox(height: 14),
               SizedBox(

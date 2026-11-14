@@ -216,7 +216,7 @@ class _SignContractDialogState extends State<SignContractDialog> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Adoption agreement pre-signed! Bring your original ${_isStudent ? 'Student ID/COR' : 'Valid ID'} and ${_isRented ? 'Proof of Residence (Barangay Cert, Lease, or Landlord Letter)' : 'Barangay Certificate'} to the event for verification.',
+                    'Adoption Agreement pre-signed! Bring your original ${_isStudent ? 'Student ID/COR' : 'Valid ID'} and ${_isRented ? 'Proof of Residence (Barangay Cert, Lease, or Landlord Letter)' : 'Barangay Certificate'} to the event for verification.',
                     style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600),
                   ),
                 ),
@@ -251,6 +251,7 @@ class _SignContractDialogState extends State<SignContractDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = AppTheme.isDark(context);
     final pet = widget.application['pet'] as Map<String, dynamic>?;
     final petName = pet != null ? (pet['name'] ?? 'Pet no. ') : 'Pet';
     final petBreed = pet?['breed'] ?? 'Aspin / Puspin';
@@ -262,12 +263,16 @@ class _SignContractDialogState extends State<SignContractDialog> {
     final hasSavedSignature = _savedSignatureUrl != null && _savedSignatureUrl!.isNotEmpty;
 
     return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      backgroundColor: isDark ? AppTheme.darkSurface : Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(24),
+        side: isDark ? const BorderSide(color: AppTheme.darkCardBorder, width: 0.8) : BorderSide.none,
+      ),
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       child: Container(
         constraints: const BoxConstraints(maxWidth: 480, maxHeight: 660),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: isDark ? AppTheme.darkSurface : Colors.white,
           borderRadius: BorderRadius.circular(24),
         ),
         child: Column(
@@ -292,7 +297,9 @@ class _SignContractDialogState extends State<SignContractDialog> {
                       duration: const Duration(milliseconds: 250),
                       height: 4,
                       decoration: BoxDecoration(
-                        color: _currentStep >= 1 ? AppTheme.primary : const Color(0xFFE2E8F0),
+                        color: _currentStep >= 1
+                            ? AppTheme.primary
+                            : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -304,8 +311,12 @@ class _SignContractDialogState extends State<SignContractDialog> {
             // Dynamic Header
             Container(
               padding: const EdgeInsets.fromLTRB(20, 12, 16, 14),
-              decoration: const BoxDecoration(
-                border: Border(bottom: BorderSide(color: Color(0xFFF1F5F9))),
+              decoration: BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(
+                    color: isDark ? AppTheme.darkCardBorder : const Color(0xFFF1F5F9),
+                  ),
+                ),
               ),
               child: Row(
                 children: [
@@ -323,7 +334,7 @@ class _SignContractDialogState extends State<SignContractDialog> {
                       width: 36,
                       height: 36,
                       decoration: BoxDecoration(
-                        color: AppTheme.primaryLight,
+                        color: isDark ? AppTheme.primary.withValues(alpha: 0.2) : AppTheme.primaryLight,
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: const Icon(Icons.assignment_turned_in_outlined, color: AppTheme.primary, size: 20),
@@ -335,25 +346,32 @@ class _SignContractDialogState extends State<SignContractDialog> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          _currentStep == 0 ? 'Adopter Commitments' : 'Pre-Sign Agreement',
+                          _currentStep == 0 ? 'Adopter Commitments' : 'Adoption Agreement',
                           style: GoogleFonts.poppins(
                             fontSize: 15,
                             fontWeight: FontWeight.w700,
-                            color: AppTheme.textPrimary,
+                            color: isDark ? AppTheme.darkTextPrimary : AppTheme.textPrimary,
                           ),
                         ),
                         Text(
                           _currentStep == 0
                               ? 'Step 1 of 2: Review terms and conditions'
-                              : 'Step 2 of 2: Pre-sign agreement in advance',
-                          style: GoogleFonts.poppins(fontSize: 11, color: AppTheme.textSecondary),
+                              : 'Step 2 of 2: Pre-sign now to expedite your pickup',
+                          style: GoogleFonts.poppins(
+                            fontSize: 11,
+                            color: isDark ? AppTheme.darkTextSecondary : AppTheme.textSecondary,
+                          ),
                         ),
                       ],
                     ),
                   ),
                   IconButton(
                     onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.close_rounded, size: 20, color: Color(0xFF64748B)),
+                    icon: Icon(
+                      Icons.close_rounded,
+                      size: 20,
+                      color: isDark ? AppTheme.darkTextSecondary : const Color(0xFF64748B),
+                    ),
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
                   ),
@@ -369,6 +387,7 @@ class _SignContractDialogState extends State<SignContractDialog> {
                 children: [
                   // Step 0: Adopter Commitments
                   _buildCommitmentsStep(
+                    isDark: isDark,
                     petName: petName,
                     petBreed: petBreed,
                     petPhotoUrl: petPhotoUrl,
@@ -378,6 +397,7 @@ class _SignContractDialogState extends State<SignContractDialog> {
 
                   // Step 1: Digital Signature
                   _buildSignatureStep(
+                    isDark: isDark,
                     hasSavedSignature: hasSavedSignature,
                   ),
                 ],
@@ -387,8 +407,12 @@ class _SignContractDialogState extends State<SignContractDialog> {
             // Footer Actions
             Container(
               padding: const EdgeInsets.all(16),
-              decoration: const BoxDecoration(
-                border: Border(top: BorderSide(color: Color(0xFFF1F5F9))),
+              decoration: BoxDecoration(
+                border: Border(
+                  top: BorderSide(
+                    color: isDark ? AppTheme.darkCardBorder : const Color(0xFFF1F5F9),
+                  ),
+                ),
               ),
               child: _currentStep == 0
                   ? SizedBox(
@@ -453,6 +477,7 @@ class _SignContractDialogState extends State<SignContractDialog> {
   }
 
   Widget _buildCommitmentsStep({
+    required bool isDark,
     required String petName,
     required String petBreed,
     String? petPhotoUrl,
@@ -469,9 +494,11 @@ class _SignContractDialogState extends State<SignContractDialog> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: const Color(0xFFF1F5F9),
+              color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
+              border: Border.all(
+                color: isDark ? AppTheme.darkCardBorder : const Color(0xFFE2E8F0),
+              ),
             ),
             child: Row(
               children: [
@@ -507,12 +534,15 @@ class _SignContractDialogState extends State<SignContractDialog> {
                         style: GoogleFonts.poppins(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
-                          color: AppTheme.textPrimary,
+                          color: isDark ? AppTheme.darkTextPrimary : AppTheme.textPrimary,
                         ),
                       ),
                       Text(
                         petBreed,
-                        style: GoogleFonts.poppins(fontSize: 11, color: AppTheme.textSecondary),
+                        style: GoogleFonts.poppins(
+                          fontSize: 11,
+                          color: isDark ? AppTheme.darkTextSecondary : AppTheme.textSecondary,
+                        ),
                       ),
                       if (scheduledAt.isNotEmpty)
                         Padding(
@@ -522,7 +552,7 @@ class _SignContractDialogState extends State<SignContractDialog> {
                             style: GoogleFonts.poppins(
                               fontSize: 10,
                               fontWeight: FontWeight.w600,
-                              color: const Color(0xFF0F766E),
+                              color: isDark ? const Color(0xFF5EEAD4) : const Color(0xFF0F766E),
                             ),
                           ),
                         ),
@@ -538,9 +568,11 @@ class _SignContractDialogState extends State<SignContractDialog> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: const Color(0xFFF8FAFC),
+              color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
+              border: Border.all(
+                color: isDark ? AppTheme.darkCardBorder : const Color(0xFFE2E8F0),
+              ),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -550,15 +582,15 @@ class _SignContractDialogState extends State<SignContractDialog> {
                   style: GoogleFonts.poppins(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF1E293B),
+                    color: isDark ? AppTheme.darkTextPrimary : const Color(0xFF1E293B),
                   ),
                 ),
                 const SizedBox(height: 10),
-                _buildTermItem('I will never abandon, hurt, or maltreat my adopted pet (sanctioned under Republic Act 8485).'),
-                _buildTermItem('I agree to provide proper veterinary care, anti-rabies vaccination, and regular nourishment.'),
-                _buildTermItem('I consent to mandatory Spay & Neuter (Kapon) to fight pet overpopulation.'),
-                _buildTermItem('I agree to submit monthly pet health updates and photos through this mobile app.'),
-                _buildTermItem('Adoption is a lifetime commitment for the entire life of the animal.'),
+                _buildTermItem('I will never abandon, hurt, or maltreat my adopted pet (sanctioned under Republic Act 8485).', isDark),
+                _buildTermItem('I agree to provide proper veterinary care, anti-rabies vaccination, and regular nourishment.', isDark),
+                _buildTermItem('I consent to mandatory Spay & Neuter (Kapon) to fight pet overpopulation.', isDark),
+                _buildTermItem('I agree to submit monthly pet health updates and photos through this mobile app.', isDark),
+                _buildTermItem('Adoption is a lifetime commitment for the entire life of the animal.', isDark),
               ],
             ),
           ),
@@ -566,21 +598,31 @@ class _SignContractDialogState extends State<SignContractDialog> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: const Color(0xFFEFF6FF),
+              color: isDark
+                  ? const Color(0xFF1E3A8A).withValues(alpha: 0.25)
+                  : const Color(0xFFEFF6FF),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFBFDBFE)),
+              border: Border.all(
+                color: isDark
+                    ? const Color(0xFF3B82F6).withValues(alpha: 0.35)
+                    : const Color(0xFFBFDBFE),
+              ),
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.info_outline_rounded, size: 16, color: Color(0xFF1D4ED8)),
+                Icon(
+                  Icons.info_outline_rounded,
+                  size: 16,
+                  color: isDark ? const Color(0xFF60A5FA) : const Color(0xFF1D4ED8),
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Note: This is only a pre-signing step. Please bring the original copies of your uploaded ${_isStudent ? 'Student ID/COR' : 'Valid ID'} and ${_isRented ? 'Proof of Residence (Barangay Certificate, Lease, or Landlord Letter)' : 'Barangay Certificate'} on your scheduled date. You can only download the adoption contract after CAWS verifies your identification.',
+                    'Note: This is an advance pre-signing step. Please bring the original copies of your uploaded ${_isStudent ? 'Student ID/COR' : 'Valid ID'} and ${_isRented ? 'Proof of Residence (Barangay Certificate, Lease, or Landlord Letter)' : 'Barangay Certificate'} on your scheduled date. The official adoption contract unlocks after CAWS verifies your identification and completes the handover.',
                     style: GoogleFonts.poppins(
                       fontSize: 11,
-                      color: const Color(0xFF1E40AF),
+                      color: isDark ? const Color(0xFFBFDBFE) : const Color(0xFF1E40AF),
                       height: 1.35,
                     ),
                   ),
@@ -590,10 +632,10 @@ class _SignContractDialogState extends State<SignContractDialog> {
           ),
           const SizedBox(height: 12),
           Text(
-            'By tapping \'I Agree\', you acknowledge your readiness to take on these responsibilities before signing.',
+            'By tapping \'I Agree\', you acknowledge your readiness to take on these responsibilities before pre-signing the Adoption Agreement.',
             style: GoogleFonts.poppins(
               fontSize: 11,
-              color: AppTheme.textSecondary,
+              color: isDark ? AppTheme.darkTextSecondary : AppTheme.textSecondary,
               fontStyle: FontStyle.italic,
               height: 1.35,
             ),
@@ -604,13 +646,17 @@ class _SignContractDialogState extends State<SignContractDialog> {
   }
 
   Widget _buildSignatureStep({
+    required bool isDark,
     required bool hasSavedSignature,
   }) {
     if (_isLoadingUser) {
-      return const Center(
+      return Center(
         child: Padding(
-          padding: EdgeInsets.all(32),
-          child: CircularProgressIndicator(strokeWidth: 2),
+          padding: const EdgeInsets.all(32),
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            color: AppTheme.primary,
+          ),
         ),
       );
     }
@@ -633,28 +679,38 @@ class _SignContractDialogState extends State<SignContractDialog> {
                       style: GoogleFonts.poppins(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
-                        color: AppTheme.textPrimary,
+                        color: isDark ? AppTheme.darkTextPrimary : AppTheme.textPrimary,
                       ),
                     ),
                     const SizedBox(width: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFECFDF5),
+                        color: isDark
+                            ? const Color(0xFF064E3B).withValues(alpha: 0.4)
+                            : const Color(0xFFECFDF5),
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: const Color(0xFFA7F3D0)),
+                        border: Border.all(
+                          color: isDark
+                              ? const Color(0xFF059669).withValues(alpha: 0.5)
+                              : const Color(0xFFA7F3D0),
+                        ),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.verified_rounded, size: 11, color: Color(0xFF059669)),
+                          Icon(
+                            Icons.verified_rounded,
+                            size: 11,
+                            color: isDark ? const Color(0xFF34D399) : const Color(0xFF059669),
+                          ),
                           const SizedBox(width: 3),
                           Text(
                             'On Record',
                             style: GoogleFonts.poppins(
                               fontSize: 9,
                               fontWeight: FontWeight.w700,
-                              color: const Color(0xFF065F46),
+                              color: isDark ? const Color(0xFF6EE7B7) : const Color(0xFF065F46),
                             ),
                           ),
                         ],
@@ -687,24 +743,43 @@ class _SignContractDialogState extends State<SignContractDialog> {
               width: double.infinity,
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
+                color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xFFCBD5E1), width: 1.5),
-              ),
-              alignment: Alignment.center,
-              child: Image.network(
-                _savedSignatureUrl!,
-                height: 100,
-                fit: BoxFit.contain,
-                errorBuilder: (_, _, _) => const Center(
-                  child: Text('Signature on file', style: TextStyle(color: Color(0xFF64748B))),
+                border: Border.all(
+                  color: isDark ? AppTheme.darkCardBorder : const Color(0xFFCBD5E1),
+                  width: 1.5,
                 ),
               ),
+              alignment: Alignment.center,
+              child: isDark
+                  ? ColorFiltered(
+                      colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+                      child: Image.network(
+                        _savedSignatureUrl!,
+                        height: 100,
+                        fit: BoxFit.contain,
+                        errorBuilder: (_, _, _) => const Center(
+                          child: Text('Signature on file', style: TextStyle(color: Color(0xFF64748B))),
+                        ),
+                      ),
+                    )
+                  : Image.network(
+                      _savedSignatureUrl!,
+                      height: 100,
+                      fit: BoxFit.contain,
+                      errorBuilder: (_, _, _) => const Center(
+                        child: Text('Signature on file', style: TextStyle(color: Color(0xFF64748B))),
+                      ),
+                    ),
             ),
             const SizedBox(height: 8),
             Text(
               'Your verified on-record digital signature will be applied to this agreement.',
-              style: GoogleFonts.poppins(fontSize: 11, color: const Color(0xFF64748B), fontStyle: FontStyle.italic),
+              style: GoogleFonts.poppins(
+                fontSize: 11,
+                color: isDark ? AppTheme.darkTextSecondary : const Color(0xFF64748B),
+                fontStyle: FontStyle.italic,
+              ),
             ),
           ] else ...[
             // Drawing Canvas View
@@ -716,7 +791,7 @@ class _SignContractDialogState extends State<SignContractDialog> {
                   style: GoogleFonts.poppins(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
-                    color: AppTheme.textPrimary,
+                    color: isDark ? AppTheme.darkTextPrimary : AppTheme.textPrimary,
                   ),
                 ),
                 Row(
@@ -732,7 +807,11 @@ class _SignContractDialogState extends State<SignContractDialog> {
                         ),
                         child: Text(
                           'Use Saved',
-                          style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w700, color: const Color(0xFF059669)),
+                          style: GoogleFonts.poppins(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: isDark ? const Color(0xFF34D399) : const Color(0xFF059669),
+                          ),
                         ),
                       ),
                     TextButton.icon(
@@ -756,10 +835,10 @@ class _SignContractDialogState extends State<SignContractDialog> {
               height: 170,
               width: double.infinity,
               decoration: BoxDecoration(
-                color: const Color(0xFFFAFAFA),
+                color: isDark ? const Color(0xFF0F172A) : const Color(0xFFFAFAFA),
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
-                  color: _isSigning ? AppTheme.primary : const Color(0xFFCBD5E1),
+                  color: _isSigning ? AppTheme.primary : (isDark ? AppTheme.darkCardBorder : const Color(0xFFCBD5E1)),
                   width: _isSigning ? 2.0 : 1.5,
                 ),
               ),
@@ -768,16 +847,24 @@ class _SignContractDialogState extends State<SignContractDialog> {
                 child: Stack(
                   children: [
                     if (_strokes.isEmpty)
-                      const IgnorePointer(
+                      IgnorePointer(
                         child: Center(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.draw_rounded, size: 26, color: Color(0xFF94A3B8)),
-                              SizedBox(height: 6),
+                              Icon(
+                                Icons.draw_rounded,
+                                size: 26,
+                                color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
+                              ),
+                              const SizedBox(height: 6),
                               Text(
                                 'Sign with your finger inside this box',
-                                style: TextStyle(fontFamily: 'Poppins', fontSize: 12, color: Color(0xFF94A3B8)),
+                                style: TextStyle(
+                                  fontFamily: 'Poppins',
+                                  fontSize: 12,
+                                  color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
+                                ),
                               ),
                             ],
                           ),
@@ -787,11 +874,11 @@ class _SignContractDialogState extends State<SignContractDialog> {
                       bottom: 24,
                       left: 16,
                       right: 16,
-                      child: const IgnorePointer(
+                      child: IgnorePointer(
                         child: Divider(
                           height: 1,
                           thickness: 1,
-                          color: Color(0xFFCBD5E1),
+                          color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
                         ),
                       ),
                     ),
@@ -830,7 +917,7 @@ class _SignContractDialogState extends State<SignContractDialog> {
                         },
                         child: SizedBox.expand(
                           child: CustomPaint(
-                            painter: _SignaturePainter(strokes: _strokes),
+                            painter: _SignaturePainter(strokes: _strokes, isDark: isDark),
                           ),
                         ),
                       ),
@@ -842,7 +929,11 @@ class _SignContractDialogState extends State<SignContractDialog> {
             const SizedBox(height: 8),
             Text(
               'Sign inside the box to affix your legal digital signature.',
-              style: GoogleFonts.poppins(fontSize: 11, color: const Color(0xFF64748B), fontStyle: FontStyle.italic),
+              style: GoogleFonts.poppins(
+                fontSize: 11,
+                color: isDark ? AppTheme.darkTextSecondary : const Color(0xFF64748B),
+                fontStyle: FontStyle.italic,
+              ),
             ),
           ],
         ],
@@ -850,7 +941,7 @@ class _SignContractDialogState extends State<SignContractDialog> {
     );
   }
 
-  Widget _buildTermItem(String text) {
+  Widget _buildTermItem(String text, bool isDark) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
@@ -866,7 +957,7 @@ class _SignContractDialogState extends State<SignContractDialog> {
               text,
               style: GoogleFonts.poppins(
                 fontSize: 11,
-                color: const Color(0xFF334155),
+                color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF334155),
                 height: 1.4,
               ),
             ),
@@ -879,13 +970,15 @@ class _SignContractDialogState extends State<SignContractDialog> {
 
 class _SignaturePainter extends CustomPainter {
   final List<List<Offset>> strokes;
+  final bool isDark;
 
-  _SignaturePainter({required this.strokes});
+  _SignaturePainter({required this.strokes, this.isDark = false});
 
   @override
   void paint(Canvas canvas, Size size) {
+    final inkColor = isDark ? const Color(0xFFF8FAFC) : const Color(0xFF0F172A);
     final strokePaint = Paint()
-      ..color = const Color(0xFF0F172A)
+      ..color = inkColor
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round
       ..strokeWidth = 3.0
@@ -893,7 +986,7 @@ class _SignaturePainter extends CustomPainter {
       ..isAntiAlias = true;
 
     final dotPaint = Paint()
-      ..color = const Color(0xFF0F172A)
+      ..color = inkColor
       ..style = PaintingStyle.fill
       ..isAntiAlias = true;
 
