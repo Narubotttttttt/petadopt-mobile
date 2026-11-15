@@ -1142,7 +1142,6 @@ class _RecordVetVaccineModalState extends State<_RecordVetVaccineModal> {
   final TextEditingController _notesCtrl = TextEditingController();
 
   DateTime _adminDate = DateTime.now();
-  DateTime? _nextDueDate = DateTime.now().add(const Duration(days: 365));
 
   File? _proofPhoto;
   bool _isSubmitting = false;
@@ -1169,13 +1168,10 @@ class _RecordVetVaccineModalState extends State<_RecordVetVaccineModal> {
       _category = newCat;
       if (newCat == 'vaccination') {
         _vaccineNameCtrl.text = '5-in-1 (DHPP)';
-        _nextDueDate = _adminDate.add(const Duration(days: 365));
       } else if (newCat == 'deworming') {
         _vaccineNameCtrl.text = 'Heartgard Plus';
-        _nextDueDate = _adminDate.add(const Duration(days: 90));
       } else {
         _vaccineNameCtrl.text = '';
-        _nextDueDate = null;
       }
     });
   }
@@ -1219,37 +1215,7 @@ class _RecordVetVaccineModalState extends State<_RecordVetVaccineModal> {
     if (picked != null && mounted) {
       setState(() {
         _adminDate = picked;
-        if (_category == 'vaccination') {
-          _nextDueDate = picked.add(const Duration(days: 365));
-        } else if (_category == 'deworming') {
-          _nextDueDate = picked.add(const Duration(days: 90));
-        }
       });
-    }
-  }
-
-  Future<void> _pickNextDueDate() async {
-    final initial = _nextDueDate ?? _adminDate.add(const Duration(days: 180));
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: initial.isBefore(_adminDate) ? _adminDate : initial,
-      firstDate: _adminDate,
-      lastDate: DateTime(2035),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: AppTheme.primary,
-              onPrimary: Colors.white,
-              onSurface: AppTheme.textPrimary,
-            ),
-          ),
-          child: child!,
-        );
-      },
-    );
-    if (picked != null && mounted) {
-      setState(() => _nextDueDate = picked);
     }
   }
 
@@ -1281,7 +1247,7 @@ class _RecordVetVaccineModalState extends State<_RecordVetVaccineModal> {
         category: _category,
         vaccineName: vaccine,
         date: _formatDateIso(_adminDate),
-        nextDueDate: _nextDueDate != null ? _formatDateIso(_nextDueDate!) : null,
+        nextDueDate: null,
         clinicName: clinic,
         veterinarian: _vetCtrl.text.trim().isNotEmpty ? _vetCtrl.text.trim() : null,
         proofPhoto: _proofPhoto!,
@@ -1492,95 +1458,49 @@ class _RecordVetVaccineModalState extends State<_RecordVetVaccineModal> {
             ],
             const SizedBox(height: 14),
 
-            // Dates: Administered & Next Booster
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Date Administered *',
-                        style: GoogleFonts.poppins(
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w600,
-                          color: AppTheme.getTextPrimary(context),
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      InkWell(
-                        onTap: _pickAdminDate,
-                        borderRadius: BorderRadius.circular(10),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-                          decoration: BoxDecoration(
-                            color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                _formatDate(_adminDate),
-                                style: GoogleFonts.poppins(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppTheme.getTextPrimary(context),
-                                ),
-                              ),
-                              const Icon(Icons.calendar_today_outlined, size: 14, color: AppTheme.primary),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+            // Date Administered
+            Text(
+              'Date Administered *',
+              style: GoogleFonts.poppins(
+                fontSize: 11.5,
+                fontWeight: FontWeight.w600,
+                color: AppTheme.getTextPrimary(context),
+              ),
+            ),
+            const SizedBox(height: 6),
+            InkWell(
+              onTap: _pickAdminDate,
+              borderRadius: BorderRadius.circular(10),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Next Booster Due',
-                        style: GoogleFonts.poppins(
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w600,
-                          color: AppTheme.getTextPrimary(context),
-                        ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      _formatDate(_adminDate),
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.getTextPrimary(context),
                       ),
-                      const SizedBox(height: 6),
-                      InkWell(
-                        onTap: _pickNextDueDate,
-                        borderRadius: BorderRadius.circular(10),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-                          decoration: BoxDecoration(
-                            color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                _nextDueDate != null ? _formatDate(_nextDueDate!) : 'None',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: _nextDueDate != null ? const Color(0xFFF59E0B) : (isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8)),
-                                ),
-                              ),
-                              const Icon(Icons.event_repeat_outlined, size: 14, color: Color(0xFFF59E0B)),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                    const Icon(Icons.calendar_today_outlined, size: 14, color: AppTheme.primary),
+                  ],
                 ),
-              ],
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'CAWS shelter staff will verify your submitted proof and schedule the next booster due date.',
+              style: GoogleFonts.poppins(
+                fontSize: 10,
+                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+              ),
             ),
             const SizedBox(height: 14),
 
