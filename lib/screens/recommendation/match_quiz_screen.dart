@@ -529,8 +529,8 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
       final appsFuture = ApiService.getMyApplications();
 
       final results = await Future.wait([recsFuture, appsFuture]);
-      final recs = results[0] as List<Map<String, dynamic>>;
-      final applications = results[1] as List<Map<String, dynamic>>;
+      final recs = results[0];
+      final applications = results[1];
 
       final appliedPetIds = applications
           .where((app) {
