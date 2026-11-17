@@ -167,7 +167,9 @@ class _PetCardState extends State<PetCard> {
                           ),
                           child: Text(
                             matchPct != null
-                                ? '${matchPct.toInt()}% Match'
+                                ? (matchPct.truncateToDouble() == matchPct
+                                    ? '${matchPct.toInt()}% Match'
+                                    : '${matchPct.toStringAsFixed(1)}% Match')
                                 : 'Top Match',
                             style: GoogleFonts.poppins(
                               color: Colors.white,
@@ -378,7 +380,9 @@ class _PetCardState extends State<PetCard> {
                       ),
                       child: Text(
                         matchPct != null
-                            ? '${matchPct.toInt()}% Match'
+                            ? (matchPct.truncateToDouble() == matchPct
+                                ? '${matchPct.toInt()}% Match'
+                                : '${matchPct.toStringAsFixed(1)}% Match')
                             : 'Top Pick',
                         style: GoogleFonts.poppins(
                           color: Colors.white,
