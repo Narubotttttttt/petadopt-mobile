@@ -13,6 +13,7 @@ import 'package:mobile_petadopt/screens/adoption/adopted_pet_hub_screen.dart';
 import 'package:mobile_petadopt/screens/adoption/my_adopted_pets_screen.dart';
 import 'package:mobile_petadopt/screens/adoption/pet_medical_card_screen.dart';
 import 'package:mobile_petadopt/screens/profile/profile_screen.dart';
+import 'package:mobile_petadopt/screens/recommendation/match_quiz_screen.dart';
 import 'package:mobile_petadopt/widgets/skeleton_loader.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -630,6 +631,7 @@ class _HomeTabState extends State<_HomeTab> {
   List<Map<String, dynamic>> _vaccineReminders = [];
   bool _isLoading = true;
   bool _hasUnreadNotifications = false;
+  bool _hasCompletedQuiz = false;
 
   void reload() {
     _loadDashboardData();
@@ -649,6 +651,7 @@ class _HomeTabState extends State<_HomeTab> {
       final prefs = await SharedPreferences.getInstance();
       final cachedAppsStr = prefs.getString('cached_home_applications');
       final cachedRemindersStr = prefs.getString('cached_home_reminders');
+      final cachedQuizLocked = prefs.getBool('cached_quiz_locked') ?? false;
 
       List<Map<String, dynamic>> cachedApps = [];
       List<Map<String, dynamic>> cachedReminders = [];
@@ -667,10 +670,11 @@ class _HomeTabState extends State<_HomeTab> {
         }
       }
 
-      if (mounted && (cachedApps.isNotEmpty || cachedReminders.isNotEmpty)) {
+      if (mounted && (cachedApps.isNotEmpty || cachedReminders.isNotEmpty || cachedQuizLocked)) {
         setState(() {
           if (cachedApps.isNotEmpty) _applications = cachedApps;
           if (cachedReminders.isNotEmpty) _vaccineReminders = cachedReminders;
+          if (cachedQuizLocked) _hasCompletedQuiz = true;
           _isLoading = false;
         });
       }
@@ -788,20 +792,25 @@ class _HomeTabState extends State<_HomeTab> {
     // 1. Immediately ensure cached data is loaded first for instant display
     await _loadCachedData();
 
-    // 2. Fetch fresh profile, applications, and vaccine reminders in parallel
+    // 2. Fetch fresh profile, applications, vaccine reminders, and compatibility preferences in parallel
     final profileFuture = ApiService.getProfile().catchError((_) => null);
     final appsFuture = ApiService.getMyApplications().catchError((_) => <Map<String, dynamic>>[]);
     final remindersFuture = ApiService.getVaccineReminders().catchError((_) => <Map<String, dynamic>>[]);
+    final prefsFuture = ApiService.getSavedPreferences().catchError((_) => null);
 
     final results = await Future.wait([
       profileFuture,
       appsFuture,
       remindersFuture,
+      prefsFuture,
     ]);
 
     final profile = results[0] as Map<String, dynamic>?;
     final apps = (results[1] as List<dynamic>?)?.cast<Map<String, dynamic>>() ?? <Map<String, dynamic>>[];
     final reminders = (results[2] as List<dynamic>?)?.cast<Map<String, dynamic>>() ?? <Map<String, dynamic>>[];
+    final savedPrefs = results[3] as Map<String, dynamic>?;
+
+    final bool hasQuiz = savedPrefs != null && savedPrefs['is_locked'] == true;
 
     if (!mounted) return;
 
@@ -810,9 +819,11 @@ class _HomeTabState extends State<_HomeTab> {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('cached_home_applications', jsonEncode(apps));
       await prefs.setString('cached_home_reminders', jsonEncode(reminders));
+      await prefs.setBool('cached_quiz_locked', hasQuiz);
     } catch (_) {}
 
     setState(() {
+      _hasCompletedQuiz = hasQuiz;
       if (profile != null) {
         _userProfile = profile;
         final name = _extractNameFromMap(profile);
@@ -912,12 +923,21 @@ class _HomeTabState extends State<_HomeTab> {
   // Direct Navigation Handlers
   void _openAiMatchmaker() {
     HapticFeedback.mediumImpact();
+    if (_hasCompletedQuiz) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const MatchQuizScreen(initialShowResults: true),
+        ),
+      ).then((_) => _loadDashboardData());
+      return;
+    }
     if (widget.onPetFinderPressed != null) {
       widget.onPetFinderPressed!();
     } else if (widget.onSeeAllPressed != null) {
       widget.onSeeAllPressed!();
     } else {
-      Navigator.pushNamed(context, '/match-quiz');
+      Navigator.pushNamed(context, '/match-quiz').then((_) => _loadDashboardData());
     }
   }
 
@@ -1694,7 +1714,7 @@ class _HomeTabState extends State<_HomeTab> {
 
         // Ready to meet your companion?
         Text(
-          'Ready to meet your companion?',
+          _hasCompletedQuiz ? 'Your Matches Are Waiting' : 'Ready to meet your companion?',
           style: GoogleFonts.poppins(
             fontSize: 17.5,
             fontWeight: FontWeight.w700,
@@ -1706,7 +1726,9 @@ class _HomeTabState extends State<_HomeTab> {
 
         // Descriptive copy
         Text(
-          'Tell us about your lifestyle, living environment, and ability to care for a pet. Our matching system will recommend suitable pets for you.',
+          _hasCompletedQuiz
+              ? 'Our matching system has curated pet recommendations tailored specifically to your lifestyle and household.'
+              : 'Tell us about your lifestyle, living environment, and ability to care for a pet. Our matching system will recommend suitable pets for you.',
           style: GoogleFonts.poppins(
             fontSize: 12.5,
             fontWeight: FontWeight.w400,
@@ -1716,7 +1738,7 @@ class _HomeTabState extends State<_HomeTab> {
         ),
         const SizedBox(height: 12),
 
-        // Start Pet Matching Button
+        // Start Pet Matching Button / View Matches Button
         Container(
           width: double.infinity,
           decoration: BoxDecoration(
@@ -1745,14 +1767,14 @@ class _HomeTabState extends State<_HomeTab> {
               mainAxisAlignment: MainAxisAlignment.center,
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(
-                  Icons.auto_awesome_rounded,
+                Icon(
+                  _hasCompletedQuiz ? Icons.pets_rounded : Icons.auto_awesome_rounded,
                   color: Colors.white,
                   size: 19,
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'Start Pet Matching',
+                  _hasCompletedQuiz ? 'View My Matches' : 'Start Pet Matching',
                   style: GoogleFonts.poppins(
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
@@ -1880,19 +1902,47 @@ class _CompanionHeroCarouselState extends State<CompanionHeroCarousel> {
   static const List<Map<String, String>> _slides = [
     {
       'image': 'assets/images/companion_hero.jpg',
-      'credit': 'heldermartins',
+      'credit': 'CAWS Shelter Team',
     },
     {
       'image': 'assets/images/companion_hero_2.jpg',
-      'credit': 'caws_rescue',
+      'credit': 'CAWS Adoption Drive',
     },
     {
       'image': 'assets/images/companion_hero_3.jpg',
-      'credit': 'caws_rescue',
+      'credit': 'CAWS Adopter',
     },
     {
       'image': 'assets/images/companion_hero_4.jpg',
-      'credit': 'caws_adopter',
+      'credit': 'CAWS Adopter',
+    },
+    {
+      'image': 'assets/images/companion_hero_5.jpg',
+      'credit': 'CAWS Community Drive',
+    },
+    {
+      'image': 'assets/images/companion_hero_6.jpg',
+      'credit': 'CAWS Medical Mission',
+    },
+    {
+      'image': 'assets/images/companion_hero_7.jpg',
+      'credit': 'CAWS Free Vaccination',
+    },
+    {
+      'image': 'assets/images/companion_hero_8.jpg',
+      'credit': 'CAWS Pet Health Check',
+    },
+    {
+      'image': 'assets/images/companion_hero_9.jpg',
+      'credit': 'CAWS Free Clinic',
+    },
+    {
+      'image': 'assets/images/companion_hero_10.jpg',
+      'credit': 'CAWS Adopter',
+    },
+    {
+      'image': 'assets/images/companion_hero_11.jpg',
+      'credit': 'CAWS Rescue Kittens',
     },
   ];
 
@@ -1961,6 +2011,71 @@ class _CompanionHeroCarouselState extends State<CompanionHeroCarousel> {
               },
             ),
 
+            // Subtle top gradient for logo badge contrast
+            Positioned(
+              left: 0,
+              right: 0,
+              top: 0,
+              height: 42,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.bottomCenter,
+                    end: Alignment.topCenter,
+                    colors: [
+                      Colors.transparent,
+                      Colors.black.withValues(alpha: 0.35),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            // Small CAWS Logo Badge at top left
+            Positioned(
+              top: 9,
+              left: 10,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.50),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.25),
+                    width: 0.8,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 20,
+                      height: 20,
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white,
+                      ),
+                      padding: const EdgeInsets.all(1.5),
+                      child: Image.asset(
+                        'assets/images/caws_logo.png',
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'CAWS',
+                      style: GoogleFonts.poppins(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white.withValues(alpha: 0.95),
+                        letterSpacing: 0.4,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
             // Subtle bottom gradient for tag and indicator readability
             Positioned(
               left: 0,
@@ -2013,9 +2128,9 @@ class _CompanionHeroCarouselState extends State<CompanionHeroCarousel> {
                   return AnimatedContainer(
                     duration: const Duration(milliseconds: 300),
                     curve: Curves.easeInOut,
-                    margin: const EdgeInsets.symmetric(horizontal: 2.5),
-                    width: isActive ? 18 : 6,
-                    height: 6,
+                    margin: const EdgeInsets.symmetric(horizontal: 1.8),
+                    width: isActive ? 14 : 4.5,
+                    height: 4.5,
                     decoration: BoxDecoration(
                       color: isActive ? Colors.white : Colors.white.withValues(alpha: 0.45),
                       borderRadius: BorderRadius.circular(4),

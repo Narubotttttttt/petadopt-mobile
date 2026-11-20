@@ -58,6 +58,18 @@ class PetAdoptApp extends StatelessWidget {
         '/settings': (context) => const SettingsScreen(),
       },
       onGenerateRoute: (settings) {
+        if (settings.name == '/match-quiz') {
+          final args = settings.arguments;
+          bool showResults = false;
+          if (args is Map && args['showResults'] == true) {
+            showResults = true;
+          } else if (args is bool) {
+            showResults = args;
+          }
+          return MaterialPageRoute(
+            builder: (context) => MatchQuizScreen(initialShowResults: showResults),
+          );
+        }
         if (settings.name == '/pet-detail') {
           final pet = settings.arguments as Map<String, dynamic>;
           return MaterialPageRoute(

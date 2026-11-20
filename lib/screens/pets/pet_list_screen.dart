@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:mobile_petadopt/screens/recommendation/match_quiz_screen.dart';
 import 'package:mobile_petadopt/services/api_service.dart';
 import 'package:mobile_petadopt/theme/app_theme.dart';
 import 'package:mobile_petadopt/widgets/ai_recommendation_hero.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class PetListScreen extends StatefulWidget {
   final String? initialSearch;
@@ -23,8 +25,9 @@ class PetListScreen extends StatefulWidget {
 class _PetListScreenState extends State<PetListScreen> {
   final _searchController = TextEditingController();
   String _activeLifestyleFilter = 'none';
-    String _userName = 'Adopter';
+  String _userName = 'Adopter';
   String? _userAvatar;
+  bool _isQuizCompleted = false;
 
   @override
   void initState() {
@@ -35,8 +38,23 @@ class _PetListScreenState extends State<PetListScreen> {
     if (widget.initialSearch != null && widget.initialSearch!.isNotEmpty) {
       _searchController.text = widget.initialSearch!;
     }
+    _checkCachedQuizStatus();
     _loadUser();
     _fetchRecommendations();
+  }
+
+  Future<void> _checkCachedQuizStatus() async {
+    try {
+      final user = await ApiService.getUser();
+      final userId = user?['id'];
+      final prefs = await SharedPreferences.getInstance();
+      final isLocked = (userId != null ? prefs.getBool('quiz_locked_user_$userId') : null) ??
+          prefs.getBool('cached_quiz_locked') ??
+          false;
+      if (mounted && isLocked) {
+        setState(() => _isQuizCompleted = true);
+      }
+    } catch (_) {}
   }
 
   @override
@@ -94,20 +112,25 @@ class _PetListScreenState extends State<PetListScreen> {
   Future<void> _fetchRecommendations() async {
     try {
       // Pre-warm recommendation engine and user preferences
-      await ApiService.getSavedPreferences();
+      final prefs = await ApiService.getSavedPreferences();
+      final hasCompleted = prefs != null && prefs['is_locked'] == true;
+      if (mounted && hasCompleted != _isQuizCompleted) {
+        setState(() {
+          _isQuizCompleted = hasCompleted;
+        });
+      }
       await ApiService.getRecommendations();
-
-
     } catch (_) {
     }
   }
 
-
-
-
-
   Future<void> _openQuiz() async {
-    final result = await Navigator.pushNamed(context, '/match-quiz');
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => MatchQuizScreen(initialShowResults: _isQuizCompleted),
+      ),
+    );
     if (result == true || mounted) {
       _fetchRecommendations();
     }
@@ -199,12 +222,12 @@ class _PetListScreenState extends State<PetListScreen> {
               visualDensity: VisualDensity.compact,
               materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
               avatar: Icon(
-                Icons.tune_rounded,
+                _isQuizCompleted ? Icons.pets_rounded : Icons.tune_rounded,
                 size: 14,
                 color: isDark ? Colors.white : AppTheme.primaryDark,
               ),
               label: Text(
-                'Match Quiz',
+                _isQuizCompleted ? 'My Matches' : 'Match Quiz',
                 style: GoogleFonts.poppins(
                   fontSize: 11.5,
                   fontWeight: FontWeight.w600,
@@ -235,6 +258,7 @@ class _PetListScreenState extends State<PetListScreen> {
                   searchController: _searchController,
                   activeLifestyleFilter: _activeLifestyleFilter,
                   isCompact: false,
+                  hasCompletedQuiz: _isQuizCompleted,
                   onSearchChanged: (_) {},
                   onSearchSubmitted: (_) => _openQuiz(),
                   onQuizPressed: _openQuiz,

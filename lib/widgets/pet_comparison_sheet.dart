@@ -41,6 +41,19 @@ class PetComparisonSheet extends StatefulWidget {
         .trim();
   }
 
+  static String cleanReasonText(String text) {
+    if (text.isEmpty) return text;
+    var cleaned = cleanBracketText(text);
+    cleaned = cleaned.replaceFirst(
+      RegExp(r'^(?:the\s+)?pet\s+(?:no\.?|#)?\s*\d+\s*(?:\([^)]+\))?\s*[:-]?\s*', caseSensitive: false),
+      '',
+    ).trim();
+    if (cleaned.isNotEmpty) {
+      cleaned = cleaned[0].toUpperCase() + cleaned.substring(1);
+    }
+    return cleaned;
+  }
+
   static Future<void> show({
     required BuildContext context,
     required List<Map<String, dynamic>> pets,

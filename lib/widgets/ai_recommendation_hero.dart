@@ -548,6 +548,7 @@ class AiRecommendationHero extends StatefulWidget {
   final String activeLifestyleFilter;
   final bool isCompact;
   final int entranceTrigger;
+  final bool hasCompletedQuiz;
 
   const AiRecommendationHero({
     super.key,
@@ -559,6 +560,7 @@ class AiRecommendationHero extends StatefulWidget {
     this.activeLifestyleFilter = 'none',
     this.isCompact = false,
     this.entranceTrigger = 0,
+    this.hasCompletedQuiz = false,
   });
 
   @override
@@ -988,9 +990,11 @@ class _AiRecommendationHeroState extends State<AiRecommendationHero>
                                 ? AppTheme.primary.withValues(alpha: 0.2)
                                 : AppTheme.primaryLight,
                           ),
-                          child: const Center(
+                          child: Center(
                             child: Icon(
-                              Icons.quiz_outlined,
+                              widget.hasCompletedQuiz
+                                  ? Icons.pets_rounded
+                                  : Icons.quiz_outlined,
                               color: AppTheme.primary,
                               size: 19,
                             ),
@@ -1006,7 +1010,9 @@ class _AiRecommendationHeroState extends State<AiRecommendationHero>
                                 fit: BoxFit.scaleDown,
                                 alignment: Alignment.centerLeft,
                                 child: Text(
-                                  'Answer the Match Quiz',
+                                  widget.hasCompletedQuiz
+                                      ? 'View Recommended Matches'
+                                      : 'Answer the Match Quiz',
                                   style: GoogleFonts.poppins(
                                     fontSize: 12.5,
                                     fontWeight: FontWeight.w700,
@@ -1019,7 +1025,9 @@ class _AiRecommendationHeroState extends State<AiRecommendationHero>
                                 fit: BoxFit.scaleDown,
                                 alignment: Alignment.centerLeft,
                                 child: Text(
-                                  'I will find the perfect pet for you',
+                                  widget.hasCompletedQuiz
+                                      ? 'AI-curated pets matching your lifestyle'
+                                      : 'I will find the perfect pet for you',
                                   style: GoogleFonts.poppins(
                                     fontSize: 11.5,
                                     fontWeight: FontWeight.w500,
@@ -1045,7 +1053,7 @@ class _AiRecommendationHeroState extends State<AiRecommendationHero>
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
-                                'Start',
+                                widget.hasCompletedQuiz ? 'View' : 'Start',
                                 style: GoogleFonts.poppins(
                                   color: Colors.white,
                                   fontSize: 12,

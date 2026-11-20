@@ -12,10 +12,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class MatchQuizScreen extends StatefulWidget {
   final bool isEmbeddedInTab;
+  final bool initialShowResults;
 
   const MatchQuizScreen({
     super.key,
     this.isEmbeddedInTab = false,
+    this.initialShowResults = false,
   });
 
   @override
@@ -27,6 +29,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
   bool _isLoading = false;
   bool _isCheckingStatus = true;
   bool _showResults = false;
+  bool _initialShowResultsRequested = false;
   bool _isLocked = false;
   bool _isLoadingRecommendations = false;
   List<Map<String, dynamic>> _recommendations = [];
@@ -90,11 +93,39 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
     });
   }
 
+  bool get _isDirectResultNavigation =>
+      widget.initialShowResults ||
+      _initialShowResultsRequested ||
+      (ModalRoute.of(context)?.settings.arguments is Map &&
+          (ModalRoute.of(context)!.settings.arguments as Map)['showResults'] == true) ||
+      (ModalRoute.of(context)?.settings.arguments == true);
+
   @override
   void initState() {
     super.initState();
+    if (widget.initialShowResults) {
+      _initialShowResultsRequested = true;
+      _showResults = true;
+    }
     _checkBanStanding();
     _loadSavedPreferences();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final args = ModalRoute.of(context)?.settings.arguments;
+    if (args is Map && args['showResults'] == true) {
+      _initialShowResultsRequested = true;
+      if (!_showResults) {
+        setState(() => _showResults = true);
+      }
+    } else if (args is bool && args == true) {
+      _initialShowResultsRequested = true;
+      if (!_showResults) {
+        setState(() => _showResults = true);
+      }
+    }
   }
 
   Future<String?> _getUserQuizLockKey() async {
@@ -129,6 +160,9 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
             final cachedMap = jsonDecode(savedPrefsJson);
             if (cachedMap is Map<String, dynamic>) {
               _isLocked = true;
+              if (_isDirectResultNavigation) {
+                _showResults = true;
+              }
               _preferredSpecies = cachedMap['preferred_species']?.toString();
               _livingEnvironment = cachedMap['living_environment']?.toString();
               final hy = cachedMap['has_yard'];
@@ -174,6 +208,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
           prefMap.isNotEmpty;
 
       if (hasSavedProfile && mounted) {
+        final bool shouldShowDirect = _isDirectResultNavigation;
         if (lockKey != null) {
           await prefs.setBool(lockKey, true);
           await prefs.setBool('${lockKey}_can_retake', saved['can_retake'] == true);
@@ -189,6 +224,10 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
         setState(() {
           _isLocked = true;
           _isCheckingStatus = false;
+          if (shouldShowDirect) {
+            _showResults = true;
+            _isLoadingRecommendations = true;
+          }
           _adoptedCount = RecommendationService.adoptedCount;
           _canRetake = saved['can_retake'] == true;
           _daysRemaining = (saved['days_remaining'] as num?)?.toInt() ?? 0;
@@ -234,7 +273,13 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
         });
 
         // Pre-fetch recommendations in background for this specific user
-        _fetchSavedRecommendations();
+        await _fetchSavedRecommendations();
+        if (mounted && shouldShowDirect) {
+          setState(() {
+            _isLoadingRecommendations = false;
+            _showResults = true;
+          });
+        }
         return;
       } else if (mounted) {
         // Fresh user or account with no submitted quiz
@@ -307,8 +352,9 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
             _selectedMatchIndex = 0;
           }
           _adoptedCount = RecommendationService.adoptedCount;
-          // CRITICAL: DO NOT auto-set _showResults = true here!
-          // The screen must stay on the locked profile review until the adopter taps 'View Recommended Pets'.
+          if (_isDirectResultNavigation) {
+            _showResults = true;
+          }
         });
       }
     } catch (_) {}
@@ -598,10 +644,11 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDirect = _isDirectResultNavigation;
     return PopScope(
-      canPop: !(_showResults && _isLocked),
+      canPop: !(_showResults && _isLocked && !isDirect),
       onPopInvokedWithResult: (didPop, result) {
-        if (!didPop && _showResults && _isLocked) {
+        if (!didPop && _showResults && _isLocked && !isDirect) {
           setState(() => _showResults = false);
         }
       },
@@ -622,7 +669,7 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
                   ),
                   tooltip: 'Back',
                   onPressed: () {
-                    if (_showResults && _isLocked) {
+                    if (_showResults && _isLocked && !isDirect) {
                       setState(() => _showResults = false);
                     } else {
                       Navigator.pop(context);
@@ -651,6 +698,26 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                     color: AppTheme.getTextSecondary(context),
+                  ),
+                ),
+              ),
+            if (_showResults && _isLocked)
+              Padding(
+                padding: const EdgeInsets.only(right: 12),
+                child: TextButton.icon(
+                  onPressed: () => setState(() => _showResults = false),
+                  icon: const Icon(Icons.tune_rounded, size: 15),
+                  label: Text(
+                    _canRetake ? 'Retake Quiz' : 'Preferences',
+                    style: GoogleFonts.poppins(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppTheme.primary,
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    visualDensity: VisualDensity.compact,
                   ),
                 ),
               ),
@@ -1755,6 +1822,9 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
   // RESULTS VIEW
   Widget _buildResultsView() {
     final bottomInset = widget.isEmbeddedInTab ? 110.0 : 20.0;
+    if (_isLoadingRecommendations) {
+      return _buildLoadingState();
+    }
     if (_recommendations.isEmpty) {
       return Center(
         child: Padding(
@@ -2189,7 +2259,8 @@ class _MatchQuizScreenState extends State<MatchQuizScreen> {
         : (double.tryParse(rawPct.toString().replaceAll('%', '').trim()) ?? 80.0);
     final rawReasons = pet['match_reasons'] ?? pet['reasons'];
     final reasons = (rawReasons as List<dynamic>?)
-            ?.map((e) => PetComparisonSheet.cleanBracketText(e.toString()))
+            ?.map((e) => PetComparisonSheet.cleanReasonText(e.toString()))
+            .where((e) => e.isNotEmpty)
             .toList() ??
         [];
     final rawCareTip = pet['care_tip']?.toString() ?? pet['consideration']?.toString();

@@ -4,6 +4,7 @@ import 'package:mobile_petadopt/screens/adoption/my_applications_screen.dart';
 import 'package:mobile_petadopt/services/api_service.dart';
 import 'package:mobile_petadopt/theme/app_theme.dart';
 import 'package:mobile_petadopt/widgets/app_confirmation_dialog.dart';
+import 'package:mobile_petadopt/widgets/pet_comparison_sheet.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class PetDetailScreen extends StatefulWidget {
@@ -95,7 +96,10 @@ class _PetDetailScreenState extends State<PetDetailScreen> {
   List<String> get _matchReasons {
     final raw = widget.pet['match_reasons'] ?? widget.pet['reasons'];
     if (raw is List) {
-      return raw.map((e) => e.toString()).toList();
+      return raw
+          .map((e) => PetComparisonSheet.cleanReasonText(e.toString()))
+          .where((e) => e.isNotEmpty)
+          .toList();
     }
     return [];
   }
