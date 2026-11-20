@@ -30,9 +30,65 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
   @override
   void initState() {
     super.initState();
-    _selectedFilter = widget.initialFilter ?? 'all';
+    String filter = widget.initialFilter ?? 'all';
+    if (filter == 'declined') filter = 'archived';
+    _selectedFilter = filter;
     _loadCachedApplications();
     _fetchApplications();
+  }
+
+  bool _isArchived(Map<String, dynamic> app) {
+    if (app['is_archived'] == true || app['isArchived'] == true) return true;
+    final status = (app['status'] as String? ?? '').toLowerCase();
+    final isAdoptedByOther = app['isAdoptedByOther'] == true;
+    final isArchivedDueToAdoption = app['is_archived_due_to_adoption'] == true;
+    return status == 'rejected' || isAdoptedByOther || isArchivedDueToAdoption;
+  }
+
+  int _getSortPriority(Map<String, dynamic> app) {
+    if (_isArchived(app)) return 100; // Archived applications transfer to bottom / archive tab
+
+    final status = (app['status'] as String? ?? '').toLowerCase();
+    final isFinalized = app['is_finalized'] == true || app['isFinalized'] == true;
+    final isSigned = app['is_signed'] == true || app['is_pre_signed'] == true;
+    final sigRequired = app['signature_required'] == true;
+
+    if (status == 'approved') {
+      // Old or new accepted request:
+      // If signature is required or not yet pre-signed -> Tier 0 (FIRST to show so adopter can pre-sign immediately!)
+      if (sigRequired || !isSigned) return 0;
+      // Pre-signed, awaiting physical verification / scheduled pickup -> Tier 1
+      if (!isFinalized) return 1;
+      // Finalized adoption -> Tier 2
+      return 2;
+    }
+
+    if (status == 'pending' || status == 'under_review') {
+      return 3; // Pending applications under review
+    }
+
+    if (status == 'adopted') {
+      return 4;
+    }
+
+    return 5;
+  }
+
+  List<Map<String, dynamic>> _sortApplications(List<Map<String, dynamic>> list) {
+    final sorted = List<Map<String, dynamic>>.from(list);
+    sorted.sort((a, b) {
+      final pA = _getSortPriority(a);
+      final pB = _getSortPriority(b);
+      if (pA != pB) return pA.compareTo(pB);
+
+      // Within same priority, sort newest activity/update or creation date first
+      final dateA = DateTime.tryParse(a['updated_at'] ?? a['created_at'] ?? '') ??
+          DateTime.fromMillisecondsSinceEpoch(0);
+      final dateB = DateTime.tryParse(b['updated_at'] ?? b['created_at'] ?? '') ??
+          DateTime.fromMillisecondsSinceEpoch(0);
+      return dateB.compareTo(dateA);
+    });
+    return sorted;
   }
 
   Future<void> _loadCachedApplications() async {
@@ -143,7 +199,7 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
           ? const ApplicationsSkeletonLoader()
           : Column(
               children: [
-                // Filter Tabs: Approved first, then Pending, then Declined (No "All")
+                // Filter Tabs: All (Active), Pending, Pre-Approved, Archived
                 if (_applications.isNotEmpty)
                   Container(
                     width: double.infinity,
@@ -160,7 +216,7 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
                           const SizedBox(width: 8),
                           _buildFilterChip('approved', 'Pre-Approved', _countForFilter('approved')),
                           const SizedBox(width: 8),
-                          _buildFilterChip('declined', 'Declined', _countForFilter('declined')),
+                          _buildFilterChip('archived', 'Archived', _countForFilter('archived')),
                         ],
                       ),
                     ),
@@ -220,6 +276,9 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
 
   Widget _buildEmptyState({required bool isTotalEmpty}) {
     final isDark = AppTheme.isDark(context);
+    final archivedCount = _countForFilter('archived');
+    final hasArchived = archivedCount > 0;
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 32),
@@ -234,14 +293,20 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
                 shape: BoxShape.circle,
               ),
               child: Icon(
-                Icons.assignment_outlined,
+                _selectedFilter == 'archived'
+                    ? Icons.archive_outlined
+                    : Icons.assignment_outlined,
                 size: 26,
                 color: AppTheme.getTextSecondary(context),
               ),
             ),
             const SizedBox(height: 14),
             Text(
-              isTotalEmpty ? 'No applications yet' : 'No $_selectedFilter applications',
+              isTotalEmpty
+                  ? 'No applications yet'
+                  : _selectedFilter == 'archived'
+                      ? 'No archived applications'
+                      : 'No active $_selectedFilter applications',
               style: GoogleFonts.poppins(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
@@ -252,7 +317,11 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
             Text(
               isTotalEmpty
                   ? 'Discover your personalized pet matches and submit an adoption request.'
-                  : 'You have no applications under $_selectedFilter status.',
+                  : _selectedFilter == 'archived'
+                      ? 'You have no declined or archived applications.'
+                      : hasArchived && _selectedFilter == 'all'
+                          ? 'All active applications are resolved. You have $archivedCount application(s) transferred to Archive.'
+                          : 'You have no applications under $_selectedFilter status.',
               style: GoogleFonts.poppins(
                 fontSize: 12,
                 color: AppTheme.getTextSecondary(context),
@@ -260,6 +329,22 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
               ),
               textAlign: TextAlign.center,
             ),
+            if (!isTotalEmpty && hasArchived && _selectedFilter == 'all') ...[
+              const SizedBox(height: 16),
+              OutlinedButton.icon(
+                onPressed: () => setState(() => _selectedFilter = 'archived'),
+                icon: const Icon(Icons.archive_outlined, size: 16),
+                label: Text(
+                  'View Archived ($archivedCount)',
+                  style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600),
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppTheme.primary,
+                  side: const BorderSide(color: AppTheme.primary),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -267,51 +352,52 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
   }
 
   List<Map<String, dynamic>> get _filteredApplications {
+    List<Map<String, dynamic>> base;
     if (_selectedFilter == 'all') {
-      return _applications;
-    }
-    if (_selectedFilter == 'approved') {
-      return _applications.where((app) {
+      // In the main "All" view, show active applications (rejected/declined are transferred to archive)
+      base = _applications.where((app) => !_isArchived(app)).toList();
+    } else if (_selectedFilter == 'approved') {
+      base = _applications.where((app) {
+        if (_isArchived(app)) return false;
         final status = (app['status'] as String? ?? '').toLowerCase();
         return status == 'approved' || status == 'adopted';
       }).toList();
-    }
-    if (_selectedFilter == 'pending') {
-      return _applications.where((app) {
+    } else if (_selectedFilter == 'pending') {
+      base = _applications.where((app) {
+        if (_isArchived(app)) return false;
         final status = (app['status'] as String? ?? '').toLowerCase();
         return status == 'pending' || status == 'under_review';
       }).toList();
+    } else if (_selectedFilter == 'archived') {
+      // Archived tab holds all rejected, declined, and archived applications
+      base = _applications.where((app) => _isArchived(app)).toList();
+    } else {
+      base = _applications.where((app) => !_isArchived(app)).toList();
     }
-    if (_selectedFilter == 'declined') {
-      return _applications.where((app) {
-        final status = (app['status'] as String? ?? '').toLowerCase();
-        final isAdoptedByOther = app['isAdoptedByOther'] == true;
-        return status == 'rejected' || isAdoptedByOther;
-      }).toList();
-    }
-    return _applications;
+
+    return _sortApplications(base);
   }
 
   int _countForFilter(String filter) {
-    if (filter == 'all') return _applications.length;
+    if (filter == 'all') {
+      return _applications.where((app) => !_isArchived(app)).length;
+    }
     if (filter == 'approved') {
       return _applications.where((app) {
+        if (_isArchived(app)) return false;
         final status = (app['status'] as String? ?? '').toLowerCase();
         return status == 'approved' || status == 'adopted';
       }).length;
     }
     if (filter == 'pending') {
       return _applications.where((app) {
+        if (_isArchived(app)) return false;
         final status = (app['status'] as String? ?? '').toLowerCase();
         return status == 'pending' || status == 'under_review';
       }).length;
     }
-    if (filter == 'declined') {
-      return _applications.where((app) {
-        final status = (app['status'] as String? ?? '').toLowerCase();
-        final isAdoptedByOther = app['isAdoptedByOther'] == true;
-        return status == 'rejected' || isAdoptedByOther;
-      }).length;
+    if (filter == 'archived') {
+      return _applications.where((app) => _isArchived(app)).length;
     }
     return 0;
   }
@@ -336,6 +422,7 @@ class _ApplicationCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final status = (application['status'] as String? ?? 'pending').toLowerCase();
     final isAdoptedByOther = application['isAdoptedByOther'] as bool? ?? false;
+    final isArchivedDueToAdoption = application['is_archived_due_to_adoption'] == true;
     final scheduledAt = application['scheduledAt'] as String?;
     final eventLocation = application['eventLocation'] as String?;
     final eventNotes = application['eventNotes'] as String?;
@@ -445,7 +532,12 @@ class _ApplicationCard extends StatelessWidget {
                               ],
                             ),
                           ),
-                          _buildStatusBadge(status, isScheduled, isAdoptedByOther),
+                          _buildStatusBadge(
+                            status,
+                            isScheduled,
+                            isAdoptedByOther,
+                            isArchivedDueToAdoption: isArchivedDueToAdoption,
+                          ),
                         ],
                       ),
                       const SizedBox(height: 2),
@@ -1046,15 +1138,20 @@ class _ApplicationCard extends StatelessWidget {
     );
   }
 
-  Widget _buildStatusBadge(String status, bool isScheduled, bool isAdoptedByOther) {
+  Widget _buildStatusBadge(
+    String status,
+    bool isScheduled,
+    bool isAdoptedByOther, {
+    bool isArchivedDueToAdoption = false,
+  }) {
     Color dotColor;
     Color bgColor;
     String label;
 
-    if (isAdoptedByOther) {
-      label = 'Adopted by Other';
-      dotColor = const Color(0xFFDC2626);
-      bgColor = const Color(0xFFFEF2F2);
+    if (isAdoptedByOther || isArchivedDueToAdoption) {
+      label = isAdoptedByOther ? 'Adopted by Other' : 'Archived';
+      dotColor = const Color(0xFF64748B);
+      bgColor = const Color(0xFFF1F5F9);
     } else if (isScheduled && status != 'approved' && status != 'rejected') {
       label = 'Scheduled';
       dotColor = const Color(0xFF9333EA);
