@@ -1298,7 +1298,7 @@ class _ApplicationCard extends StatelessWidget {
               Text(
                 isDeclined
                     ? 'Declined'
-                    : currentStep == 3
+                    : isContractUnlocked
                         ? 'Finalized'
                         : 'Step ${currentStep + 1} of 4',
                 style: GoogleFonts.poppins(

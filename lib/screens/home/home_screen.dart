@@ -913,10 +913,8 @@ class _HomeTabState extends State<_HomeTab> {
   List<Map<String, dynamic>> get _adoptedPets {
     return _applications.where((app) {
       final status = (app['status'] as String? ?? '').toLowerCase();
-      final isFinalized = app['is_finalized'] == true ||
-          app['isFinalized'] == true ||
-          app['contract_unlocked'] == true;
-      return (status == 'approved' || status == 'adopted') && isFinalized;
+      final isArchived = app['is_archived'] == true || app['isArchived'] == true;
+      return (status == 'approved' || status == 'adopted') && !isArchived;
     }).toList();
   }
 

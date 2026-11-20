@@ -93,14 +93,13 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
     try {
       final apps = await ApiService.getMyApplications();
       appCount = apps.length;
-      approvedCount = apps.where((a) {
+      final activeApproved = apps.where((a) {
         final st = (a['status'] as String? ?? '').toLowerCase();
-        return st == 'approved';
-      }).length;
-      adoptedCount = apps.where((a) {
-        final st = (a['status'] as String? ?? '').toLowerCase();
-        return st == 'completed' || st == 'adopted';
-      }).length;
+        final isArchived = a['is_archived'] == true || a['isArchived'] == true;
+        return (st == 'approved' || st == 'adopted') && !isArchived;
+      }).toList();
+      approvedCount = activeApproved.length;
+      adoptedCount = activeApproved.length;
     } catch (_) {}
 
     if (mounted) {

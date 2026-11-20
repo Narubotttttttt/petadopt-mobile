@@ -29,7 +29,6 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
   late String _healthStatus;
   final TextEditingController _weightCtrl = TextEditingController();
   final TextEditingController _notesCtrl = TextEditingController();
-  final TextEditingController _clinicCtrl = TextEditingController();
   DateTime? _passingDate;
   String _deceasedCause = 'Natural Causes / Old Age';
   String? _notesError;
@@ -55,7 +54,6 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
   void dispose() {
     _weightCtrl.dispose();
     _notesCtrl.dispose();
-    _clinicCtrl.dispose();
     super.dispose();
   }
 
@@ -155,10 +153,8 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
         iconColor: const Color(0xFF475569),
         iconBackgroundColor: const Color(0xFFF1F5F9),
         title: 'Confirm Life Event Report',
-        message:
-            'Are you sure you want to officially report that ${widget.petName} has passed away? This will update CAWS organization records and close recurring monthly check-ins for this pet.',
         cancelText: 'Cancel',
-        confirmText: 'Confirm & Submit',
+        confirmText: 'Confirm',
         confirmColor: const Color(0xFF475569),
       );
 
@@ -173,11 +169,9 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
       final passDateStr = _passingDate != null
           ? '${_passingDate!.year}-${_passingDate!.month.toString().padLeft(2, '0')}-${_passingDate!.day.toString().padLeft(2, '0')}'
           : 'Recent';
-      final clinic = _clinicCtrl.text.trim();
       formattedNotes = '[PET LIFE EVENT: DECEASED REPORT]\n'
           'Date of Passing: $passDateStr\n'
           'Cause Category: $_deceasedCause\n'
-          '${clinic.isNotEmpty ? 'Attending Vet / Clinic: $clinic\n' : ''}'
           'Reason & Circumstances: ${_notesCtrl.text.trim()}';
     } else {
       formattedNotes = _notesCtrl.text.trim();
@@ -197,7 +191,7 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
           SnackBar(
             content: Text(
               isDeceased
-                  ? 'Deceased notification received. CAWS records have been respectfully updated.'
+                  ? 'Deceased report submitted. Awaiting CAWS shelter staff verification.'
                   : 'Monthly health report submitted successfully.',
               style: GoogleFonts.poppins(fontSize: 13),
             ),
@@ -406,14 +400,41 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
             ),
             child: Column(
               children: [
-                ClipRRect(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                  child: Image.file(
-                    _photo!,
-                    width: double.infinity,
-                    height: 200,
-                    fit: BoxFit.cover,
-                  ),
+                Stack(
+                  alignment: Alignment.topRight,
+                  children: [
+                    ClipRRect(
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                      child: Image.file(
+                        _photo!,
+                        width: double.infinity,
+                        height: 200,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                    Positioned(
+                      top: 10,
+                      right: 10,
+                      child: Material(
+                        color: Colors.black.withValues(alpha: 0.65),
+                        shape: const CircleBorder(),
+                        child: InkWell(
+                          onTap: () {
+                            setState(() => _photo = null);
+                          },
+                          customBorder: const CircleBorder(),
+                          child: const Padding(
+                            padding: EdgeInsets.all(6),
+                            child: Icon(
+                              Icons.close_rounded,
+                              size: 18,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -611,6 +632,15 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
           AppTheme.errorColor,
           const Color(0xFFFEEEEE),
         ),
+        const SizedBox(height: 8),
+        _conditionOption(
+          'deceased',
+          'Pet Passed Away / Dedication',
+          'Notify CAWS of pet passing to update records and create a memorial.',
+          Icons.favorite_rounded,
+          const Color(0xFF64748B),
+          const Color(0xFFF1F5F9),
+        ),
       ],
     );
   }
@@ -729,6 +759,27 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
           ),
         ),
         const SizedBox(height: 10),
+        if (!widget.isDeceasedReport)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: OutlinedButton.icon(
+              onPressed: () {
+                setState(() {
+                  _healthStatus = 'healthy';
+                  _notesError = null;
+                });
+              },
+              icon: const Icon(Icons.arrow_back_rounded, size: 14),
+              label: Text(
+                'Back to Routine Health Check-in',
+                style: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w600),
+              ),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+            ),
+          ),
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -852,48 +903,37 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              Text(
-                'Attending Veterinarian or Clinic (Optional)',
-                style: GoogleFonts.poppins(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.getTextPrimary(context),
-                ),
-              ),
-              const SizedBox(height: 6),
-              TextFormField(
-                controller: _clinicCtrl,
-                style: GoogleFonts.poppins(fontSize: 13, color: AppTheme.getTextPrimary(context)),
-                decoration: InputDecoration(
-                  hintText: 'e.g. City Vet Animal Clinic or Dr. Reyes',
-                  hintStyle: GoogleFonts.poppins(fontSize: 12, color: isDark ? const Color(0xFF64748B) : Colors.grey.shade400),
-                  fillColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
-                  filled: true,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: isDark ? const Color(0xFF334155) : Colors.grey.shade300),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: isDark ? const Color(0xFF334155) : Colors.grey.shade300),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppTheme.primary, width: 1.5),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
               Row(
                 children: [
                   Expanded(
-                    child: Text(
-                      'Reason Why Pet Died (Explanation) *',
-                      style: GoogleFonts.poppins(
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w700,
-                        color: AppTheme.getTextPrimary(context),
+                    child: Text.rich(
+                      TextSpan(
+                        children: [
+                          TextSpan(
+                            text: 'Reason Why Pet Died ',
+                            style: GoogleFonts.poppins(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w700,
+                              color: AppTheme.getTextPrimary(context),
+                            ),
+                          ),
+                          TextSpan(
+                            text: '(you can use bisaya) ',
+                            style: GoogleFonts.poppins(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w500,
+                              color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                            ),
+                          ),
+                          TextSpan(
+                            text: '*',
+                            style: GoogleFonts.poppins(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w700,
+                              color: isDark ? const Color(0xFFF87171) : const Color(0xFFDC2626),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -936,8 +976,6 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
                   }
                 },
                 decoration: InputDecoration(
-                  hintText: 'Describe what happened in detail (e.g. When did symptoms start? What medical care or veterinary diagnosis was given? What led to their passing?)...',
-                  hintStyle: GoogleFonts.poppins(fontSize: 12, color: isDark ? const Color(0xFF64748B) : Colors.grey.shade400),
                   errorText: _notesError,
                   errorMaxLines: 3,
                   fillColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
