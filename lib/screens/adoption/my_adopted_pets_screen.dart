@@ -853,6 +853,28 @@ class _MyAdoptedPetsScreenState extends State<MyAdoptedPetsScreen> {
 
                         final checkInDate = deceasedRecord['check_in_date']?.toString() ?? 'Recorded';
                         final notes = deceasedRecord['notes']?.toString() ?? 'Official memorial recorded with CAWS.';
+                        final decision = deceasedRecord['review_decision']?.toString();
+                        final isInvestigation = decision == 'investigation_pending';
+                        final isNeglect = decision == 'neglect_confirmed';
+                        final isCleared = decision == 'cleared_accidental';
+
+                        String badgeText = 'Recorded';
+                        Color badgeBg = isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0);
+                        Color badgeTextColor = isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569);
+
+                        if (isInvestigation) {
+                          badgeText = 'On-Site Visit Requested';
+                          badgeBg = const Color(0xFFF59E0B).withValues(alpha: 0.15);
+                          badgeTextColor = isDark ? const Color(0xFFFBBF24) : const Color(0xFFD97706);
+                        } else if (isNeglect) {
+                          badgeText = 'Review Recorded';
+                          badgeBg = const Color(0xFFE11D48).withValues(alpha: 0.15);
+                          badgeTextColor = isDark ? const Color(0xFFFB7185) : const Color(0xFFE11D48);
+                        } else if (isCleared) {
+                          badgeText = 'Memorial Cleared';
+                          badgeBg = const Color(0xFF10B981).withValues(alpha: 0.15);
+                          badgeTextColor = isDark ? const Color(0xFF34D399) : const Color(0xFF059669);
+                        }
 
                         return SingleChildScrollView(
                           child: Column(
@@ -883,15 +905,15 @@ class _MyAdoptedPetsScreenState extends State<MyAdoptedPetsScreen> {
                                         Container(
                                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                           decoration: BoxDecoration(
-                                            color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                                            color: badgeBg,
                                             borderRadius: BorderRadius.circular(6),
                                           ),
                                           child: Text(
-                                            'Recorded',
+                                            badgeText,
                                             style: GoogleFonts.poppins(
                                               fontSize: 10,
                                               fontWeight: FontWeight.w600,
-                                              color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569),
+                                              color: badgeTextColor,
                                             ),
                                           ),
                                         ),
@@ -936,32 +958,87 @@ class _MyAdoptedPetsScreenState extends State<MyAdoptedPetsScreen> {
                                 ),
                               ),
                               const SizedBox(height: 12),
-                              Container(
-                                width: double.infinity,
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: isDark ? const Color(0xFF064E3B).withValues(alpha: 0.2) : const Color(0xFFECFDF5),
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: isDark ? const Color(0xFF059669).withValues(alpha: 0.4) : const Color(0xFFA7F3D0)),
-                                ),
-                                child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Icon(Icons.check_circle_outline_rounded, color: AppTheme.successColor, size: 18),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: Text(
-                                        'Official CAWS Record: Your companion is respectfully recorded in the CAWS registry. All post-adoption check-in obligations are complete.',
-                                        style: GoogleFonts.poppins(
-                                          fontSize: 11.5,
-                                          color: isDark ? const Color(0xFFA7F3D0) : const Color(0xFF065F46),
-                                          height: 1.4,
+                              if (isInvestigation)
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: isDark ? const Color(0xFF78350F).withValues(alpha: 0.25) : const Color(0xFFFEF3C7),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(color: isDark ? const Color(0xFFD97706).withValues(alpha: 0.4) : const Color(0xFFFDE68A)),
+                                  ),
+                                  child: Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Icon(Icons.home_work_outlined, color: Color(0xFFD97706), size: 18),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          'CAWS shelter staff has requested an on-site consultation / home visit regarding the passing of your companion. A staff member will coordinate the visit schedule with you.',
+                                          style: GoogleFonts.poppins(
+                                            fontSize: 11.5,
+                                            color: isDark ? const Color(0xFFFDE68A) : const Color(0xFF92400E),
+                                            height: 1.4,
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
+                                )
+                              else if (isNeglect)
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: isDark ? const Color(0xFF881337).withValues(alpha: 0.25) : const Color(0xFFFFE4E6),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(color: isDark ? const Color(0xFFE11D48).withValues(alpha: 0.4) : const Color(0xFFFECDD3)),
+                                  ),
+                                  child: Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Icon(Icons.warning_amber_rounded, color: Color(0xFFE11D48), size: 18),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          'Official CAWS Record: A welfare review violation was recorded for this life event.',
+                                          style: GoogleFonts.poppins(
+                                            fontSize: 11.5,
+                                            color: isDark ? const Color(0xFFFECDD3) : const Color(0xFF9F1239),
+                                            height: 1.4,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                )
+                              else
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: isDark ? const Color(0xFF064E3B).withValues(alpha: 0.2) : const Color(0xFFECFDF5),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(color: isDark ? const Color(0xFF059669).withValues(alpha: 0.4) : const Color(0xFFA7F3D0)),
+                                  ),
+                                  child: Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Icon(Icons.check_circle_outline_rounded, color: AppTheme.successColor, size: 18),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          'Official CAWS Record: Your companion is respectfully recorded in the CAWS registry. All post-adoption check-in obligations are complete.',
+                                          style: GoogleFonts.poppins(
+                                            fontSize: 11.5,
+                                            color: isDark ? const Color(0xFFA7F3D0) : const Color(0xFF065F46),
+                                            height: 1.4,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
                             ],
                           ),
                         );

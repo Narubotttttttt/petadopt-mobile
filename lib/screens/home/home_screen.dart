@@ -75,226 +75,236 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         showDialog(
           context: context,
           barrierDismissible: true,
-          builder: (ctx) => AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-            contentPadding: const EdgeInsets.fromLTRB(24, 26, 24, 12),
-            actionsPadding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
-            title: Column(
-              children: [
-                Container(
-                  width: 60,
-                  height: 60,
-                  decoration: BoxDecoration(
-                    color: isBlacklisted ? const Color(0xFFFFEAEA) : const Color(0xFFFFFBEB),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Center(
-                    child: Icon(
-                      Icons.block_rounded,
-                      color: isBlacklisted ? AppTheme.errorColor : AppTheme.warningColor,
-                      size: 30,
+          builder: (ctx) {
+            final isDark = AppTheme.isDark(ctx);
+            return AlertDialog(
+              backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+              contentPadding: const EdgeInsets.fromLTRB(24, 26, 24, 12),
+              actionsPadding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+              title: Column(
+                children: [
+                  Container(
+                    width: 60,
+                    height: 60,
+                    decoration: BoxDecoration(
+                      color: isBlacklisted
+                          ? (isDark ? const Color(0xFF450A0A) : const Color(0xFFFFEAEA))
+                          : (isDark ? const Color(0xFF451A03) : const Color(0xFFFFFBEB)),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Center(
+                      child: Icon(
+                        Icons.block_rounded,
+                        color: isBlacklisted ? AppTheme.errorColor : (isDark ? const Color(0xFFF59E0B) : AppTheme.warningColor),
+                        size: 30,
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 14),
-                Text(
-                  isBlacklisted ? 'Account Banned' : 'Account Restricted',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.poppins(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: AppTheme.textPrimary,
-                  ),
-                ),
-              ],
-            ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Text(
-                    isBlacklisted
-                        ? 'Your account has been banned from submitting adoption applications. You can still view pet compatibility matches in read-only mode.'
-                        : 'Your account is restricted from new adoption applications. You can still view pet matches.',
+                  const SizedBox(height: 14),
+                  Text(
+                    isBlacklisted ? 'Account Banned' : 'Account Restricted',
                     textAlign: TextAlign.center,
                     style: GoogleFonts.poppins(
-                      fontSize: 13,
-                      color: AppTheme.textSecondary,
-                      height: 1.4,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 14),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: isBlacklisted ? const Color(0xFFFFF1F2) : const Color(0xFFFFFBEB),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: isBlacklisted ? const Color(0xFFFECDD3) : const Color(0xFFFDE68A),
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'OFFICIAL REASON',
-                        style: GoogleFonts.poppins(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w800,
-                          color: isBlacklisted ? AppTheme.errorColor : const Color(0xFFB45309),
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        officialReason,
-                        style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: AppTheme.textPrimary,
-                          height: 1.4,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF8FAFC),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: const Color(0xFFE2E8F0)),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'SHELTER CONTACT & APPEALS',
-                        style: GoogleFonts.poppins(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w800,
-                          color: AppTheme.primaryDark,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          const Icon(Icons.facebook, size: 16, color: Color(0xFF1877F2)),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              'CDO Animal Welfare Society Inc.',
-                              style: GoogleFonts.poppins(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: AppTheme.textPrimary,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      Row(
-                        children: [
-                          const Icon(Icons.email_outlined, size: 15, color: Color(0xFFEA4335)),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              'cdoanimalrescueorg@gmail.com',
-                              style: GoogleFonts.poppins(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                                color: AppTheme.textPrimary,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      Row(
-                        children: [
-                          const Icon(Icons.phone_outlined, size: 15, color: Color(0xFF10B981)),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              '0936 556 6200',
-                              style: GoogleFonts.poppins(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                                color: AppTheme.textPrimary,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            actions: [
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        Navigator.pop(ctx);
-                        await ApiService.clearSession();
-                        if (mounted) {
-                          Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil('/login', (route) => false);
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFF1F5F9),
-                        foregroundColor: const Color(0xFF475569),
-                        elevation: 0,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                      ),
-                      child: Text(
-                        'Log Out',
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.poppins(
-                          color: const Color(0xFF475569),
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () => Navigator.pop(ctx),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primary,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                      ),
-                      child: Text(
-                        'Continue',
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.poppins(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 14,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.getTextPrimary(ctx),
                     ),
                   ),
                 ],
               ),
-            ],
-          ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Text(
+                      isBlacklisted
+                          ? 'Your account has been banned from submitting adoption applications. You can still view pet compatibility matches in read-only mode.'
+                          : 'Your account is restricted from new adoption applications. You can still view pet matches.',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.poppins(
+                        fontSize: 13,
+                        color: AppTheme.getTextSecondary(ctx),
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: isBlacklisted
+                          ? (isDark ? const Color(0xFF450A0A).withValues(alpha: 0.3) : const Color(0xFFFFF1F2))
+                          : (isDark ? const Color(0xFF451A03).withValues(alpha: 0.3) : const Color(0xFFFFFBEB)),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: isBlacklisted
+                            ? (isDark ? const Color(0xFF991B1B) : const Color(0xFFFECDD3))
+                            : (isDark ? const Color(0xFF92400E) : const Color(0xFFFDE68A)),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'OFFICIAL REASON',
+                          style: GoogleFonts.poppins(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            color: isBlacklisted ? AppTheme.errorColor : (isDark ? const Color(0xFFFBBF24) : const Color(0xFFB45309)),
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          officialReason,
+                          style: GoogleFonts.poppins(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.getTextPrimary(ctx),
+                            height: 1.4,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: AppTheme.getCardBorder(ctx)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'SHELTER CONTACT & APPEALS',
+                          style: GoogleFonts.poppins(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            color: isDark ? const Color(0xFF5EEAD4) : AppTheme.primaryDark,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            const Icon(Icons.facebook, size: 16, color: Color(0xFF1877F2)),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'CDO Animal Welfare Society Inc.',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppTheme.getTextPrimary(ctx),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            const Icon(Icons.email_outlined, size: 15, color: Color(0xFFEA4335)),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'cdoanimalrescueorg@gmail.com',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppTheme.getTextPrimary(ctx),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            const Icon(Icons.phone_outlined, size: 15, color: Color(0xFF10B981)),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                '0936 556 6200',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppTheme.getTextPrimary(ctx),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          Navigator.pop(ctx);
+                          await ApiService.clearSession();
+                          if (mounted) {
+                            Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil('/login', (route) => false);
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9),
+                          foregroundColor: isDark ? const Color(0xFFF8FAFC) : const Color(0xFF475569),
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        ),
+                        child: Text(
+                          'Log Out',
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.poppins(
+                            color: isDark ? const Color(0xFFF8FAFC) : const Color(0xFF475569),
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.primary,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        ),
+                        child: Text(
+                          'Continue',
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            );
+          },
         );
       }
     } catch (_) {}

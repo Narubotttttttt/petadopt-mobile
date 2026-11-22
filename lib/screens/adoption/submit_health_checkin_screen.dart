@@ -250,11 +250,13 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
                 children: [
                   _buildPetHeader(),
                   const SizedBox(height: 20),
-                  _buildPhotoSection(),
-                  const SizedBox(height: 20),
-                  if (isDeceased)
-                    _buildDeceasedDetailsSection()
-                  else ...[
+                  if (isDeceased) ...[
+                    _buildDeceasedDetailsSection(),
+                    const SizedBox(height: 20),
+                    _buildPhotoSection(),
+                  ] else ...[
+                    _buildPhotoSection(),
+                    const SizedBox(height: 20),
                     _buildHealthConditionSection(),
                     const SizedBox(height: 20),
                     _buildWeightAndNotesSection(),
@@ -329,19 +331,37 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
 
   Widget _buildPhotoSection() {
     final isDeceased = _healthStatus == 'deceased';
+    final isTrauma = isDeceased && _deceasedCause == 'Accident / Trauma';
     final isDark = AppTheme.isDark(context);
+
+    String photoTitle;
+    String photoSubtitle;
+    if (isDeceased) {
+      if (isTrauma) {
+        photoTitle = '3. Veterinary Document or Memorial Tribute';
+        photoSubtitle = 'For traumatic accidents, please upload an official veterinary clinic certificate, burial site photo, or past living memorial photo. Graphic trauma photos are strictly prohibited.';
+      } else {
+        photoTitle = '3. Pet Photo or Veterinary Document';
+        photoSubtitle = 'You may upload a photo of your pet that passed away, a memorial tribute, or an official veterinary document.';
+      }
+    } else {
+      photoTitle = '1. Recent Pet Photo';
+      photoSubtitle = 'Take or upload a clear, current photo of your pet.';
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            Text(
-              isDeceased ? '1. Memorial Photo or Document' : '1. Recent Pet Photo',
-              style: GoogleFonts.poppins(
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: AppTheme.getTextPrimary(context),
+            Expanded(
+              child: Text(
+                photoTitle,
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.getTextPrimary(context),
+                ),
               ),
             ),
             const SizedBox(width: 8),
@@ -375,14 +395,56 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
         ),
         const SizedBox(height: 4),
         Text(
-          isDeceased
-              ? 'Upload a memorial photo of your pet, or an official veterinary document / death certificate if available.'
-              : 'Take or upload a clear, current photo of your pet.',
+          photoSubtitle,
           style: GoogleFonts.poppins(
             fontSize: 12,
             color: AppTheme.getTextSecondary(context),
           ),
         ),
+        if (isTrauma) ...[
+          const SizedBox(height: 10),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF7F1D1D).withValues(alpha: 0.25) : const Color(0xFFFEF2F2),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: isDark ? const Color(0xFFEF4444).withValues(alpha: 0.4) : const Color(0xFFFCA5A5),
+              ),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.shield_outlined, size: 20, color: isDark ? const Color(0xFFF87171) : const Color(0xFFDC2626)),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Graphic Injury Photos Prohibited',
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: isDark ? const Color(0xFFF87171) : const Color(0xFFDC2626),
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'To respect animal welfare standards and protect staff from distressing imagery, do not upload graphic or bloody injury photos. Upload a clinic certification, burial proof, or memorial tribute photo.',
+                        style: GoogleFonts.poppins(
+                          fontSize: 11,
+                          color: isDark ? const Color(0xFFFCA5A5) : const Color(0xFF7F1D1D),
+                          height: 1.35,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
         const SizedBox(height: 10),
 
         if (_photo != null)
@@ -790,32 +852,6 @@ class _SubmitHealthCheckinScreenState extends State<SubmitHealthCheckinScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(Icons.info_outline_rounded, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569), size: 20),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        'Submitting this report will officially notify CAWS shelter staff that ${widget.petName} has passed away and will permanently complete your monthly check-in obligations.',
-                        style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF334155),
-                          height: 1.4,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
               Text(
                 'Date of Passing *',
                 style: GoogleFonts.poppins(

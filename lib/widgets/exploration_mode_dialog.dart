@@ -112,117 +112,127 @@ class ExplorationModeDialog extends StatelessWidget {
                     showDialog(
                       context: context,
                       barrierDismissible: true,
-                      builder: (ctx) => AlertDialog(
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                        contentPadding: const EdgeInsets.fromLTRB(24, 22, 24, 12),
-                        actionsPadding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
-                        title: Column(
-                          children: [
-                            Container(
-                              width: 60,
-                              height: 60,
-                              decoration: BoxDecoration(
-                                color: isBlacklisted ? const Color(0xFFFFEAEA) : const Color(0xFFFFFBEB),
-                                shape: BoxShape.circle,
-                              ),
-                              child: Center(
-                                child: Icon(
-                                  Icons.block_rounded,
-                                  color: isBlacklisted ? AppTheme.errorColor : AppTheme.warningColor,
-                                  size: 30,
+                      builder: (ctx) {
+                        final isDark = AppTheme.isDark(ctx);
+                        return AlertDialog(
+                          backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                          contentPadding: const EdgeInsets.fromLTRB(24, 22, 24, 12),
+                          actionsPadding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+                          title: Column(
+                            children: [
+                              Container(
+                                width: 60,
+                                height: 60,
+                                decoration: BoxDecoration(
+                                  color: isBlacklisted
+                                      ? (isDark ? const Color(0xFF450A0A) : const Color(0xFFFFEAEA))
+                                      : (isDark ? const Color(0xFF451A03) : const Color(0xFFFFFBEB)),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Center(
+                                  child: Icon(
+                                    Icons.block_rounded,
+                                    color: isBlacklisted ? AppTheme.errorColor : (isDark ? const Color(0xFFF59E0B) : AppTheme.warningColor),
+                                    size: 30,
+                                  ),
                                 ),
                               ),
-                            ),
-                            const SizedBox(height: 14),
-                            Text(
-                              isBlacklisted ? 'Account Banned' : 'Account Restricted',
-                              textAlign: TextAlign.center,
-                              style: GoogleFonts.poppins(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w700,
-                                color: AppTheme.textPrimary,
-                              ),
-                            ),
-                          ],
-                        ),
-                        content: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Center(
-                              child: Text(
-                                isBlacklisted
-                                    ? 'Your account has been banned from submitting adoption applications.'
-                                    : 'Your account is currently restricted from taking recommendation quizzes.',
+                              const SizedBox(height: 14),
+                              Text(
+                                isBlacklisted ? 'Account Banned' : 'Account Restricted',
                                 textAlign: TextAlign.center,
                                 style: GoogleFonts.poppins(
-                                  fontSize: 13,
-                                  color: AppTheme.textSecondary,
-                                  height: 1.4,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppTheme.getTextPrimary(ctx),
                                 ),
                               ),
-                            ),
-                            const SizedBox(height: 14),
-                            Container(
+                            ],
+                          ),
+                          content: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Center(
+                                child: Text(
+                                  isBlacklisted
+                                      ? 'Your account has been banned from submitting adoption applications.'
+                                      : 'Your account is currently restricted from taking recommendation quizzes.',
+                                  textAlign: TextAlign.center,
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 13,
+                                    color: AppTheme.getTextSecondary(ctx),
+                                    height: 1.4,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 14),
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: isBlacklisted
+                                      ? (isDark ? const Color(0xFF450A0A).withValues(alpha: 0.3) : const Color(0xFFFFF1F2))
+                                      : (isDark ? const Color(0xFF451A03).withValues(alpha: 0.3) : const Color(0xFFFFFBEB)),
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(
+                                    color: isBlacklisted
+                                        ? (isDark ? const Color(0xFF991B1B) : const Color(0xFFFECDD3))
+                                        : (isDark ? const Color(0xFF92400E) : const Color(0xFFFDE68A)),
+                                  ),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'OFFICIAL REASON',
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w800,
+                                        color: isBlacklisted ? AppTheme.errorColor : (isDark ? const Color(0xFFFBBF24) : const Color(0xFFB45309)),
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      officialReason,
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppTheme.getTextPrimary(ctx),
+                                        height: 1.4,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          actions: [
+                            SizedBox(
                               width: double.infinity,
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: isBlacklisted ? const Color(0xFFFFF1F2) : const Color(0xFFFFFBEB),
-                                borderRadius: BorderRadius.circular(14),
-                                border: Border.all(
-                                  color: isBlacklisted ? const Color(0xFFFECDD3) : const Color(0xFFFDE68A),
+                              child: ElevatedButton(
+                                onPressed: () => Navigator.pop(ctx),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: isBlacklisted ? AppTheme.errorColor : AppTheme.primary,
+                                  padding: const EdgeInsets.symmetric(vertical: 14),
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                                 ),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'OFFICIAL REASON',
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w800,
-                                      color: isBlacklisted ? AppTheme.errorColor : const Color(0xFFB45309),
-                                      letterSpacing: 0.5,
-                                    ),
+                                child: Text(
+                                  'Understood',
+                                  style: GoogleFonts.poppins(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 14,
                                   ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    officialReason,
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                      color: AppTheme.textPrimary,
-                                      height: 1.4,
-                                    ),
-                                  ),
-                                ],
+                                ),
                               ),
                             ),
                           ],
-                        ),
-                        actions: [
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton(
-                              onPressed: () => Navigator.pop(ctx),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: isBlacklisted ? AppTheme.errorColor : AppTheme.primary,
-                                padding: const EdgeInsets.symmetric(vertical: 14),
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                              ),
-                              child: Text(
-                                'Understood',
-                                style: GoogleFonts.poppins(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
+                        );
+                      },
                     );
                     return;
                   }

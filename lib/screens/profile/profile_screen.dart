@@ -412,8 +412,11 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
             ),
           ),
           const SizedBox(height: 10),
-          Row(
-            mainAxisSize: MainAxisSize.min,
+          Wrap(
+            alignment: WrapAlignment.center,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 8,
+            runSpacing: 6,
             children: [
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -445,7 +448,6 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
@@ -464,45 +466,25 @@ class _ProfileScreenState extends State<ProfileScreen> with WidgetsBindingObserv
               Builder(
                 builder: (context) {
                   final status = (_user?['status'] ?? 'active').toString().toLowerCase();
-                  if (status == 'blacklisted' || status == 'banned' || status == 'restricted') {
-                    return Padding(
-                      padding: const EdgeInsets.only(left: 8),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFEF4444),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          'BLACKLISTED',
-                          style: GoogleFonts.poppins(
-                            fontSize: 11,
-                            color: Colors.white,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
+                  final isRestrictedOrBanned = status == 'blacklisted' || status == 'banned' || status == 'restricted';
+                  final badgeText = status == 'restricted' ? 'RESTRICTED' : (isRestrictedOrBanned ? 'BLACKLISTED' : 'ACTIVE');
+                  final badgeColor = isRestrictedOrBanned ? const Color(0xFFEF4444) : const Color(0xFF10B981);
+
+                  return Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: badgeColor,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      badgeText,
+                      style: GoogleFonts.poppins(
+                        fontSize: 11,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
                       ),
-                    );
-                  } else {
-                    return Padding(
-                      padding: const EdgeInsets.only(left: 8),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF10B981),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          'ACTIVE',
-                          style: GoogleFonts.poppins(
-                            fontSize: 11,
-                            color: Colors.white,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    );
-                  }
+                    ),
+                  );
                 },
               ),
             ],
