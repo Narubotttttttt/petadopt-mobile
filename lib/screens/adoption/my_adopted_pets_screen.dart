@@ -505,6 +505,9 @@ class _MyAdoptedPetsScreenState extends State<MyAdoptedPetsScreen> {
                 const SizedBox(height: 14),
                 Divider(height: 1, color: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9)),
                 const SizedBox(height: 12),
+                if (isFinalized && !isDeceased) ...[
+                  _buildKaponStatusCard(pet, isDark),
+                ],
                 if (isDeceased) ...[
                   SizedBox(
                     width: double.infinity,
@@ -694,6 +697,274 @@ class _MyAdoptedPetsScreenState extends State<MyAdoptedPetsScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildKaponStatusCard(Map<String, dynamic> pet, bool isDark) {
+    final rawStatus = (pet['kapon_status'] ?? '').toString().toLowerCase().trim();
+    final isNeutered = pet['is_neutered'] == true || pet['pet']?['is_neutered'] == true;
+    final kaponStatus = rawStatus.isNotEmpty
+        ? rawStatus
+        : (isNeutered ? 'completed' : 'awaiting_schedule');
+
+    if (kaponStatus == 'not_required') {
+      return Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.verified_outlined, size: 16, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Neuter / Kapon Status: Already Completed or Not Required',
+                style: GoogleFonts.poppins(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (kaponStatus == 'completed' || isNeutered) {
+      final completedAt = pet['kapon_completed_at']?.toString();
+      final vetName = pet['kapon_attending_vet']?.toString();
+      return Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF064E3B).withValues(alpha: 0.25) : const Color(0xFFECFDF5),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: isDark ? const Color(0xFF059669).withValues(alpha: 0.4) : const Color(0xFFA7F3D0)),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF059669).withValues(alpha: 0.3) : const Color(0xFFD1FAE5),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.check_circle_rounded,
+                size: 16,
+                color: isDark ? const Color(0xFF34D399) : const Color(0xFF059669),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Spayed / Neutered (Kapon Done)',
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: isDark ? const Color(0xFF34D399) : const Color(0xFF065F46),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    completedAt != null && completedAt.isNotEmpty
+                        ? 'Completed on $completedAt${vetName != null && vetName.isNotEmpty ? " • $vetName" : ""}'
+                        : 'Official surgery procedure verified in pet medical passport.',
+                    style: GoogleFonts.poppins(
+                      fontSize: 11,
+                      color: isDark ? const Color(0xFFA7F3D0) : const Color(0xFF047857),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (kaponStatus == 'scheduled') {
+      final scheduledDate = pet['kapon_scheduled_date']?.toString() ?? 'Pending Date';
+      final venue = pet['kapon_venue']?.toString() ?? 'CAWS Shelter Clinic';
+      final instructions = pet['kapon_instructions']?.toString() ?? '';
+
+      return Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF082F49).withValues(alpha: 0.3) : const Color(0xFFF0F9FF),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: isDark ? const Color(0xFF0284C7).withValues(alpha: 0.4) : const Color(0xFFBAE6FD)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF0284C7).withValues(alpha: 0.3) : const Color(0xFFE0F2FE),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.event_available_rounded,
+                    size: 16,
+                    color: Color(0xFF0284C7),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Spay / Neuter (Kapon) Scheduled',
+                    style: GoogleFonts.poppins(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w700,
+                      color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF0369A1),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF0F172A) : Colors.white,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE0F2FE)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.access_time_filled_rounded, size: 14, color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF0284C7)),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Date: $scheduledDate',
+                        style: GoogleFonts.poppins(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.getTextPrimary(context),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Icon(Icons.location_on_rounded, size: 14, color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF0284C7)),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          'Venue: $venue',
+                          style: GoogleFonts.poppins(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w500,
+                            color: AppTheme.getTextSecondary(context),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (instructions.isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF78350F).withValues(alpha: 0.2) : const Color(0xFFFFFBEB),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: isDark ? const Color(0xFFD97706).withValues(alpha: 0.3) : const Color(0xFFFDE68A)),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(Icons.info_outline_rounded, size: 14, color: isDark ? const Color(0xFFFBBF24) : const Color(0xFFB45309)),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              instructions,
+                              style: GoogleFonts.poppins(
+                                fontSize: 11,
+                                color: isDark ? const Color(0xFFFDE68A) : const Color(0xFF92400E),
+                                height: 1.35,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Default: awaiting_schedule
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF78350F).withValues(alpha: 0.2) : const Color(0xFFFFFBEB),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: isDark ? const Color(0xFFD97706).withValues(alpha: 0.35) : const Color(0xFFFDE68A)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF78350F).withValues(alpha: 0.3) : const Color(0xFFFEF3C7),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.schedule_rounded,
+              size: 16,
+              color: isDark ? const Color(0xFFFBBF24) : const Color(0xFFD97706),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Awaiting Kapon Schedule Announcement',
+                  style: GoogleFonts.poppins(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: isDark ? const Color(0xFFFCD34D) : const Color(0xFF92400E),
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  'Your companion is queued for mandatory spay / neuter (kapon) to prevent cross-breeding. CAWS shelter will notify you once the veterinary date is scheduled.',
+                  style: GoogleFonts.poppins(
+                    fontSize: 11,
+                    color: isDark ? const Color(0xFFFDE68A) : const Color(0xFFB45309),
+                    height: 1.35,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

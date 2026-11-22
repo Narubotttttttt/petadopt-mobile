@@ -812,6 +812,66 @@ class _ApplicationCard extends StatelessWidget {
                   ),
                 ),
               ],
+              if (isContractUnlocked) ...[
+                Builder(builder: (context) {
+                  final kStatus = (application['kapon_status'] ?? '').toString().toLowerCase().trim();
+                  if (kStatus == 'scheduled') {
+                    final kDate = application['kapon_scheduled_date']?.toString() ?? 'Scheduled';
+                    return Container(
+                      margin: const EdgeInsets.only(top: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF082F49).withValues(alpha: 0.3) : const Color(0xFFF0F9FF),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: isDark ? const Color(0xFF0284C7).withValues(alpha: 0.35) : const Color(0xFFBAE6FD)),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.event_available_rounded, size: 14, color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF0284C7)),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              'Kapon Scheduled: $kDate',
+                              style: GoogleFonts.poppins(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF0369A1),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  } else if (kStatus == 'awaiting_schedule') {
+                    return Container(
+                      margin: const EdgeInsets.only(top: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF78350F).withValues(alpha: 0.2) : const Color(0xFFFFFBEB),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: isDark ? const Color(0xFFD97706).withValues(alpha: 0.3) : const Color(0xFFFDE68A)),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.schedule_rounded, size: 14, color: isDark ? const Color(0xFFFBBF24) : const Color(0xFFB45309)),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              'Kapon Queue: Awaiting shelter schedule announcement',
+                              style: GoogleFonts.poppins(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
+                                color: isDark ? const Color(0xFFFDE68A) : const Color(0xFF92400E),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+                  return const SizedBox.shrink();
+                }),
+              ],
               const SizedBox(height: 8),
               // When not finalized: Pet Health Hub is locked and cannot be clicked
               Builder(builder: (context) {
