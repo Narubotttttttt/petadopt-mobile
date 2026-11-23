@@ -881,10 +881,25 @@ class _HomeTabState extends State<_HomeTab> {
 
       final hasUpcomingReminders = reminders.any((r) {
         final days = r['days_until_due'] as int? ?? 999;
-        return days <= 30;
+        final isOverdue = r['is_overdue'] == true || days < 0;
+        return isOverdue || days <= 30;
       });
 
       if (hasUpcomingReminders) {
+        if (mounted) setState(() => _hasUnreadNotifications = true);
+        return;
+      }
+
+      final hasActionableApps = apps.any((app) {
+        final requiresNaming = app['requires_naming'] == true || app['requiresNaming'] == true;
+        final status = (app['status'] as String? ?? '').toLowerCase();
+        final isSigned = app['is_signed'] == true || app['is_pre_signed'] == true;
+        final isFinalized = app['is_finalized'] == true || app['isFinalized'] == true;
+        final isApprovedAwaitingSign = status == 'approved' && !isFinalized && !isSigned;
+        return requiresNaming || isApprovedAwaitingSign;
+      });
+
+      if (hasActionableApps) {
         if (mounted) setState(() => _hasUnreadNotifications = true);
         return;
       }
@@ -1094,6 +1109,205 @@ class _HomeTabState extends State<_HomeTab> {
     );
   }
 
+  void _showNamePetDialog(BuildContext context, Map<String, dynamic> app, String currentName) {
+    final petId = app['pet_id'] ?? app['petId'] ?? app['pet']?['id'];
+    if (petId == null) return;
+
+    final controller = TextEditingController();
+    bool isSaving = false;
+    final isDark = AppTheme.isDark(context);
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return Dialog(
+              backgroundColor: AppTheme.getCardColor(context),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: AppTheme.primary.withValues(alpha: isDark ? 0.2 : 0.1),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(
+                            Icons.drive_file_rename_outline_rounded,
+                            color: AppTheme.primary,
+                            size: 20,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'Name Your Adopted Pet',
+                            style: GoogleFonts.poppins(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: AppTheme.getTextPrimary(context),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Give your new family member their official name! This will appear on their digital certificate, vaccination book, and health hub.',
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        color: AppTheme.textSecondary,
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: controller,
+                      autofocus: true,
+                      textCapitalization: TextCapitalization.words,
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        color: AppTheme.getTextPrimary(context),
+                      ),
+                      decoration: InputDecoration(
+                        hintText: 'e.g. Bella, Milo, Rocky',
+                        hintStyle: GoogleFonts.poppins(
+                          fontSize: 13,
+                          color: isDark ? AppTheme.darkTextSecondary : Colors.grey.shade400,
+                        ),
+                        prefixIcon: const Icon(Icons.pets_rounded, size: 18, color: AppTheme.primary),
+                        filled: true,
+                        fillColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: AppTheme.getCardBorder(context)),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: AppTheme.getCardBorder(context)),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: AppTheme.primary, width: 1.5),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: isSaving ? null : () => Navigator.pop(dialogContext),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9),
+                              foregroundColor: isDark ? Colors.white : const Color(0xFF475569),
+                              elevation: 0,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                            ),
+                            child: Text(
+                              'Cancel',
+                              style: GoogleFonts.poppins(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: isDark ? Colors.white : const Color(0xFF475569),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: isSaving
+                                ? null
+                                : () async {
+                                    final entered = controller.text.trim();
+                                    if (entered.isEmpty) return;
+
+                                    setDialogState(() => isSaving = true);
+                                    try {
+                                      final parsedId = petId is int ? petId : int.parse(petId.toString());
+                                      await ApiService.updatePetName(
+                                        petId: parsedId,
+                                        name: entered,
+                                      );
+                                      if (context.mounted) {
+                                        Navigator.pop(dialogContext);
+                                        _loadDashboardData();
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              'Pet name updated to "$entered"',
+                                              style: GoogleFonts.poppins(fontSize: 13),
+                                            ),
+                                            backgroundColor: AppTheme.successColor,
+                                            behavior: SnackBarBehavior.floating,
+                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                          ),
+                                        );
+                                      }
+                                    } catch (e) {
+                                      setDialogState(() => isSaving = false);
+                                      if (context.mounted) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              e.toString().replaceAll('Exception: ', ''),
+                                              style: GoogleFonts.poppins(fontSize: 13),
+                                            ),
+                                            backgroundColor: const Color(0xFFDC2626),
+                                            behavior: SnackBarBehavior.floating,
+                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                          ),
+                                        );
+                                      }
+                                    }
+                                  },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.primary,
+                              elevation: 0,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                            ),
+                            child: isSaving
+                                ? const SizedBox(
+                                    height: 18,
+                                    width: 18,
+                                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                  )
+                                : Text(
+                                    'Save Name',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   Future<void> _showNotificationsBottomSheet() async {
     final user = await ApiService.getUser();
     if (user != null) {
@@ -1185,7 +1399,13 @@ class _HomeTabState extends State<_HomeTab> {
                       return const NotificationsModalSkeletonLoader();
                     }
                     final apps = snapshot.data ?? [];
-                    if (apps.isEmpty && _vaccineReminders.isEmpty) {
+                    final activeReminders = _vaccineReminders.where((r) {
+                      final days = r['days_until_due'] as int? ?? 999;
+                      final isOverdue = r['is_overdue'] == true || days < 0;
+                      return isOverdue || days <= 30;
+                    }).toList();
+
+                    if (apps.isEmpty && activeReminders.isEmpty) {
                       return Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -1220,7 +1440,7 @@ class _HomeTabState extends State<_HomeTab> {
                     return ListView(
                       padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
                       children: [
-                        if (_vaccineReminders.isNotEmpty) ...[
+                        if (activeReminders.isNotEmpty) ...[
                           Padding(
                             padding: const EdgeInsets.only(bottom: 6, left: 2),
                             child: Text(
@@ -1233,8 +1453,9 @@ class _HomeTabState extends State<_HomeTab> {
                               ),
                             ),
                           ),
-                          ..._vaccineReminders.map((reminder) {
+                          ...activeReminders.map((reminder) {
                             final days = reminder['days_until_due'] as int? ?? 999;
+                            final isOverdue = reminder['is_overdue'] == true || days < 0;
                             final dueLabel = reminder['next_due_label'] as String? ?? '';
                             final petName = reminder['pet_name'] as String? ?? 'Your pet';
                             final category = reminder['category'] as String? ?? 'Health';
@@ -1244,38 +1465,42 @@ class _HomeTabState extends State<_HomeTab> {
                             final bool isTomorrow = days == 1;
                             final bool isUrgent = days <= 3;
 
-                            final Color iconColor = isToday
+                            final Color iconColor = (isOverdue || isToday)
                                 ? const Color(0xFFDC2626)
                                 : isUrgent
                                     ? const Color(0xFFEA580C)
                                     : const Color(0xFF0D9488);
-                            final Color iconBg = isToday
+                            final Color iconBg = (isOverdue || isToday)
                                 ? const Color(0xFFFEF2F2)
                                 : isUrgent
                                     ? const Color(0xFFFFF7ED)
                                     : const Color(0xFFF0FDFA);
 
-                            final String badgeText = isToday
-                                ? 'Due Today'
-                                : isTomorrow
-                                    ? 'Tomorrow'
-                                    : 'In $days days';
-                            final Color badgeColor = isToday
+                            final String badgeText = isOverdue
+                                ? (days == -1 ? '1 day overdue' : '${-days} days overdue')
+                                : isToday
+                                    ? 'Due Today'
+                                    : isTomorrow
+                                        ? 'Tomorrow'
+                                        : 'In $days days';
+                            final Color badgeColor = (isOverdue || isToday)
                                 ? const Color(0xFFDC2626)
                                 : isUrgent
                                     ? const Color(0xFFEA580C)
                                     : const Color(0xFF0D9488);
-                            final Color badgeBg = isToday
+                            final Color badgeBg = (isOverdue || isToday)
                                 ? const Color(0xFFFEE2E2)
                                 : isUrgent
                                     ? const Color(0xFFFFEDD5)
                                     : const Color(0xFFCCFBF1);
 
-                            final String subtitle = isToday
-                                ? '$category due today ($dueLabel)'
-                                : isTomorrow
-                                    ? '$category due tomorrow ($dueLabel)'
-                                    : '$category due on $dueLabel';
+                            final String subtitle = isOverdue
+                                ? '$category overdue since $dueLabel'
+                                : isToday
+                                    ? '$category due today ($dueLabel)'
+                                    : isTomorrow
+                                        ? '$category due tomorrow ($dueLabel)'
+                                        : '$category due on $dueLabel';
 
                             return _buildMinimalNotificationCard(
                               icon: Icons.vaccines_rounded,
@@ -1305,7 +1530,7 @@ class _HomeTabState extends State<_HomeTab> {
                         ],
 
                         if (apps.isNotEmpty) ...[
-                          if (_vaccineReminders.isNotEmpty) const SizedBox(height: 10),
+                          if (activeReminders.isNotEmpty) const SizedBox(height: 10),
                           Padding(
                             padding: const EdgeInsets.only(bottom: 6, left: 2),
                             child: Text(
@@ -1328,7 +1553,7 @@ class _HomeTabState extends State<_HomeTab> {
                                 icon: Icons.home_outlined,
                                 iconColor: const Color(0xFFE11D48),
                                 iconBg: const Color(0xFFFFF1F2),
-                                title: '$petName - Adopted',
+                                title: '$petName - Application Closed',
                                 subtitle: 'Pet found a home with another applicant',
                                 badgeText: 'Closed',
                                 badgeColor: const Color(0xFFE11D48),
@@ -1341,13 +1566,43 @@ class _HomeTabState extends State<_HomeTab> {
                                 item['isFinalized'] == true ||
                                 item['contract_unlocked'] == true;
 
+                            final isSigned = item['is_signed'] == true ||
+                                item['is_pre_signed'] == true;
+
+                            final requiresNaming = item['requires_naming'] == true ||
+                                item['requiresNaming'] == true ||
+                                (isFinalized && (
+                                  petName.isEmpty ||
+                                  petName.toLowerCase() == 'adopted pet' ||
+                                  petName.toLowerCase() == 'rescued pet' ||
+                                  petName.toLowerCase().startsWith('pet no.') ||
+                                  petName.toLowerCase().startsWith('pet #')
+                                ));
+
                             if ((status == 'approved' || status == 'adopted') && isFinalized) {
+                              if (requiresNaming) {
+                                return _buildMinimalNotificationCard(
+                                  icon: Icons.drive_file_rename_outline_rounded,
+                                  iconColor: const Color(0xFFEA580C),
+                                  iconBg: const Color(0xFFFFF7ED),
+                                  title: '$petName - Adoption Finalized!',
+                                  subtitle: 'Handover complete! Tap to give your pet their official name.',
+                                  badgeText: 'Name Pet',
+                                  badgeColor: const Color(0xFFEA580C),
+                                  badgeBg: const Color(0xFFFFEDD5),
+                                  onTap: () {
+                                    Navigator.pop(modalContext);
+                                    _showNamePetDialog(context, item, petName);
+                                  },
+                                );
+                              }
+
                               return _buildMinimalNotificationCard(
                                 icon: Icons.pets_rounded,
                                 iconColor: const Color(0xFF059669),
                                 iconBg: const Color(0xFFECFDF5),
-                                title: '$petName - Adopted',
-                                subtitle: 'Handover complete - Tap to view Health Hub',
+                                title: '$petName - Adoption Finalized',
+                                subtitle: 'Handover complete - Tap to view Health Hub & Records',
                                 badgeText: 'Adopted',
                                 badgeColor: const Color(0xFF059669),
                                 badgeBg: const Color(0xFFD1FAE5),
@@ -1375,13 +1630,36 @@ class _HomeTabState extends State<_HomeTab> {
                                   item['homeOwnership']?.toString().toLowerCase() == 'rented';
                               final idDocShort = isStudent ? 'Student ID/COR' : 'ID';
                               final resDocShort = isRented ? 'Proof of Residence' : 'Brgy Cert';
+
+                              if (!isSigned) {
+                                return _buildMinimalNotificationCard(
+                                  icon: Icons.assignment_turned_in_outlined,
+                                  iconColor: const Color(0xFF0D9488),
+                                  iconBg: const Color(0xFFF0FDFA),
+                                  title: '$petName - Application Approved!',
+                                  subtitle: 'Approved! Tap to review and pre-sign your contract.',
+                                  badgeText: 'Sign Contract',
+                                  badgeColor: const Color(0xFF0D9488),
+                                  badgeBg: const Color(0xFFCCFBF1),
+                                  onTap: () {
+                                    Navigator.pop(modalContext);
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => const MyApplicationsScreen(),
+                                      ),
+                                    );
+                                  },
+                                );
+                              }
+
                               return _buildMinimalNotificationCard(
-                                icon: Icons.assignment_turned_in_outlined,
+                                icon: Icons.event_available_rounded,
                                 iconColor: const Color(0xFF0D9488),
                                 iconBg: const Color(0xFFF0FDFA),
-                                title: '$petName - Pre-Approved',
+                                title: '$petName - Scheduled for Pickup',
                                 subtitle: 'Event: $eventDate - Bring $idDocShort & $resDocShort',
-                                badgeText: 'Pre-Approved',
+                                badgeText: 'Approved',
                                 badgeColor: const Color(0xFF0D9488),
                                 badgeBg: const Color(0xFFCCFBF1),
                                 onTap: () {
@@ -1401,7 +1679,7 @@ class _HomeTabState extends State<_HomeTab> {
                                 icon: Icons.info_outline_rounded,
                                 iconColor: const Color(0xFFDC2626),
                                 iconBg: const Color(0xFFFEF2F2),
-                                title: '$petName - Application',
+                                title: '$petName - Application Status',
                                 subtitle: 'Application was not approved',
                                 badgeText: 'Declined',
                                 badgeColor: const Color(0xFFDC2626),
@@ -1416,7 +1694,7 @@ class _HomeTabState extends State<_HomeTab> {
                                 iconColor: const Color(0xFF2563EB),
                                 iconBg: const Color(0xFFEFF6FF),
                                 title: '$petName - In Review',
-                                subtitle: 'Staff is reviewing your application',
+                                subtitle: 'Staff is reviewing your application details',
                                 badgeText: 'In Review',
                                 badgeColor: const Color(0xFF2563EB),
                                 badgeBg: const Color(0xFFDBEAFE),
@@ -1436,9 +1714,9 @@ class _HomeTabState extends State<_HomeTab> {
                               icon: Icons.hourglass_top_rounded,
                               iconColor: const Color(0xFFD97706),
                               iconBg: const Color(0xFFFFFBEB),
-                              title: '$petName - Pending',
-                              subtitle: 'Awaiting review by CAWS staff',
-                              badgeText: 'Pending',
+                              title: '$petName - Application Submitted',
+                              subtitle: 'Awaiting review by CAWS shelter team',
+                              badgeText: 'Submitted',
                               badgeColor: const Color(0xFFD97706),
                               badgeBg: const Color(0xFFFEF3C7),
                               onTap: () {
