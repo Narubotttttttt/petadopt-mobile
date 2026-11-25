@@ -896,7 +896,8 @@ class _HomeTabState extends State<_HomeTab> {
         final isSigned = app['is_signed'] == true || app['is_pre_signed'] == true;
         final isFinalized = app['is_finalized'] == true || app['isFinalized'] == true;
         final isApprovedAwaitingSign = status == 'approved' && !isFinalized && !isSigned;
-        return requiresNaming || isApprovedAwaitingSign;
+        final isKaponScheduled = app['kapon_status'] == 'scheduled';
+        return requiresNaming || isApprovedAwaitingSign || isKaponScheduled;
       });
 
       if (hasActionableApps) {
@@ -1597,12 +1598,41 @@ class _HomeTabState extends State<_HomeTab> {
                                 );
                               }
 
+                              final kaponStatus = (item['kapon_status'] ?? '').toString().toLowerCase();
+                              final kaponSchedDate = item['kapon_scheduled_date'] ?? item['kapon_scheduled_raw'];
+
+                              if (kaponStatus == 'scheduled' && kaponSchedDate != null) {
+                                return _buildMinimalNotificationCard(
+                                  icon: Icons.event_available_rounded,
+                                  iconColor: const Color(0xFF0284C7),
+                                  iconBg: const Color(0xFFF0F9FF),
+                                  title: '$petName - Kapon Scheduled',
+                                  subtitle: 'Surgery set: $kaponSchedDate. Tap for pre-op instructions.',
+                                  badgeText: 'Kapon Date',
+                                  badgeColor: const Color(0xFF0284C7),
+                                  badgeBg: const Color(0xFFE0F2FE),
+                                  onTap: () {
+                                    Navigator.pop(modalContext);
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => AdoptedPetHubScreen(application: item),
+                                      ),
+                                    );
+                                  },
+                                );
+                              }
+
+                              final String adoptedSubtitle = (kaponStatus == 'awaiting_schedule')
+                                  ? 'Handover complete • Queued for shelter Kapon schedule'
+                                  : 'Handover complete - Tap to view Health Hub & Records';
+
                               return _buildMinimalNotificationCard(
                                 icon: Icons.pets_rounded,
                                 iconColor: const Color(0xFF059669),
                                 iconBg: const Color(0xFFECFDF5),
                                 title: '$petName - Adoption Finalized',
-                                subtitle: 'Handover complete - Tap to view Health Hub & Records',
+                                subtitle: adoptedSubtitle,
                                 badgeText: 'Adopted',
                                 badgeColor: const Color(0xFF059669),
                                 badgeBg: const Color(0xFFD1FAE5),

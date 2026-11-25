@@ -924,41 +924,70 @@ class _MyAdoptedPetsScreenState extends State<MyAdoptedPetsScreen> {
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: isDark ? const Color(0xFFD97706).withValues(alpha: 0.35) : const Color(0xFFFDE68A)),
       ),
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF78350F).withValues(alpha: 0.3) : const Color(0xFFFEF3C7),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              Icons.schedule_rounded,
-              size: 16,
-              color: isDark ? const Color(0xFFFBBF24) : const Color(0xFFD97706),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Awaiting Kapon Schedule Announcement',
-                  style: GoogleFonts.poppins(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: isDark ? const Color(0xFFFCD34D) : const Color(0xFF92400E),
-                  ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF78350F).withValues(alpha: 0.3) : const Color(0xFFFEF3C7),
+                  shape: BoxShape.circle,
                 ),
-                const SizedBox(height: 3),
-                Text(
-                  'Your companion is queued for mandatory spay / neuter (kapon) to prevent cross-breeding. CAWS shelter will notify you once the veterinary date is scheduled.',
-                  style: GoogleFonts.poppins(
-                    fontSize: 11,
-                    color: isDark ? const Color(0xFFFDE68A) : const Color(0xFFB45309),
-                    height: 1.35,
+                child: Icon(
+                  Icons.schedule_rounded,
+                  size: 16,
+                  color: isDark ? const Color(0xFFFBBF24) : const Color(0xFFD97706),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Awaiting Kapon Schedule Announcement',
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: isDark ? const Color(0xFFFCD34D) : const Color(0xFF92400E),
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      'Your companion is queued for mandatory spay / neuter (kapon) to prevent cross-breeding. CAWS coordinates clinic dates in batches and will notify you as soon as the veterinary date is scheduled.',
+                      style: GoogleFonts.poppins(
+                        fontSize: 11,
+                        color: isDark ? const Color(0xFFFDE68A) : const Color(0xFFB45309),
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF1E293B) : Colors.white,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFFDE68A)),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.info_outline_rounded, size: 14, color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF0284C7)),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    'Pre-op tip: Keep your pet indoors and in good health while awaiting surgery announcement.',
+                    style: GoogleFonts.poppins(
+                      fontSize: 10.5,
+                      color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569),
+                    ),
                   ),
                 ),
               ],
